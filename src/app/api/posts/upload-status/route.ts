@@ -39,28 +39,17 @@ export async function GET(request: NextRequest) {
     // Get today's date
     const today = new Date().toISOString().split('T')[0]
 
-    // Use time slot system 
+    // Use time slot system - query posts directly
     let uploadStatus = []
     let totalUploadsToday = 0
     
-    const { data: uploadLimits, error } = await supabaseAdmin
-      .from('daily_upload_limits')
-      .select(`
-        time_slot,
-        uploaded_at,
-        post_id,
-        posts!inner(
-          id,
-          image_url,
-          thumbnail_url,
-          alt_text,
-          created_at,
-          likes_count,
-          moderation_status
-        )
-      `)
+    // Get today's posts for this child
+    const { data: todaysPosts, error } = await supabaseAdmin
+      .from('posts')
+      .select('id, time_slot, image_url, thumbnail_url, alt_text, created_at, likes_count, moderation_status')
       .eq('child_id', child.id)
-      .eq('date', today)
+      .gte('created_at', `${today}T00:00:00Z`)
+      .lt('created_at', `${today}T23:59:59Z`)
 
     if (error) {
       console.error('Failed to fetch upload status:', error)
@@ -70,50 +59,30 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    // Build status for time slot system (only check prompted challenges, not free draw)
+    // Build status for time slot system (check all time slots including free draw)
     const timeSlots = ['daily_1', 'daily_2', 'free_draw']
     uploadStatus = timeSlots.map(slot => {
-      const existingUpload = uploadLimits?.find(ul => ul.time_slot === slot)
-      
-      // Free draw has unlimited uploads
-      if (slot === 'free_draw') {
-        return {
-          timeSlot: slot,
-          canUpload: true, // Always can upload to free draw
-          hasUploaded: false, // Don't show as uploaded since unlimited
-          uploadedAt: null,
-          postId: null,
-          post: null
-        }
-      }
+      const existingPost = todaysPosts?.find(post => post.time_slot === slot)
       
       return {
         timeSlot: slot,
-        canUpload: !existingUpload,
-        hasUploaded: !!existingUpload,
-        uploadedAt: existingUpload?.uploaded_at || null,
-        postId: existingUpload?.post_id || null,
-        post: existingUpload?.posts && Array.isArray(existingUpload.posts) && existingUpload.posts.length > 0 ? {
-          id: existingUpload.posts[0].id,
-          imageUrl: existingUpload.posts[0].image_url,
-          thumbnailUrl: existingUpload.posts[0].thumbnail_url,
-          altText: existingUpload.posts[0].alt_text,
-          createdAt: existingUpload.posts[0].created_at,
-          likesCount: existingUpload.posts[0].likes_count,
-          moderationStatus: existingUpload.posts[0].moderation_status
-        } : existingUpload?.posts && !Array.isArray(existingUpload.posts) ? {
-          id: (existingUpload.posts as any).id,
-          imageUrl: (existingUpload.posts as any).image_url,
-          thumbnailUrl: (existingUpload.posts as any).thumbnail_url,
-          altText: (existingUpload.posts as any).alt_text,
-          createdAt: (existingUpload.posts as any).created_at,
-          likesCount: (existingUpload.posts as any).likes_count,
-          moderationStatus: (existingUpload.posts as any).moderation_status
+        canUpload: !existingPost,
+        hasUploaded: !!existingPost,
+        uploadedAt: existingPost?.created_at || null,
+        postId: existingPost?.id || null,
+        post: existingPost ? {
+          id: existingPost.id,
+          imageUrl: existingPost.image_url,
+          thumbnailUrl: existingPost.thumbnail_url,
+          altText: existingPost.alt_text,
+          createdAt: existingPost.created_at,
+          likesCount: existingPost.likes_count,
+          moderationStatus: existingPost.moderation_status
         } : null
       }
     })
     
-    totalUploadsToday = uploadLimits?.length || 0
+    totalUploadsToday = todaysPosts?.length || 0
 
     return NextResponse.json({
       uploadStatus,
