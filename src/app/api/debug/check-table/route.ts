@@ -1,8 +1,8 @@
-import { createSupabaseServer } from '@/lib/supabase/server'
+import { supabaseAdmin } from '@/lib/supabase'
 import { NextResponse } from 'next/server'
 
 export async function GET() {
-  const supabase = await createSupabaseServer()
+  const supabase = supabaseAdmin
   
   // Check if table exists and get column info
   const { data: tableInfo, error: tableError } = await supabase
