@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { ChildAuth } from '@/lib/auth'
 import { supabaseAdmin } from '@/lib/supabase'
 import { cookies } from 'next/headers'
+import { moderateImage, shouldApproveForChildren } from '@/lib/openai-moderation'
 
 export async function POST(request: NextRequest) {
   try {
@@ -215,6 +216,35 @@ export async function POST(request: NextRequest) {
       thumbnailUrl = thumbUrlData.publicUrl
     }
 
+    // Moderate the image before creating the post
+    let moderationStatus: 'pending' | 'approved' | 'rejected' = 'pending'
+    
+    try {
+      // Only moderate if OpenAI API key is configured
+      if (process.env.OPENAI_API_KEY) {
+        const moderationResult = await moderateImage(imageUrl)
+        
+        if (shouldApproveForChildren(moderationResult)) {
+          moderationStatus = 'approved'
+        } else {
+          moderationStatus = 'rejected'
+          console.log('Image rejected by moderation:', {
+            childId,
+            fileName,
+            categories: moderationResult.categories
+          })
+        }
+      } else {
+        // If no API key, auto-approve (for development)
+        console.warn('OpenAI API key not configured - auto-approving upload')
+        moderationStatus = 'approved'
+      }
+    } catch (moderationError) {
+      console.error('Moderation failed:', moderationError)
+      // On error, default to pending for manual review
+      moderationStatus = 'pending'
+    }
+
     // Create the post record
     const { data: newPost, error: postError } = await supabaseAdmin
       .from('posts')
@@ -225,7 +255,7 @@ export async function POST(request: NextRequest) {
         thumbnail_url: thumbnailUrl,
         alt_text: altText,
         time_slot: targetTimeSlot,
-        moderation_status: 'pending'
+        moderation_status: moderationStatus
       })
       .select()
       .single()

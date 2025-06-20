@@ -36,12 +36,23 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    // Fetch user stats
-    const { data: stats, error: statsError } = await supabaseAdmin
-      .from('user_stats')
-      .select('*')
-      .eq('child_id', child.id)
-      .single()
+    // Fetch user stats and actual approved posts count
+    const [statsResult, postsResult] = await Promise.all([
+      supabaseAdmin
+        .from('user_stats')
+        .select('*')
+        .eq('child_id', child.id)
+        .single(),
+      supabaseAdmin
+        .from('posts')
+        .select('id')
+        .eq('child_id', child.id)
+        .eq('moderation_status', 'approved')
+    ])
+
+    const { data: stats, error: statsError } = statsResult
+    const { data: approvedPosts, error: postsError } = postsResult
+    const actualPostCount = approvedPosts?.length || 0
 
     if (statsError || !stats) {
       // Create initial stats if they don't exist
@@ -69,7 +80,7 @@ export async function GET(request: NextRequest) {
 
       return NextResponse.json({
         stats: {
-          totalPosts: newStats.total_posts,
+          totalPosts: actualPostCount,
           totalLikesReceived: newStats.total_likes_received,
           totalLikesGiven: newStats.total_likes_given,
           currentStreak: newStats.current_streak,
@@ -89,7 +100,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       stats: {
-        totalPosts: stats.total_posts,
+        totalPosts: actualPostCount,
         totalLikesReceived: stats.total_likes_received,
         totalLikesGiven: stats.total_likes_given,
         currentStreak: stats.current_streak,

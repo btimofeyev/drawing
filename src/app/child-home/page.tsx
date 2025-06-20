@@ -22,12 +22,22 @@ interface DailyChallenge {
   isToday: boolean
 }
 
+
 interface UploadStatus {
   timeSlot: 'morning' | 'afternoon' | 'evening'
   canUpload: boolean
   hasUploaded: boolean
   uploadedAt: string | null
-  post: any | null
+  postId: string | null
+  post: {
+    id: string
+    imageUrl: string
+    thumbnailUrl: string
+    altText: string
+    createdAt: string
+    likesCount: number
+    moderationStatus: 'pending' | 'approved' | 'rejected'
+  } | null
 }
 
 interface SlotPost {
@@ -90,6 +100,7 @@ export default function ChildHomePage() {
     }
   }
 
+
   const getSlotIcon = (timeSlot: 'morning' | 'afternoon' | 'evening') => {
     switch (timeSlot) {
       case 'morning': return '🌅'
@@ -140,10 +151,10 @@ export default function ChildHomePage() {
             <h1 className="text-6xl font-bold mb-4 text-slate-800 leading-tight text-center">
               Today's Creative
               <br />
-              <span className="text-pink-400">Adventures</span>
+              <span className="text-pink-400">Challenges</span>
             </h1>
             <p className="text-xl text-slate-600 max-w-2xl mx-auto text-center mb-6">
-              Three amazing challenges await you today! Pick whichever one inspires you most and create your artwork.
+              Three inspiring art challenges await you today! You can complete all three throughout the day.
             </p>
             
             {/* Daily Progress */}
@@ -156,17 +167,17 @@ export default function ChildHomePage() {
                   </span>
                 </div>
                 <div className="flex gap-2 mb-3">
-                  {['morning', 'afternoon', 'evening'].map((slot, index) => {
-                    const status = uploadStatus.find(s => s.timeSlot === slot)
+                  {['morning', 'afternoon', 'evening'].map((timeSlot, index) => {
+                    const status = uploadStatus.find(s => s.timeSlot === timeSlot)
                     const isCompleted = status?.hasUploaded || false
                     return (
                       <div
-                        key={slot}
+                        key={timeSlot}
                         className={`flex-1 h-3 rounded-full transition-all duration-300 ${
                           isCompleted 
-                            ? slot === 'morning' 
+                            ? timeSlot === 'morning' 
                               ? 'bg-gradient-to-r from-orange-400 to-yellow-500'
-                              : slot === 'afternoon'
+                              : timeSlot === 'afternoon'
                               ? 'bg-gradient-to-r from-blue-400 to-cyan-500' 
                               : 'bg-gradient-to-r from-purple-400 to-pink-500'
                             : 'bg-slate-200'
@@ -174,6 +185,17 @@ export default function ChildHomePage() {
                       />
                     )
                   })}
+                </div>
+                <div className="flex justify-between text-xs text-slate-600 mb-2">
+                  <span className="flex items-center gap-1">
+                    🌅 Morning
+                  </span>
+                  <span className="flex items-center gap-1">
+                    ☀️ Afternoon  
+                  </span>
+                  <span className="flex items-center gap-1">
+                    🌆 Evening
+                  </span>
                 </div>
                 <p className="text-sm text-slate-600 text-center">
                   {uploadStatus.filter(s => s.hasUploaded).length === 3 
@@ -185,21 +207,30 @@ export default function ChildHomePage() {
             )}
           </div>
 
+          {/* Today's Challenges */}
+          <div className="text-center mb-8">
+            <h2 className="text-3xl font-bold text-slate-800 mb-2">
+              🎨 Today's Art Challenges
+            </h2>
+            <p className="text-lg text-slate-600">
+              Three unique challenges for different times of day - complete them all!
+            </p>
+          </div>
+
           {/* Time Slots Grid */}
           {dailyChallenges.length > 0 ? (
             <div className="grid lg:grid-cols-3 gap-8 mb-12">
               {['morning', 'afternoon', 'evening'].map((timeSlot) => {
                 const challenge = dailyChallenges.find(c => c.timeSlot === timeSlot)
-                const status = uploadStatus.find(s => s.timeSlot === timeSlot)
-                const posts = postsBySlot[timeSlot] || []
-                const hasUploaded = status?.hasUploaded || posts.length > 0
+                const slotStatus = uploadStatus.find(s => s.timeSlot === timeSlot)
+                const hasUploadedToSlot = slotStatus?.hasUploaded || false
 
                 if (!challenge) return null
 
                 return (
                   <div
                     key={timeSlot}
-                    className="relative bg-white rounded-3xl shadow-lg border-2 border-slate-200 hover:border-slate-300 transition-all duration-300 hover:shadow-xl"
+                    className="relative bg-white rounded-3xl shadow-lg border-2 transition-all duration-300 hover:shadow-xl border-slate-200 hover:border-slate-300"
                   >
 
                     {/* Slot header */}
@@ -228,35 +259,35 @@ export default function ChildHomePage() {
                       </p>
 
                       {/* Upload status */}
-                      {hasUploaded ? (
+                      {hasUploadedToSlot ? (
                         <div className="mb-6">
                           <div className="bg-green-50 border border-green-200 rounded-2xl p-4">
                             <div className="flex items-center justify-center gap-2 mb-2">
                               <div className="w-2 h-2 bg-green-500 rounded-full"></div>
                               <span className="text-green-700 font-semibold text-sm">
-                                Artwork uploaded!
+                                Challenge completed!
                               </span>
                             </div>
-                            {status?.post && (
+                            {slotStatus?.post && (
                               <div className="flex items-center justify-center gap-3">
                                 <div className="w-12 h-12 rounded-lg overflow-hidden bg-slate-100">
                                   <img 
-                                    src={status.post.thumbnailUrl || status.post.imageUrl}
-                                    alt={status.post.altText}
+                                    src={slotStatus.post.thumbnailUrl || slotStatus.post.imageUrl}
+                                    alt={slotStatus.post.altText}
                                     className="w-full h-full object-cover"
                                   />
                                 </div>
                                 <div className="flex-1 text-center">
-                                  <p className="text-slate-600 text-sm">{status.post.altText}</p>
+                                  <p className="text-slate-600 text-sm">{slotStatus.post.altText}</p>
                                   <p className="text-xs text-slate-500">
-                                    Uploaded: {new Date(status.post.createdAt).toLocaleDateString()}
+                                    Uploaded: {new Date(slotStatus.post.createdAt).toLocaleDateString()}
                                   </p>
                                 </div>
                               </div>
                             )}
                           </div>
                         </div>
-                      ) : status?.canUpload ? (
+                      ) : (
                         <div className="mb-6">
                           <div className="bg-blue-50 border border-blue-200 rounded-2xl p-4">
                             <div className="flex items-center justify-center gap-2">
@@ -267,33 +298,22 @@ export default function ChildHomePage() {
                             </div>
                           </div>
                         </div>
-                      ) : (
-                        <div className="mb-6">
-                          <div className="bg-orange-50 border border-orange-200 rounded-2xl p-4">
-                            <div className="flex items-center justify-center gap-2">
-                              <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
-                              <span className="text-orange-700 font-semibold text-sm">
-                                Slot filled for today
-                              </span>
-                            </div>
-                          </div>
-                        </div>
                       )}
 
                       {/* Action buttons */}
                       <div className="space-y-3">
-                        {!hasUploaded ? (
+                        {!hasUploadedToSlot ? (
                           <Link 
-                            href={`/create?slot=${timeSlot}&prompt=${challenge.id}`}
+                            href={`/create?slot=${timeSlot}`}
                             className="w-full btn btn-primary"
                           >
                             <Camera className="h-4 w-4" />
-                            Create for {timeSlot}
+                            Start {timeSlot} Challenge!
                             <Sparkles className="h-4 w-4" />
                           </Link>
                         ) : (
                           <div className="w-full bg-green-100 text-green-700 py-3 px-4 rounded-2xl font-semibold text-center border border-green-200">
-                            ✅ Completed for today!
+                            ✅ Challenge completed!
                           </div>
                         )}
                         
@@ -323,11 +343,11 @@ export default function ChildHomePage() {
           {/* Encouragement */}
           <div className="bg-gradient-to-br from-pink-50 to-purple-50 rounded-3xl p-8 border border-pink-200 flex flex-col items-center text-center">
             <h3 className="text-2xl font-bold text-slate-800 mb-3 text-center">
-              🎨 Your Creative Journey Awaits!
+              🎨 Three Daily Challenges!
             </h3>
             <p className="text-lg text-slate-600 max-w-2xl mx-auto text-center">
-              Each time slot offers a unique creative challenge designed just for you. 
-              Start with any slot you like and build your daily art collection!
+              Morning, afternoon, and evening - each time brings a new creative challenge! 
+              Complete all three throughout the day to unlock your full artistic potential.
             </p>
           </div>
         </div>

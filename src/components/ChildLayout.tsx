@@ -28,6 +28,10 @@ interface Child {
 interface UserStats {
   points: number
   level: number
+  totalPosts: number
+  earnedAchievements: number
+  pointsToNextLevel: number
+  progressToNextLevel: number
 }
 
 interface ChildLayoutProps {
@@ -44,16 +48,79 @@ export default function ChildLayout({ children }: ChildLayoutProps) {
     fetchUserData()
   }, [])
 
+  // Level calculation system
+  const calculateLevel = (points: number) => {
+    if (points < 100) return 1
+    if (points < 300) return 2  // 100-299
+    if (points < 600) return 3  // 300-599
+    if (points < 1000) return 4 // 600-999
+    if (points < 1500) return 5 // 1000-1499
+    return Math.floor(points / 500) + 2 // 500 points per level after level 5
+  }
+
+  const getPointsForLevel = (level: number) => {
+    if (level <= 1) return 0
+    if (level === 2) return 100
+    if (level === 3) return 300
+    if (level === 4) return 600
+    if (level === 5) return 1000
+    return 1500 + (level - 6) * 500
+  }
+
+  const getPointsForNextLevel = (level: number) => {
+    return getPointsForLevel(level + 1)
+  }
+
   const fetchUserData = async () => {
     try {
-      const response = await fetch('/api/child/stats')
-      if (response.ok) {
-        const data = await response.json()
-        setChild(data.child)
-        setUserStats({ points: data.stats.points, level: data.stats.level })
+      // Fetch both stats and achievements to get accurate points
+      const [statsRes, achievementsRes] = await Promise.all([
+        fetch('/api/child/stats'),
+        fetch('/api/child/achievements')
+      ])
+      
+      if (statsRes.ok) {
+        const statsData = await statsRes.json()
+        setChild(statsData.child)
+        
+        // Calculate points from achievements if available
+        let totalPoints = 0
+        let earnedCount = 0
+        
+        if (achievementsRes.ok) {
+          const achievementsData = await achievementsRes.json()
+          const earnedAchievements = achievementsData.achievements?.filter((a: any) => a.earned) || []
+          totalPoints = earnedAchievements.reduce((sum: number, a: any) => sum + (a.points || 0), 0)
+          earnedCount = earnedAchievements.length
+        }
+        
+        const currentLevel = calculateLevel(totalPoints)
+        const pointsForCurrentLevel = getPointsForLevel(currentLevel)
+        const pointsForNextLevel = getPointsForNextLevel(currentLevel)
+        const pointsToNextLevel = pointsForNextLevel - totalPoints
+        const progressToNextLevel = totalPoints > pointsForCurrentLevel 
+          ? ((totalPoints - pointsForCurrentLevel) / (pointsForNextLevel - pointsForCurrentLevel)) * 100
+          : 0
+        
+        setUserStats({ 
+          points: totalPoints || statsData.stats?.points || 0,
+          level: currentLevel,
+          totalPosts: statsData.stats?.totalPosts || 0,
+          earnedAchievements: earnedCount,
+          pointsToNextLevel: Math.max(0, pointsToNextLevel),
+          progressToNextLevel: Math.min(100, progressToNextLevel)
+        })
       }
     } catch (error) {
       console.error('Failed to load user data:', error)
+      setUserStats({
+        points: 0,
+        level: 1,
+        totalPosts: 0,
+        earnedAchievements: 0,
+        pointsToNextLevel: 100,
+        progressToNextLevel: 0
+      })
     }
   }
 
@@ -69,10 +136,8 @@ export default function ChildLayout({ children }: ChildLayoutProps) {
 
   const navigation = [
     { name: 'Dashboard', href: '/child-home', icon: Home },
-    { name: 'Create Art', href: '/create', icon: Camera },
     { name: 'Art Gallery', href: '/gallery', icon: Users },
     { name: 'My Profile', href: '/profile', icon: Star },
-    { name: 'Challenges', href: '/challenges', icon: Target },
     { name: 'Achievements', href: '/achievements', icon: Trophy },
     { name: 'Leaderboards', href: '/leaderboards', icon: TrendingUp },
   ]
@@ -89,73 +154,103 @@ export default function ChildLayout({ children }: ChildLayoutProps) {
         />
       )}
 
-      {/* Sidebar */}
-      <div className={`fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-2xl transform transition-transform duration-300 ease-in-out lg:translate-x-0 ${
+      {/* Subtle Sidebar */}
+      <div className={`fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-slate-200 transform transition-transform duration-300 ease-in-out lg:translate-x-0 ${
         sidebarOpen ? 'translate-x-0' : '-translate-x-full'
       }`}>
         <div className="flex flex-col h-full">
-          {/* Header */}
-          <div className="flex items-center justify-between p-6 border-b border-gray-100">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl flex items-center justify-center"
-                   style={{background: 'var(--gradient-primary)'}}>
-                <Palette className="h-6 w-6 text-white" />
+          {/* Brand Header */}
+          <div className="p-6 border-b border-slate-100">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-pink-400 to-pink-600 flex items-center justify-center shadow-lg">
+                  <span className="text-lg">🎨</span>
+                </div>
+                <div>
+                  <h1 className="text-lg font-bold text-slate-800">Daily Draw</h1>
+                  <p className="text-xs text-pink-600 font-medium">Creative Community</p>
+                </div>
+              </div>
+              <button
+                className="lg:hidden p-1 rounded-lg hover:bg-slate-100"
+                onClick={() => setSidebarOpen(false)}
+              >
+                <X className="h-4 w-4 text-slate-600" />
+              </button>
+            </div>
+          </div>
+
+          {/* User Info - Simple & Clean */}
+          <div className="p-6 border-b border-slate-100">
+            <div className="text-center">
+              <div className="w-12 h-12 rounded-xl bg-slate-100 flex items-center justify-center mx-auto mb-3">
+                <span className="text-lg font-semibold text-slate-600">
+                  {child?.name ? child.name[0].toUpperCase() : '🎨'}
+                </span>
+              </div>
+              <h3 className="font-semibold text-slate-800">{child?.name || 'Young Artist'}</h3>
+              <p className="text-sm text-slate-500 mb-4">@{child?.username || 'artist'}</p>
+              
+              {/* Level Progress - Subtle */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-slate-600">Level {userStats?.level || 1}</span>
+                  <span className="text-slate-500">{userStats?.points || 0} pts</span>
+                </div>
+                <div className="w-full bg-slate-200 rounded-full h-1.5">
+                  <div 
+                    className="bg-pink-500 h-1.5 rounded-full transition-all duration-500"
+                    style={{ width: `${userStats?.progressToNextLevel || 0}%` }}
+                  />
+                </div>
+                <p className="text-xs text-slate-500">
+                  {userStats?.pointsToNextLevel || 100} points to level {(userStats?.level || 1) + 1}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Minimal Stats */}
+          <div className="p-6 border-b border-slate-100">
+            <div className="grid grid-cols-2 gap-4 text-center">
+              <div>
+                <div className="text-lg font-semibold text-slate-800">{userStats?.earnedAchievements || 0}</div>
+                <div className="text-xs text-slate-500">Achievements</div>
               </div>
               <div>
-                <h1 className="text-lg font-bold text-slate-800">Daily Draw</h1>
-                <p className="text-sm text-slate-600">{child?.name || 'Artist'}</p>
-              </div>
-            </div>
-            <button
-              className="lg:hidden p-2 rounded-lg hover:bg-gray-100"
-              onClick={() => setSidebarOpen(false)}
-            >
-              <X className="h-5 w-5 text-gray-600" />
-            </button>
-          </div>
-
-          {/* User Info */}
-          <div className="p-6 border-b border-gray-100">
-            <div className="text-center">
-              <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-3"
-                   style={{background: 'var(--gradient-purple)'}}>
-                <Trophy className="h-8 w-8 text-white" />
-              </div>
-              <h3 className="text-xl font-bold text-gray-900">Level {userStats?.level || 1}</h3>
-              <div className="flex items-center justify-center gap-2 mt-2">
-                <Star className="h-4 w-4 text-accent-600" />
-                <span className="font-bold text-accent-700">{userStats?.points || 0} points</span>
+                <div className="text-lg font-semibold text-slate-800">{userStats?.totalPosts || 0}</div>
+                <div className="text-xs text-slate-500">Artworks</div>
               </div>
             </div>
           </div>
 
-          {/* Navigation */}
-          <nav className="flex-1 p-4 space-y-2">
+          {/* Clean Navigation */}
+          <nav className="flex-1 p-4 space-y-1">
             {navigation.map((item) => {
               const Icon = item.icon
               return (
                 <Link key={item.name} href={item.href}>
-                  <div className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${
+                  <div className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
                     isActive(item.href)
-                      ? 'bg-gradient-to-r from-primary-500 to-secondary-500 text-white shadow-lg'
-                      : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
+                      ? 'bg-pink-50 text-pink-700'
+                      : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
                   }`}>
-                    <Icon className="h-5 w-5" />
-                    <span className="font-medium">{item.name}</span>
+                    <Icon className="h-4 w-4" />
+                    <span className="text-sm font-medium">{item.name}</span>
                   </div>
                 </Link>
               )
             })}
           </nav>
 
-          {/* Footer */}
-          <div className="p-4 border-t border-gray-100">
+          {/* Simple Footer */}
+          <div className="p-4 border-t border-slate-100">
             <button
               onClick={handleSignOut}
-              className="flex items-center gap-3 w-full px-4 py-3 text-gray-700 hover:bg-red-50 hover:text-red-600 rounded-xl transition-colors duration-200"
+              className="flex items-center gap-3 w-full px-3 py-2 text-slate-600 hover:bg-slate-50 hover:text-red-600 rounded-lg transition-colors text-sm"
             >
-              <LogOut className="h-5 w-5" />
-              <span className="font-medium">Sign Out</span>
+              <LogOut className="h-4 w-4" />
+              <span>Sign Out</span>
             </button>
           </div>
         </div>
@@ -163,31 +258,30 @@ export default function ChildLayout({ children }: ChildLayoutProps) {
 
       {/* Main content */}
       <div className="lg:pl-64">
-        {/* Top bar for mobile */}
-        <div className="lg:hidden bg-white/80 backdrop-blur-sm border-b border-primary-100 sticky top-0 z-30">
+        {/* Clean Mobile Header */}
+        <div className="lg:hidden bg-white border-b border-slate-200 sticky top-0 z-30">
           <div className="flex items-center justify-between px-4 py-3">
             <button
               onClick={() => setSidebarOpen(true)}
-              className="p-2 rounded-lg hover:bg-gray-100"
+              className="p-2 rounded-lg hover:bg-slate-100"
             >
-              <Menu className="h-6 w-6 text-gray-600" />
+              <Menu className="h-5 w-5 text-slate-600" />
             </button>
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg flex items-center justify-center"
-                   style={{background: 'var(--gradient-primary)'}}>
-                <Palette className="h-5 w-5 text-white" />
+            <div className="flex items-center gap-2">
+              <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-pink-400 to-pink-600 flex items-center justify-center shadow-md">
+                <span className="text-sm">🎨</span>
               </div>
               <span className="font-bold text-slate-800">Daily Draw</span>
             </div>
-            <div className="flex items-center gap-2">
-              <Star className="h-4 w-4 text-accent-600" />
-              <span className="font-bold text-accent-700 text-sm">{userStats?.points || 0}</span>
+            <div className="flex items-center gap-1 text-sm">
+              <Star className="h-4 w-4 text-yellow-500" />
+              <span className="font-medium text-slate-700">{userStats?.points || 0}</span>
             </div>
           </div>
         </div>
 
         {/* Page content */}
-        <main className="min-h-screen">
+        <main>
           {children}
         </main>
       </div>

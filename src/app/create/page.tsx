@@ -11,19 +11,22 @@ import {
 import Link from 'next/link'
 import ChildLayout from '@/components/ChildLayout'
 
-interface DailyChallenge {
+interface Prompt {
   id: string
   title: string
   description: string
   difficulty: 'easy' | 'medium' | 'hard'
   emoji: string
   date: string
-  timeSlot: 'morning' | 'afternoon' | 'evening'
+  timeSlot?: 'morning' | 'afternoon' | 'evening'
   isToday: boolean
+  promptType?: 'shared_daily' | 'individual' | 'community_remix'
+  communityTitle?: string
 }
 
 export default function CreatePage() {
-  const [dailyChallenge, setDailyChallenge] = useState<DailyChallenge | null>(null)
+  const [selectedPrompt, setSelectedPrompt] = useState<Prompt | null>(null)
+  const [uploadType, setUploadType] = useState<'challenge' | 'personal' | 'remix' | null>(null)
   const [selectedTimeSlot, setSelectedTimeSlot] = useState<'morning' | 'afternoon' | 'evening' | null>(null)
   const [selectedPromptId, setSelectedPromptId] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -39,19 +42,17 @@ export default function CreatePage() {
   const [dragActive, setDragActive] = useState(false)
 
   useEffect(() => {
-    // Check URL parameters for slot and prompt
+    // Check URL parameters for time slot
     const urlParams = new URLSearchParams(window.location.search)
     const slot = urlParams.get('slot') as 'morning' | 'afternoon' | 'evening' | null
-    const promptId = urlParams.get('prompt')
     
     if (slot) {
       setSelectedTimeSlot(slot)
+      fetchDailyChallenge(slot)
+    } else {
+      // Default to morning if no slot specified
+      fetchDailyChallenge('morning')
     }
-    if (promptId) {
-      setSelectedPromptId(promptId)
-    }
-
-    fetchDailyChallenge(slot, promptId)
   }, [])
 
   // Cleanup preview URL to prevent memory leaks
@@ -63,22 +64,16 @@ export default function CreatePage() {
     }
   }, [previewUrl])
 
-  const fetchDailyChallenge = async (timeSlot?: string | null, promptId?: string | null) => {
+  const fetchDailyChallenge = async (timeSlot: string) => {
     try {
       setIsLoading(true)
-      let url = '/api/prompts/daily'
-      
-      if (timeSlot) {
-        url += `?slot=${timeSlot}`
-      } else if (promptId) {
-        // If specific prompt ID, fetch that prompt
-        url += `?slot=morning` // Default to morning if no slot specified
-      }
+      const url = `/api/prompts/daily?slot=${timeSlot}`
 
       const response = await fetch(url)
       if (response.ok) {
         const data = await response.json()
-        setDailyChallenge(data.prompt)
+        setSelectedPrompt(data.prompt)
+        setSelectedPromptId(data.prompt.id)
         setError(null)
       } else {
         setError('Unable to load challenge. Please try again!')
@@ -90,6 +85,7 @@ export default function CreatePage() {
       setIsLoading(false)
     }
   }
+
 
   const handleFileSelect = (file: File) => {
     // Validate file type
@@ -147,7 +143,12 @@ export default function CreatePage() {
     }
 
     if (!selectedTimeSlot) {
-      setUploadError('Please select a time slot for your artwork.')
+      setUploadError('No time slot selected.')
+      return
+    }
+
+    if (!selectedPromptId) {
+      setUploadError('No prompt selected.')
       return
     }
 
@@ -159,9 +160,7 @@ export default function CreatePage() {
       formData.append('file', selectedFile)
       formData.append('altText', altText.trim())
       formData.append('timeSlot', selectedTimeSlot)
-      if (selectedPromptId) {
-        formData.append('promptId', selectedPromptId)
-      }
+      formData.append('promptId', selectedPromptId)
 
       const response = await fetch('/api/upload', {
         method: 'POST',
@@ -196,6 +195,15 @@ export default function CreatePage() {
     }
   }
 
+  const getSlotIcon = (timeSlot: 'morning' | 'afternoon' | 'evening') => {
+    switch (timeSlot) {
+      case 'morning': return '🌅'
+      case 'afternoon': return '☀️'
+      case 'evening': return '🌆'
+      default: return '✨'
+    }
+  }
+
   if (isLoading) {
     return (
       <ChildLayout>
@@ -223,46 +231,42 @@ export default function CreatePage() {
         )}
 
         {/* Challenge Header */}
-        {dailyChallenge && (
+        {selectedPrompt && (
           <div className="bg-white rounded-3xl shadow-xl border border-slate-200 mb-8 overflow-hidden">
-            {/* Slot header with gradient */}
-            <div className={`bg-gradient-to-r ${getSlotColor(dailyChallenge.timeSlot)} p-6 text-white`}>
+            {/* Header with gradient based on time slot */}
+            <div className={`bg-gradient-to-r ${
+              selectedPrompt.timeSlot 
+                ? getSlotColor(selectedPrompt.timeSlot) 
+                : 'from-gray-400 to-gray-500'
+            } p-6 text-white`}>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
-                  <span className="text-4xl">{dailyChallenge.emoji}</span>
+                  <span className="text-4xl">{selectedPrompt.emoji}</span>
                   <div>
-                    <h2 className="text-2xl font-bold">{dailyChallenge.title}</h2>
-                    <p className="text-sm opacity-90 capitalize">
-                      {dailyChallenge.timeSlot} Challenge • {dailyChallenge.difficulty} level
+                    <h2 className="text-2xl font-bold">
+                      {selectedPrompt.title}
+                    </h2>
+                    <p className="text-sm opacity-90">
+                      {selectedPrompt.timeSlot && `${selectedPrompt.timeSlot.charAt(0).toUpperCase() + selectedPrompt.timeSlot.slice(1)} Challenge`} • {selectedPrompt.difficulty} level
                     </p>
                   </div>
                 </div>
-                <div className="text-right">
-                  <div className="bg-white/20 rounded-lg px-3 py-2">
-                    <div className="text-xs opacity-75">Time Slot</div>
-                    <div className="font-bold capitalize">{dailyChallenge.timeSlot}</div>
+                {selectedTimeSlot && (
+                  <div className="text-right">
+                    <div className="bg-white/20 rounded-lg px-3 py-2">
+                      <div className="text-xs opacity-75">Time Slot</div>
+                      <div className="font-bold">{getSlotIcon(selectedTimeSlot as any)} {selectedTimeSlot.charAt(0).toUpperCase() + selectedTimeSlot.slice(1)}</div>
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
             </div>
             
             {/* Challenge content */}
             <div className="p-6">
               <p className="text-slate-600 text-lg leading-relaxed mb-4">
-                {dailyChallenge.description}
+                {selectedPrompt.description}
               </p>
-              
-              <div className="bg-blue-50 border border-blue-200 rounded-2xl p-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <Target className="h-4 w-4 text-blue-600" />
-                  <span className="text-blue-800 font-semibold text-sm">
-                    Create for {dailyChallenge.timeSlot} slot
-                  </span>
-                </div>
-                <p className="text-blue-700 text-sm">
-                  You can upload one artwork for each time slot today. This will count towards your {dailyChallenge.timeSlot} challenge!
-                </p>
-              </div>
             </div>
           </div>
         )}
@@ -304,15 +308,15 @@ export default function CreatePage() {
             // Upload Form
             <div className="text-center">
               <div className={`w-20 h-20 rounded-3xl flex items-center justify-center mx-auto mb-6 bg-gradient-to-r ${
-                dailyChallenge ? getSlotColor(dailyChallenge.timeSlot) : 'from-pink-400 to-purple-500'
+                selectedTimeSlot ? getSlotColor(selectedTimeSlot as any) : 'from-pink-400 to-purple-500'
               }`}>
                 <Upload className="h-10 w-10 text-white" />
               </div>
               
               <h3 className="text-2xl font-bold text-slate-900 mb-4">Upload Your Artwork</h3>
               <p className="text-slate-600 mb-8 max-w-lg mx-auto">
-                {dailyChallenge 
-                  ? `Share your ${dailyChallenge.timeSlot} challenge creation with the community!`
+                {selectedTimeSlot 
+                  ? `Share your ${selectedTimeSlot} challenge creation with the community!`
                   : 'Share your creative masterpiece with the community!'
                 } Upload drawings, paintings, digital art, or photos of your physical artwork.
               </p>
@@ -448,7 +452,7 @@ export default function CreatePage() {
                   ) : (
                     <div className="flex items-center justify-center gap-2">
                       <Upload className="h-5 w-5" />
-                      Upload to {selectedTimeSlot} Gallery
+                      Upload to {selectedTimeSlot?.charAt(0).toUpperCase() + selectedTimeSlot?.slice(1)} Gallery
                       <Sparkles className="h-5 w-5" />
                     </div>
                   )}

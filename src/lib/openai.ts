@@ -44,24 +44,97 @@ export class PromptGenerator {
     })
   }
 
+  // Generate shared daily prompt that everyone gets
+  static async generateSharedDailyPrompt(request: PromptRequest): Promise<GeneratedPrompt & { communityTitle: string }> {
+    const { ageGroup, previousPrompts, theme } = request
+
+    // Create age-appropriate instructions using structured prompting
+    const ageInstructions = ageGroup === 'kids' 
+      ? "children ages 6-10. Focus on real-life experiences, everyday activities, nature, pets, family, school, sports, and things they see around them. Use simple, encouraging language."
+      : "tweens ages 11-16. Focus on realistic scenarios, hobbies, interests, social situations, future aspirations, and personal experiences. Include creative challenges that allow self-expression."
+    
+    // Build structured developer message for shared prompts
+    const themeInstruction = theme === 'nature' 
+      ? 'Create a NATURE drawing prompt about animals, plants, weather, seasons, or landscapes.'
+      : theme === 'imagination'
+      ? 'Create an IMAGINATION drawing prompt about magical creatures, inventions, fantasy, or superheroes.'
+      : 'Create a REAL LIFE drawing prompt about family, home, food, pets, or favorite things.'
+
+    const ageInstruction = ageGroup === 'kids'
+      ? 'For children aged 6-10. Keep it simple, playful and easy to understand.'
+      : 'For tweens aged 11-16. Make it engaging with more creative challenges.'
+
+    const developerInstructions = `${themeInstruction}
+
+${ageInstruction}
+
+Make it fun and creative. Avoid anything scary or inappropriate.
+
+JSON format:
+{
+  "title": "Title (max 6 words)",
+  "description": "Fun description of what to draw",
+  "communityTitle": "🌟 Our [Topic] Collection!",
+  "emoji": "😊", 
+  "difficulty": "medium",
+  "ageGroup": "${ageGroup}"
+}`
+
+    try {
+      const completion = await openai.chat.completions.create({
+        model: "gpt-4o-mini",
+        messages: [
+          { role: "developer", content: developerInstructions },
+          { role: "user", content: "Create a new shared daily prompt that will inspire amazing community artwork." }
+        ],
+        temperature: 1.0,
+        max_tokens: 500,
+        response_format: { type: "json_object" }
+      })
+
+      const response = completion.choices[0].message.content
+      if (!response) {
+        throw new Error('No response from OpenAI')
+      }
+
+      const promptData = JSON.parse(response) as GeneratedPrompt & { communityTitle: string }
+      
+      // Validate required fields
+      if (!promptData.title || !promptData.description || !promptData.emoji || !promptData.communityTitle) {
+        throw new Error('Invalid shared prompt format from OpenAI')
+      }
+
+      // Ensure correct metadata
+      promptData.difficulty = 'medium'
+      promptData.ageGroup = ageGroup
+
+      return promptData
+    } catch (error) {
+      console.error('OpenAI shared prompt generation failed:', error)
+      
+      // Fallback to hardcoded shared prompts
+      return this.getFallbackSharedPrompt({ ageGroup, difficulty: 'medium' })
+    }
+  }
+
   // Get configuration for each time slot
   static getSlotConfig(timeSlot: TimeSlot) {
     const configs = {
       morning: {
         difficulty: 'easy' as const,
-        theme: 'Fresh starts, breakfast foods, morning sunshine, gentle animals, waking up activities, peaceful nature scenes',
+        theme: 'Dream breakfasts, perfect morning routines, beautiful sunrise scenes, ideal pets, amazing nature waking up, your perfect start to the day',
         color: '#FF6B6B', // Warm morning red
         description: 'Start your day with creativity!'
       },
       afternoon: {
         difficulty: 'medium' as const, 
-        theme: 'Adventure and exploration, outdoor activities, friendship, playing games, sports, traveling, active scenes',
+        theme: 'Dream adventures, amazing outdoor places, perfect beach days, ideal sports moments, fun with friends, exploring incredible places',
         color: '#4ECDC4', // Energetic teal
         description: 'Time for adventure and exploration!'
       },
       evening: {
         difficulty: 'hard' as const,
-        theme: 'Reflection and dreams, cozy indoor activities, storytelling, imagination, fantasy worlds, bedtime scenes, starry skies',
+        theme: 'Cozy dream homes, perfect family moments, amazing indoor spaces, your ideal room, beautiful nighttime scenes, peaceful evening activities',
         color: '#45B7D1', // Calm evening blue
         description: 'Wind down with thoughtful creativity!'
       }
@@ -73,51 +146,123 @@ export class PromptGenerator {
   static async generateDailyPrompt(request: PromptRequest): Promise<GeneratedPrompt> {
     const { ageGroup, difficulty, timeSlot, theme, previousPrompts } = request
 
-    // Create age-appropriate instructions
+    // Create age-appropriate instructions using structured prompting
     const ageInstructions = ageGroup === 'kids' 
-      ? "for children ages 6-10. Use simple language, focus on fun and imagination, include animals, fantasy, or everyday objects they know."
-      : "for tweens ages 11-16. Use more sophisticated language, include creative challenges that let them express personality and interests."
-
-    const difficultyInstructions = {
-      easy: "Simple concepts that can be drawn with basic shapes and colors. Should take 15-30 minutes.",
-      medium: "More detailed concepts requiring some planning and multiple elements. Should take 30-60 minutes.",
-      hard: "Complex concepts requiring creativity, storytelling, and advanced techniques. Should take 60+ minutes."
-    }
+      ? "children ages 6-10. Focus on real-life experiences, everyday activities, nature, pets, family, school, sports, and things they see around them. Use simple, encouraging language."
+      : "tweens ages 11-16. Focus on realistic scenarios, hobbies, interests, social situations, future aspirations, and personal experiences. Include creative challenges that allow self-expression."
 
     const timeSlotContext = timeSlot ? this.getSlotConfig(timeSlot) : null
     
-    const systemPrompt = `You are a creative art teacher designing daily drawing prompts for children. Create engaging, safe, and inspiring prompts that encourage creativity and self-expression.
+    // Build structured developer message with Markdown and XML
+    const developerInstructions = `# Identity
 
-Guidelines:
-- Always child-safe and positive
-- Encourage imagination and creativity  
-- Avoid scary, violent, or inappropriate themes
-- Make prompts specific enough to provide direction but open enough for personal interpretation
-- Include encouraging language
+You are an expert children's art teacher and creative prompt designer. Your role is to create engaging, safe, and inspiring drawing prompts that spark creativity and build confidence in young artists.
 
-Age group: ${ageGroup} (${ageInstructions})
-Difficulty: ${difficulty} (${difficultyInstructions[difficulty]})
-${timeSlot ? `Time slot: ${timeSlot} - ${timeSlotContext?.description}` : ''}
-${theme ? `Theme preference: ${theme}` : ''}
-${previousPrompts?.length ? `Avoid repeating these recent prompts: ${previousPrompts.join(', ')}` : ''}
+# Instructions
 
-Return a JSON object with:
-- title: A catchy, short title (max 6 words)
-- description: A detailed, encouraging prompt (2-3 sentences)
-- emoji: One relevant emoji
+## Core Requirements
+* **Safety First**: Always create child-safe, positive, and uplifting prompts
+* **Fun & Imaginative**: Blend real-world experiences with creative imagination and "what if" scenarios
+* **Age Appropriate**: Design prompts specifically ${ageInstructions}
+* **Creativity Focus**: Encourage imagination, wonder, and creative interpretation of real things
+* **Skill Building**: Match the complexity to the specified difficulty level
+* **Inclusivity**: Ensure prompts work for all backgrounds and abilities
+
+## Content Guidelines
+* **Great Topics**: Real animals (but imagine them in fun ways), amazing nature scenes, dream vacations, future aspirations, "what if" scenarios, beautiful versions of real things
+* **Creative Twists**: "The most beautiful horse you can imagine", "Your perfect treehouse", "If you could redesign your room", "The most amazing playground"
+* **Balance**: Mix realistic drawing with imaginative elements - real subjects with creative interpretation
+* **Inspire Wonder**: Prompts should make kids excited about the world around them and dream big
+
+## Difficulty Guidelines
+* **Easy**: Simple concepts using basic shapes and colors (15-30 minutes)
+* **Medium**: More detailed concepts requiring planning and multiple elements (30-60 minutes)  
+* **Hard**: Complex concepts requiring creativity, storytelling, and advanced techniques (60+ minutes)
+
+## Prompt Structure Rules
+* Title: Create a catchy, exciting title (maximum 6 words)
+* Description: Write 2-3 encouraging sentences that guide without restricting creativity
+* Include specific but flexible elements with imaginative twists (e.g., "the most amazing beach you can imagine" or "your dream pet")
+* Use action words and emotional language to inspire wonder and excitement
+* End with an encouraging question or creative challenge that sparks imagination
+* Ground prompts in real things but encourage creative, beautiful, or fun interpretations
+
+## Format Requirements
+Respond with ONLY a valid JSON object containing these exact fields:
+- title: string (max 6 words)
+- description: string (2-3 sentences)
+- emoji: string (one relevant emoji)
 - difficulty: "${difficulty}"
 - ageGroup: "${ageGroup}"
-${timeSlot ? `- timeSlot: "${timeSlot}"` : ''}`
+${timeSlot ? `- timeSlot: "${timeSlot}"` : ''}
+
+# Context
+
+<age_group>${ageGroup}</age_group>
+<difficulty_level>${difficulty}</difficulty_level>
+${timeSlot ? `<time_slot>${timeSlot}</time_slot>
+<time_theme>${timeSlotContext?.theme}</time_theme>
+<time_description>${timeSlotContext?.description}</time_description>` : ''}
+${theme ? `<additional_theme>${theme}</additional_theme>` : ''}
+${previousPrompts?.length ? `<avoid_prompts>${previousPrompts.join(', ')}</avoid_prompts>` : ''}
+
+# Examples
+
+<example_request>
+Age: kids, Difficulty: easy, Time: morning
+</example_request>
+
+<example_response>
+{
+  "title": "Most Beautiful Sunrise",
+  "description": "Draw the most amazing sunrise you can imagine! Maybe there are colorful clouds, birds flying by, or flowers opening up to greet the morning. Add anything that makes you feel happy and excited about a new day! What colors would make the perfect sunrise?",
+  "emoji": "🌅",
+  "difficulty": "easy",
+  "ageGroup": "kids",
+  "timeSlot": "morning"
+}
+</example_response>
+
+<example_request>
+Age: tweens, Difficulty: medium, Time: afternoon
+</example_request>
+
+<example_response>
+{
+  "title": "Perfect Beach Day",
+  "description": "Imagine you're at the most incredible beach ever! Draw what you see - maybe crystal clear water, interesting shells, fun beach activities, or amazing wildlife. Include yourself having the best time. What would make this the perfect beach day for you?",
+  "emoji": "🏖️",
+  "difficulty": "medium",
+  "ageGroup": "tweens",
+  "timeSlot": "afternoon"
+}
+</example_response>
+
+<example_request>
+Age: kids, Difficulty: easy, Time: evening
+</example_request>
+
+<example_response>
+{
+  "title": "Dream Pet Friend",
+  "description": "Draw the most amazing pet you can imagine having! It could be a super fluffy cat, a dog with the prettiest fur, or any real animal that would be the perfect companion. Show your pet doing something fun with you! What would make your dream pet special?",
+  "emoji": "🐕",
+  "difficulty": "easy",
+  "ageGroup": "kids",
+  "timeSlot": "evening"
+}
+</example_response>`
 
     try {
       const completion = await openai.chat.completions.create({
         model: "gpt-4o-mini",
         messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: "Generate a creative drawing prompt." }
+          { role: "developer", content: developerInstructions },
+          { role: "user", content: "Create a new drawing prompt based on the specified requirements." }
         ],
-        temperature: 0.8,
-        max_tokens: 300
+        temperature: 0.7,
+        max_tokens: 400,
+        response_format: { type: "json_object" }
       })
 
       const response = completion.choices[0].message.content
@@ -125,23 +270,16 @@ ${timeSlot ? `- timeSlot: "${timeSlot}"` : ''}`
         throw new Error('No response from OpenAI')
       }
 
-      // Clean the response to remove markdown formatting
-      let cleanResponse = response.trim()
-      if (cleanResponse.startsWith('```json')) {
-        cleanResponse = cleanResponse.replace(/```json\s*/, '').replace(/```\s*$/, '')
-      }
-      if (cleanResponse.startsWith('```')) {
-        cleanResponse = cleanResponse.replace(/```\s*/, '').replace(/```\s*$/, '')
-      }
-
-      const promptData = JSON.parse(cleanResponse) as GeneratedPrompt
+      const promptData = JSON.parse(response) as GeneratedPrompt
       
       // Validate required fields
       if (!promptData.title || !promptData.description || !promptData.emoji) {
         throw new Error('Invalid prompt format from OpenAI')
       }
 
-      // Ensure timeSlot is included
+      // Ensure correct metadata
+      promptData.difficulty = difficulty
+      promptData.ageGroup = ageGroup
       if (timeSlot) {
         promptData.timeSlot = timeSlot
       }
@@ -227,6 +365,62 @@ ${timeSlot ? `- timeSlot: "${timeSlot}"` : ''}`
     }
   }
 
+  static getFallbackSharedPrompt(request: { ageGroup: 'kids' | 'tweens', difficulty: 'medium' }): GeneratedPrompt & { communityTitle: string } {
+    const { ageGroup } = request
+
+    const sharedFallbacks = {
+      kids: [
+        {
+          title: "Dream Pet Adventure",
+          description: "Draw the most amazing pet you can imagine going on an adventure with you! It could be a super smart dog, a gentle giant cat, or any real animal that would be the perfect adventure buddy. Show your pet doing something incredible together! What kind of adventure would you go on with your dream pet?",
+          communityTitle: "🐾 Everyone's Dream Pet Adventures!",
+          emoji: "🐕"
+        },
+        {
+          title: "Perfect Treehouse",
+          description: "Design the most incredible treehouse you can imagine! Where would it be? What special rooms or features would it have? Include a rope ladder, windows, maybe even a slide! What would make your treehouse the best place to hang out?",
+          communityTitle: "🏠 Amazing Treehouse Designs!",
+          emoji: "🌳"
+        },
+        {
+          title: "Magical Garden Discovery",
+          description: "Draw a beautiful garden where you discover something amazing! Maybe talking flowers, friendly butterflies, or a hidden fairy door. Show yourself exploring this wonderful place. What would be the most exciting thing to find in a magical garden?",
+          communityTitle: "🌸 Enchanted Garden Adventures!",
+          emoji: "🌺"
+        }
+      ],
+      tweens: [
+        {
+          title: "Future Dream Job",
+          description: "Draw yourself in your absolute dream job 10 years from now! What would you be doing? Where would you work? Include details about your workspace, tools, or the people around you. Make it as amazing and inspiring as possible! What would make this the perfect job for you?",
+          communityTitle: "🚀 Our Future Dream Careers!",
+          emoji: "💼"
+        },
+        {
+          title: "Perfect Hangout Spot",
+          description: "Design the ultimate hangout space for you and your friends! It could be indoors or outdoors, with games, snacks, music, or whatever makes it perfect for spending time together. Show all the details that would make this the best place ever! What would make you never want to leave?",
+          communityTitle: "🎮 Epic Friend Hangout Spaces!",
+          emoji: "🏠"
+        },
+        {
+          title: "Adventure to Remember",
+          description: "Draw the most incredible adventure you can imagine taking! It could be exploring ancient ruins, swimming with dolphins, climbing amazing mountains, or traveling to a dream destination. Include yourself in the scene having the time of your life! Where would your perfect adventure take you?",
+          communityTitle: "🗺️ Ultimate Adventure Dreams!",
+          emoji: "⛰️"
+        }
+      ]
+    }
+
+    const prompts = sharedFallbacks[ageGroup]
+    const randomPrompt = prompts[Math.floor(Math.random() * prompts.length)]
+    
+    return {
+      ...randomPrompt,
+      difficulty: 'medium',
+      ageGroup
+    }
+  }
+
   // Generate 3 prompts for all time slots for a specific day
   static async generateDailySlots(ageGroup: 'kids' | 'tweens', previousPrompts?: string[]): Promise<GeneratedPrompt[]> {
     const slots: TimeSlot[] = ['morning', 'afternoon', 'evening']
@@ -264,5 +458,244 @@ ${timeSlot ? `- timeSlot: "${timeSlot}"` : ''}`
     }
     
     return prompts
+  }
+
+  // Generate 3 random fun prompts - not tied to time slots at all
+  static async generateMVPCommunityPrompts(ageGroup: 'kids' | 'tweens'): Promise<(GeneratedPrompt & { communityTitle: string })[]> {
+    const timeSlots: TimeSlot[] = ['morning', 'afternoon', 'evening']
+
+    try {
+      const ageInstruction = ageGroup === 'kids'
+        ? 'You are a playful and inspiring assistant that gives three creative daily drawing challenge prompts to kids aged 6–10.'
+        : 'You are a creative assistant that gives three engaging daily drawing challenge prompts to tweens aged 11–16.'
+
+      const themeGuidelines = ageGroup === 'kids'
+        ? `Each day, generate **three different prompts** that a child might be excited to draw. The prompts can include any of these themes:
+- Nature (animals, plants, oceans, seasons)
+- Imagination (fantasy, magic, silly inventions, made-up creatures)
+- Real Life (family, home, school, meals, pets)
+- Emotions (what makes them happy, scared, proud)
+- Favorites (favorite toy, food, holiday, person)
+- Memories or dreams (funny dream, favorite trip, yesterday's sunset)`
+        : `Each day, generate **three different prompts** that a tween might find engaging. The prompts can include themes like:
+- Nature and science (animals, space, weather phenomena)
+- Creative imagination (inventions, fantasy worlds, character design)
+- Real life experiences (friendships, hobbies, future dreams)
+- Personal expression (emotions, identity, social situations)
+- Interests and favorites (music, sports, technology, art styles)
+- Memories and aspirations (childhood memories, future goals, meaningful moments)`
+
+      const completion = await openai.chat.completions.create({
+        model: "gpt-4o-mini",
+        messages: [
+          { 
+            role: "system", 
+            content: `${ageInstruction}
+
+${themeGuidelines}
+
+Guidelines:
+- Prompts must be age-appropriate, friendly, and creative
+- Use simple, playful language that a ${ageGroup === 'kids' ? '6 to 10 year old' : '11 to 16 year old'} can understand and get excited about
+- Do **not** categorize the prompts — just give three unique ones per day
+- Avoid anything dark, violent, or scary
+- Keep each prompt short and imaginative
+- Make sure all three prompts feel different from each other
+- Create prompts with varying complexity - some simple, some more detailed
+
+Return ONLY a JSON array with 3 prompts, varying the difficulty (easy/medium/hard):
+[
+  {
+    "title": "Title (max 6 words)",
+    "description": "Fun description of what to draw",
+    "communityTitle": "🌟 Our [Topic] Collection!",
+    "emoji": "😊",
+    "difficulty": "easy|medium|hard",
+    "ageGroup": "${ageGroup}"
+  }
+]`
+          },
+          { 
+            role: "user", 
+            content: "Generate 3 diverse drawing prompts for today. Make sure they're all different themes and exciting for kids to draw!"
+          }
+        ],
+        temperature: 1.0,
+        max_tokens: 800,
+        response_format: { type: "json_object" }
+      })
+
+      const response = completion.choices[0].message.content
+      if (!response) {
+        throw new Error('No response from OpenAI')
+      }
+
+      const promptsData = JSON.parse(response) as { prompts: (GeneratedPrompt & { communityTitle: string })[] } | (GeneratedPrompt & { communityTitle: string })[]
+      const prompts = Array.isArray(promptsData) ? promptsData : promptsData.prompts
+
+      if (!prompts || prompts.length !== 3) {
+        throw new Error('Invalid prompts format from OpenAI')
+      }
+
+      // Add timeSlots for storage, keep AI-generated difficulty
+      prompts.forEach((prompt, i) => {
+        prompt.timeSlot = timeSlots[i]
+        prompt.ageGroup = ageGroup
+      })
+
+      return prompts
+
+    } catch (error) {
+      console.error(`Failed to generate community prompts for ${ageGroup}:`, error)
+      
+      // Fallback to individual generation
+      const prompts: (GeneratedPrompt & { communityTitle: string })[] = []
+      const themes = ['nature', 'imagination', 'real-life']
+      
+      for (let i = 0; i < 3; i++) {
+        try {
+          const prompt = await this.generateSharedDailyPrompt({
+            ageGroup,
+            previousPrompts: prompts.map(p => p.title),
+            theme: themes[i]
+          })
+          
+          prompt.timeSlot = timeSlots[i]
+          prompts.push(prompt)
+        } catch (fallbackError) {
+          const fallbackPrompt = this.getFallbackCommunityPrompt(ageGroup, timeSlots[i], '')
+          prompts.push(fallbackPrompt)
+        }
+      }
+
+      return prompts
+    }
+  }
+
+  // Fallback community prompts with diverse themes
+  static getFallbackCommunityPrompt(
+    ageGroup: 'kids' | 'tweens', 
+    timeSlot: TimeSlot, 
+    theme: string
+  ): GeneratedPrompt & { communityTitle: string } {
+    const diverseFallbacks = {
+      kids: {
+        morning: [
+          {
+            title: "Busy Morning Animals",
+            description: "Draw animals getting ready for their day! Show a bear brushing teeth, a bird doing stretches, or a rabbit getting dressed. What funny morning routine would your favorite animal have?",
+            communityTitle: "🐻 Animals Starting Their Day!",
+            emoji: "🐰"
+          },
+          {
+            title: "Morning Exercise Fun",
+            description: "Draw yourself or friends doing morning exercises! Maybe jumping jacks in the park, running with your dog, or playing an active game. What's your favorite way to get energized in the morning?",
+            communityTitle: "🏃 Our Morning Energy Boost!",
+            emoji: "⚽"
+          },
+          {
+            title: "School Bus Adventure", 
+            description: "Draw the most exciting school bus ride ever! Maybe the bus can fly, has special powers, or visits amazing places. What would make your school bus ride an incredible adventure?",
+            communityTitle: "🚌 Our Amazing School Adventures!",
+            emoji: "🎒"
+          }
+        ],
+        afternoon: [
+          {
+            title: "Community Helper Heroes",
+            description: "Draw yourself as a community helper! You could be a firefighter, teacher, doctor, or inventor. Show yourself helping others in your neighborhood. What special job would you love to have?",
+            communityTitle: "🚒 Our Community Helper Dreams!",
+            emoji: "👩‍🚒"
+          },
+          {
+            title: "Building Something Amazing",
+            description: "Draw yourself building or creating something incredible! It could be with blocks, art supplies, or found objects in nature. What amazing creation would you make with your hands?",
+            communityTitle: "🔨 Our Creative Constructions!",
+            emoji: "🧱"
+          },
+          {
+            title: "Best Friend Adventure",
+            description: "Draw you and your best friend (or pet!) having the most fun afternoon ever! What games would you play? Where would you explore? Show your special friendship adventure!",
+            communityTitle: "👫 Our Friendship Adventures!",
+            emoji: "🤝"
+          }
+        ],
+        evening: [
+          {
+            title: "Family Dinner Stories",
+            description: "Draw your family having dinner together and sharing stories! What delicious food are you eating? What funny stories are being told? Show your special family mealtime!",
+            communityTitle: "🍽️ Our Family Dinner Time!",
+            emoji: "🥘"
+          },
+          {
+            title: "Bedtime Story Characters",
+            description: "Draw characters from your favorite bedtime story coming to life in your room! Maybe they're dancing, playing, or helping you get ready for bed. What story characters would visit you?",
+            communityTitle: "📚 Our Bedtime Story Friends!",
+            emoji: "🧸"
+          },
+          {
+            title: "Counting Stars",
+            description: "Draw yourself looking up at a beautiful starry night! What shapes do you see in the stars? Maybe animals, objects, or magical creatures. What amazing things do you discover in the night sky?",
+            communityTitle: "⭐ Our Starry Night Discoveries!",
+            emoji: "🌙"
+          }
+        ]
+      },
+      tweens: {
+        morning: [
+          {
+            title: "Personal Morning Ritual",
+            description: "Draw your ideal morning routine that gets you excited for the day! Include activities, music, food, or practices that energize and inspire you. What makes your morning perfect?",
+            communityTitle: "🌅 Our Personal Morning Vibes!",
+            emoji: "☕"
+          },
+          {
+            title: "Learning Something New",
+            description: "Draw yourself discovering or learning something fascinating! It could be a new skill, subject, or hobby that excites you. What knowledge or ability would you love to master?",
+            communityTitle: "📖 Our Learning Adventures!",
+            emoji: "🧠"
+          }
+        ],
+        afternoon: [
+          {
+            title: "Creative Expression",
+            description: "Draw yourself expressing your creativity in your favorite way! Whether it's art, music, writing, dance, or something unique to you. How do you share your inner creativity with the world?",
+            communityTitle: "🎨 Our Creative Expressions!",
+            emoji: "🎭"
+          },
+          {
+            title: "Adventure in Your Community",
+            description: "Draw an adventure taking place right in your neighborhood or town! Discover hidden spots, meet interesting people, or find something unexpected. What exciting discoveries are around you?",
+            communityTitle: "🗺️ Our Local Adventures!",
+            emoji: "🏘️"
+          }
+        ],
+        evening: [
+          {
+            title: "Reflection and Growth",
+            description: "Draw a peaceful scene that represents your personal growth or a meaningful moment of reflection. Show yourself processing the day, setting goals, or appreciating progress you've made.",
+            communityTitle: "🌱 Our Growth Moments!",
+            emoji: "💭"
+          },
+          {
+            title: "Dream Planning",
+            description: "Draw yourself planning or visualizing a future goal or dream! Include vision boards, sketches, or scenes of what you're working toward. What are you excited to achieve?",
+            communityTitle: "✨ Our Future Plans!",
+            emoji: "🎯"
+          }
+        ]
+      }
+    }
+
+    // Pick a random fallback from the available options
+    const timeSlotFallbacks = diverseFallbacks[ageGroup][timeSlot]
+    const randomFallback = timeSlotFallbacks[Math.floor(Math.random() * timeSlotFallbacks.length)]
+    
+    return {
+      ...randomFallback,
+      difficulty: 'medium' as const,
+      ageGroup,
+      timeSlot
+    }
   }
 }

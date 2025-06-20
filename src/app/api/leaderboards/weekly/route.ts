@@ -56,7 +56,7 @@ export async function GET(request: NextRequest) {
       .gte('created_at', weekStart)
       .eq('moderation_status', 'approved')
 
-    // Get weekly likes leaderboard
+    // Get weekly likes leaderboard (likes received)
     const { data: weeklyLikes, error: likesError } = await supabaseAdmin
       .from('child_likes')
       .select(`
@@ -68,7 +68,16 @@ export async function GET(request: NextRequest) {
       `)
       .gte('created_at', weekStart)
 
-    if (uploadsError || likesError) {
+    // Get community stars leaderboard (likes given)
+    const { data: communityData, error: communityError } = await supabaseAdmin
+      .from('child_likes')
+      .select(`
+        child_id,
+        child_profiles!inner(username, name, age_group)
+      `)
+      .gte('created_at', weekStart)
+
+    if (uploadsError || likesError || communityError) {
       return NextResponse.json(
         { error: 'Failed to fetch leaderboard data' },
         { status: 500 }
@@ -91,7 +100,7 @@ export async function GET(request: NextRequest) {
       }
     })
 
-    // Process likes data
+    // Process likes data (likes received)
     const likesMap = new Map<string, { child: any; count: number }>()
     weeklyLikes?.forEach(like => {
       const childId = like.posts.child_id
@@ -101,6 +110,22 @@ export async function GET(request: NextRequest) {
         likesMap.get(childId)!.count++
       } else {
         likesMap.set(childId, {
+          child: childData,
+          count: 1
+        })
+      }
+    })
+
+    // Process community data (likes given)
+    const communityMap = new Map<string, { child: any; count: number }>()
+    communityData?.forEach(like => {
+      const childId = like.child_id
+      const childData = like.child_profiles
+      
+      if (communityMap.has(childId)) {
+        communityMap.get(childId)!.count++
+      } else {
+        communityMap.set(childId, {
           child: childData,
           count: 1
         })
@@ -152,11 +177,28 @@ export async function GET(request: NextRequest) {
       isCurrentChild: item.child_profiles.username === child.username
     })) || []
 
+    const topCommunity = Array.from(communityMap.values())
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 10)
+      .map((item, index) => ({
+        rank: index + 1,
+        username: item.child.username,
+        name: item.child.name,
+        ageGroup: item.child.age_group,
+        count: item.count,
+        isCurrentChild: item.child.username === child.username
+      }))
+
     return NextResponse.json({
       leaderboards: {
         weeklyUploads: topUploaders,
         weeklyLikes: topLiked,
-        currentStreaks: topStreaks
+        currentStreaks: topStreaks,
+        monthlyUploads: [], // Placeholder for now
+        monthlyLikes: [], // Placeholder for now
+        newArtists: [], // Placeholder for now
+        mostImproved: [], // Placeholder for now
+        communityStars: topCommunity
       },
       weekStart: weekStart
     })

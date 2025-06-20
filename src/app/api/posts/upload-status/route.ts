@@ -39,18 +39,24 @@ export async function GET(request: NextRequest) {
     // Get today's date
     const today = new Date().toISOString().split('T')[0]
 
-    // Check upload status for each time slot
+    // Use time slot system 
+    let uploadStatus = []
+    let totalUploadsToday = 0
+    
     const { data: uploadLimits, error } = await supabaseAdmin
       .from('daily_upload_limits')
       .select(`
         time_slot,
         uploaded_at,
+        post_id,
         posts!inner(
           id,
           image_url,
           thumbnail_url,
           alt_text,
-          created_at
+          created_at,
+          likes_count,
+          moderation_status
         )
       `)
       .eq('child_id', child.id)
@@ -64,9 +70,9 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    // Build status for each time slot
+    // Build status for time slot system
     const timeSlots = ['morning', 'afternoon', 'evening']
-    const uploadStatus = timeSlots.map(slot => {
+    uploadStatus = timeSlots.map(slot => {
       const existingUpload = uploadLimits?.find(ul => ul.time_slot === slot)
       
       return {
@@ -74,21 +80,43 @@ export async function GET(request: NextRequest) {
         canUpload: !existingUpload,
         hasUploaded: !!existingUpload,
         uploadedAt: existingUpload?.uploaded_at || null,
+        postId: existingUpload?.post_id || null,
         post: existingUpload?.posts ? {
           id: existingUpload.posts.id,
           imageUrl: existingUpload.posts.image_url,
           thumbnailUrl: existingUpload.posts.thumbnail_url,
           altText: existingUpload.posts.alt_text,
-          createdAt: existingUpload.posts.created_at
+          createdAt: existingUpload.posts.created_at,
+          likesCount: existingUpload.posts.likes_count,
+          moderationStatus: existingUpload.posts.moderation_status
         } : null
       }
     })
+    
+    totalUploadsToday = uploadLimits?.length || 0
 
     return NextResponse.json({
       uploadStatus,
       date: today,
-      totalUploadsToday: uploadLimits?.length || 0,
-      maxUploadsPerDay: 3
+      totalUploadsToday,
+      maxUploadsPerDay: 3,
+      timeSlots: {
+        morning: {
+          label: 'Morning Challenge',
+          description: 'Start your day with creativity',
+          icon: '🌅'
+        },
+        afternoon: {
+          label: 'Afternoon Challenge', 
+          description: 'Midday artistic inspiration',
+          icon: '☀️'
+        },
+        evening: {
+          label: 'Evening Challenge',
+          description: 'End your day with art',
+          icon: '🌆'
+        }
+      }
     })
   } catch (error) {
     console.error('Upload status error:', error)

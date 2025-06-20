@@ -250,7 +250,15 @@ export async function GET(request: NextRequest) {
 }
 
 function getCurrentTimeSlot(): 'morning' | 'afternoon' | 'evening' {
-  const hour = new Date().getHours()
+  // Get current UTC time and subtract 4 hours for EST equivalent
+  const now = new Date()
+  const utcHour = now.getUTCHours()
+  let hour = utcHour - 4
+  
+  // Handle negative hours (wrap around to previous day)
+  if (hour < 0) {
+    hour = hour + 24
+  }
   
   if (hour >= 6 && hour < 12) {
     return 'morning'

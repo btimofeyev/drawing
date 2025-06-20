@@ -40,6 +40,9 @@ export async function GET(request: NextRequest) {
         created_at,
         time_slot,
         prompt_id,
+        likes_count,
+        views_count,
+        child_id,
         child_profiles!inner(
           id,
           username,
@@ -115,6 +118,21 @@ export async function GET(request: NextRequest) {
       )
     }
 
+    console.log(`Gallery query returned ${posts?.length || 0} posts`)
+
+    // Get user's likes if authenticated
+    let userLikes = new Set<string>()
+    if (currentChildId && posts?.length) {
+      const postIds = posts.map(p => p.id)
+      const { data: likes } = await supabaseAdmin
+        .from('child_likes')
+        .select('post_id')
+        .eq('child_id', currentChildId)
+        .in('post_id', postIds)
+      
+      userLikes = new Set(likes?.map(like => like.post_id) || [])
+    }
+
     // Transform data to match frontend interface
     const artworks = posts?.map(post => ({
       id: post.id,
@@ -123,7 +141,8 @@ export async function GET(request: NextRequest) {
       altText: post.alt_text,
       artistName: post.child_profiles.name,
       artistUsername: post.child_profiles.username,
-      likes: 0, // Placeholder - will be replaced with actual likes later
+      likes: post.likes_count || 0,
+      views: post.views_count || 0,
       createdAt: post.created_at,
       promptId: post.prompt_id,
       promptTitle: extractPromptTitle(post.prompts.prompt_text),
@@ -131,21 +150,54 @@ export async function GET(request: NextRequest) {
       timeSlot: post.time_slot,
       difficulty: post.prompts.difficulty,
       ageGroup: post.child_profiles.age_group,
-      isLiked: false, // Placeholder - will be replaced with actual user likes later
-      isOwnPost: currentChildId === post.child_profiles.id
+      isLiked: userLikes.has(post.id),
+      isOwnPost: currentChildId === post.child_id
     })) || []
 
-    // Get total count for pagination
+    // Get total count for pagination - must match the main query structure exactly
     let countQuery = supabaseAdmin
       .from('posts')
-      .select('*', { count: 'exact', head: true })
+      .select(`
+        id,
+        child_profiles!inner(id),
+        prompts!inner(id)
+      `, { count: 'exact', head: true })
       .eq('moderation_status', 'approved')
 
+    // Apply time slot filter
     if (timeSlot) {
       countQuery = countQuery.eq('time_slot', timeSlot)
     }
 
-    const { count } = await countQuery
+    // Apply difficulty filter
+    if (difficulty) {
+      countQuery = countQuery.eq('prompts.difficulty', difficulty)
+    }
+
+    // Apply search filter
+    if (search) {
+      countQuery = countQuery.or(
+        `alt_text.ilike.%${search}%,child_profiles.name.ilike.%${search}%,child_profiles.username.ilike.%${search}%,prompts.prompt_text.ilike.%${search}%`
+      )
+    }
+
+    // Apply date filter
+    if (dateFilter === 'today') {
+      const today = new Date().toISOString().split('T')[0]
+      countQuery = countQuery.gte('created_at', today)
+    } else if (dateFilter === 'week') {
+      const weekAgo = new Date()
+      weekAgo.setDate(weekAgo.getDate() - 7)
+      countQuery = countQuery.gte('created_at', weekAgo.toISOString())
+    }
+
+    const { count, error: countError } = await countQuery
+
+    if (countError) {
+      console.error('Failed to fetch gallery count:', countError)
+    }
+
+    console.log(`Gallery count query returned ${count || 0} total posts`)
 
     return NextResponse.json({
       artworks,

@@ -24,6 +24,7 @@ interface Artwork {
   artistName: string
   artistUsername: string
   likes: number
+  views: number
   createdAt: string
   promptId: string
   promptTitle: string
@@ -102,6 +103,13 @@ export default function GalleryPage() {
   }
 
   const handleLike = async (artworkId: string) => {
+    // Check if user is trying to like their own post
+    const artwork = artworks.find(a => a.id === artworkId)
+    if (artwork?.isOwnPost) {
+      // Don't show error for self-posts, just do nothing
+      return
+    }
+
     // Optimistic update
     setArtworks(prev => prev.map(artwork => 
       artwork.id === artworkId 
@@ -113,7 +121,83 @@ export default function GalleryPage() {
         : artwork
     ))
 
-    // TODO: Send like request to API
+    try {
+      const response = await fetch('/api/posts/like', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ postId: artworkId })
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        console.error('Like failed:', errorData.error)
+        
+        // Revert optimistic update on error
+        setArtworks(prev => prev.map(artwork => 
+          artwork.id === artworkId 
+            ? { 
+                ...artwork, 
+                isLiked: !artwork.isLiked,
+                likes: artwork.isLiked ? artwork.likes + 1 : artwork.likes - 1
+              }
+            : artwork
+        ))
+        return
+      }
+
+      const data = await response.json()
+      
+      // Update with server response
+      setArtworks(prev => prev.map(artwork => 
+        artwork.id === artworkId 
+          ? { 
+              ...artwork, 
+              isLiked: data.isLiked,
+              likes: data.likesCount
+            }
+          : artwork
+      ))
+    } catch (error) {
+      console.error('Like request failed:', error)
+      
+      // Revert optimistic update on error
+      setArtworks(prev => prev.map(artwork => 
+        artwork.id === artworkId 
+          ? { 
+              ...artwork, 
+              isLiked: !artwork.isLiked,
+              likes: artwork.isLiked ? artwork.likes + 1 : artwork.likes - 1
+            }
+          : artwork
+      ))
+    }
+  }
+
+  const handleView = async (artworkId: string) => {
+    try {
+      const response = await fetch('/api/posts/view', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ postId: artworkId })
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        
+        // Update view count in local state
+        setArtworks(prev => prev.map(artwork => 
+          artwork.id === artworkId 
+            ? { ...artwork, views: data.viewsCount }
+            : artwork
+        ))
+      }
+    } catch (error) {
+      console.error('View tracking failed:', error)
+    }
   }
 
   const getSlotColor = (slot: 'morning' | 'afternoon' | 'evening') => {
@@ -315,15 +399,22 @@ export default function GalleryPage() {
                         <div className="flex gap-3">
                           <button
                             onClick={() => handleLike(artwork.id)}
+                            disabled={artwork.isOwnPost}
                             className={`p-3 rounded-full transition-all duration-200 ${
-                              artwork.isLiked 
+                              artwork.isOwnPost
+                                ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                : artwork.isLiked 
                                 ? 'bg-red-500 text-white scale-110' 
                                 : 'bg-white/90 text-gray-700 hover:bg-red-500 hover:text-white'
                             }`}
+                            title={artwork.isOwnPost ? 'You cannot like your own artwork' : ''}
                           >
                             <Heart className={`h-5 w-5 ${artwork.isLiked ? 'fill-current' : ''}`} />
                           </button>
-                          <button className="p-3 bg-white/90 text-gray-700 rounded-full hover:bg-blue-500 hover:text-white transition-all duration-200">
+                          <button 
+                            onClick={() => handleView(artwork.id)}
+                            className="p-3 bg-white/90 text-gray-700 rounded-full hover:bg-blue-500 hover:text-white transition-all duration-200"
+                          >
                             <Eye className="h-5 w-5" />
                           </button>
                         </div>
@@ -387,7 +478,7 @@ export default function GalleryPage() {
                           </div>
                           <div className="flex items-center gap-1 text-blue-500">
                             <Eye className="h-4 w-4" />
-                            <span className="font-semibold">0</span>
+                            <span className="font-semibold">{artwork.views || 0}</span>
                           </div>
                         </div>
                         <div className="text-sm text-slate-500">
