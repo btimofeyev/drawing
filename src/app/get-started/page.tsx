@@ -29,7 +29,7 @@ export default function GetStartedPage() {
             </span>
             <br />
             <span className="bg-gradient-to-r from-secondary-500 to-accent-500 bg-clip-text text-transparent">
-              DrawingBuddy!
+              Daily Scribble!
             </span>
           </h1>
           <p className="text-xl text-gray-600 max-w-lg mx-auto">

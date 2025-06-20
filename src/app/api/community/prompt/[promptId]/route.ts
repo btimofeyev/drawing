@@ -5,9 +5,11 @@ import { cookies } from 'next/headers'
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { promptId: string } }
+  { params }: { params: Promise<{ promptId: string }> }
 ) {
   try {
+    const { promptId } = await params
+    
     // Get child auth cookie
     const cookieStore = await cookies()
     const authCookie = cookieStore.get('child_auth')
@@ -39,7 +41,6 @@ export async function GET(
       )
     }
 
-    const { promptId } = params
     const { searchParams } = new URL(request.url)
     const page = parseInt(searchParams.get('page') || '1')
     const limit = parseInt(searchParams.get('limit') || '20')
@@ -147,10 +148,10 @@ export async function GET(
       isLiked: likedPostIds.has(post.id),
       isOwnPost: post.child_id === childId,
       artist: {
-        username: post.child_profiles.username,
-        name: post.child_profiles.name,
-        avatarUrl: post.child_profiles.avatar_url,
-        ageGroup: post.child_profiles.age_group
+        username: Array.isArray(post.child_profiles) ? post.child_profiles[0]?.username : (post.child_profiles as any)?.username,
+        name: Array.isArray(post.child_profiles) ? post.child_profiles[0]?.name : (post.child_profiles as any)?.name,
+        avatarUrl: Array.isArray(post.child_profiles) ? post.child_profiles[0]?.avatar_url : (post.child_profiles as any)?.avatar_url,
+        ageGroup: Array.isArray(post.child_profiles) ? post.child_profiles[0]?.age_group : (post.child_profiles as any)?.age_group
       }
     })) || []
 

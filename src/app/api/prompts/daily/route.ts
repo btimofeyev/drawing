@@ -70,7 +70,8 @@ export async function GET(request: NextRequest) {
         try {
           const generatedPrompt = await PromptGenerator.generateSlotPrompt({
             ageGroup: child.age_group,
-            timeSlot: slot
+            timeSlot: slot,
+            difficulty: 'easy'
           })
 
           // Store the generated prompt in database
@@ -111,7 +112,7 @@ export async function GET(request: NextRequest) {
 
       // Sort by time slot order
       const slotOrder = { morning: 0, afternoon: 1, evening: 2 }
-      allPrompts.sort((a, b) => slotOrder[a.time_slot] - slotOrder[b.time_slot])
+      allPrompts.sort((a, b) => slotOrder[a.time_slot as keyof typeof slotOrder] - slotOrder[b.time_slot as keyof typeof slotOrder])
 
       return NextResponse.json({
         prompts: allPrompts.map(prompt => ({
@@ -142,11 +143,11 @@ export async function GET(request: NextRequest) {
     if (error || !prompt) {
       // If no prompt for today, try to generate one with OpenAI
       try {
-        console.log(`No prompt found for ${today} ${targetSlot}, generating with OpenAI...`)
         
         const generatedPrompt = await PromptGenerator.generateSlotPrompt({
           ageGroup: child.age_group,
-          timeSlot: targetSlot
+          timeSlot: targetSlot,
+          difficulty: 'easy'
         })
 
         // Store the generated prompt in database

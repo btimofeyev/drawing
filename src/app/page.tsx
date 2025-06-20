@@ -21,7 +21,7 @@ export default function Home() {
                 <Palette />
               </div>
               <h1 className="text-2xl font-bold text-slate-700">
-                Daily Draw
+                Daily Scribble
               </h1>
             </div>
             <div className="flex items-center gap-4">
@@ -60,13 +60,13 @@ export default function Home() {
 
             <div className="flex justify-between items-center max-w-5xl mx-auto text-center">
               <div className="animate-fade-in flex-1">
-                <div className="text-5xl font-bold text-slate-800 mb-3">100+</div>
+                <div className="text-5xl font-bold text-slate-800 mb-3">Join</div>
                 <div className="text-xl text-slate-600">Young Artists</div>
               </div>
               
               <div className="animate-fade-in flex-1" style={{animationDelay: '0.1s'}}>
-                <div className="text-5xl font-bold text-slate-800 mb-3">500+</div>
-                <div className="text-xl text-slate-600">Drawings Shared</div>
+                <div className="text-5xl font-bold text-slate-800 mb-3">Create</div>
+                <div className="text-xl text-slate-600">& Share</div>
               </div>
               
               <div className="animate-fade-in flex-1" style={{animationDelay: '0.2s'}}>
@@ -80,7 +80,7 @@ export default function Home() {
 
       <footer className="py-8 bg-white relative z-10">
         <div className="container">
-          <p className="text-slate-500 text-center">© 2025 Daily Draw</p>
+          <p className="text-slate-500 text-center">© 2025 Daily Scribble</p>
         </div>
       </footer>
     </div>

@@ -452,7 +452,7 @@ export default function CreatePage() {
                   ) : (
                     <div className="flex items-center justify-center gap-2">
                       <Upload className="h-5 w-5" />
-                      Upload to {selectedTimeSlot?.charAt(0).toUpperCase() + selectedTimeSlot?.slice(1)} Gallery
+                      Upload to {selectedTimeSlot ? selectedTimeSlot.charAt(0).toUpperCase() + selectedTimeSlot.slice(1) : ''} Gallery
                       <Sparkles className="h-5 w-5" />
                     </div>
                   )}

@@ -177,10 +177,12 @@ export class ChildAuth {
 }
 
 // Child Session Utilities
+
 export class ChildSession {
   static getCurrentChildFromRequest(request: Request): { childId: string } | null {
     try {
       // Import cookies function dynamically to avoid SSR issues
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
       const { cookies } = require('next/headers')
       const cookieStore = cookies()
       const authCookie = cookieStore.get('child_auth')
@@ -202,6 +204,25 @@ export class ChildSession {
     if (!session) return null
 
     return await ChildAuth.getChildProfile(session.childId)
+  }
+}
+
+// Helper function to verify parent authentication from request
+export async function verifyParentAuth(request: Request) {
+  try {
+    const user = await ParentAuth.getCurrentUser()
+    if (!user) {
+      return { parent: null, error: 'Not authenticated' }
+    }
+
+    const parent = await ParentAuth.getParentAccount(user.id)
+    if (!parent) {
+      return { parent: null, error: 'Parent account not found' }
+    }
+
+    return { parent, error: null }
+  } catch (error) {
+    return { parent: null, error: 'Authentication failed' }
   }
 }
 

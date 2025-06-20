@@ -103,8 +103,8 @@ export async function GET(request: NextRequest) {
     // Process likes data (likes received)
     const likesMap = new Map<string, { child: any; count: number }>()
     weeklyLikes?.forEach(like => {
-      const childId = like.posts.child_id
-      const childData = like.posts.child_profiles
+      const childId = Array.isArray(like.posts) ? like.posts[0]?.child_id : (like.posts as any)?.child_id
+      const childData = Array.isArray(like.posts) ? like.posts[0]?.child_profiles : (like.posts as any)?.child_profiles
       
       if (likesMap.has(childId)) {
         likesMap.get(childId)!.count++
@@ -170,11 +170,11 @@ export async function GET(request: NextRequest) {
 
     const topStreaks = streaksData?.map((item, index) => ({
       rank: index + 1,
-      username: item.child_profiles.username,
-      name: item.child_profiles.name,
-      ageGroup: item.child_profiles.age_group,
+      username: Array.isArray(item.child_profiles) ? item.child_profiles[0]?.username : (item.child_profiles as any)?.username,
+      name: Array.isArray(item.child_profiles) ? item.child_profiles[0]?.name : (item.child_profiles as any)?.name,
+      ageGroup: Array.isArray(item.child_profiles) ? item.child_profiles[0]?.age_group : (item.child_profiles as any)?.age_group,
       count: item.current_streak,
-      isCurrentChild: item.child_profiles.username === child.username
+      isCurrentChild: (Array.isArray(item.child_profiles) ? item.child_profiles[0]?.username : (item.child_profiles as any)?.username) === child.username
     })) || []
 
     const topCommunity = Array.from(communityMap.values())

@@ -11,7 +11,6 @@ export async function POST(request: NextRequest) {
     const targetDate = date ? new Date(date) : new Date()
     const dateStr = targetDate.toISOString().split('T')[0]
 
-    console.log(`Generating prompts for ${dateStr}`)
 
     const generatedPrompts = []
 
@@ -24,7 +23,6 @@ export async function POST(request: NextRequest) {
         .eq('age_group', ageGroup)
 
       if (existing && existing.length > 0) {
-        console.log(`Prompts already exist for ${ageGroup} on ${dateStr}`)
         generatedPrompts.push(...existing)
         continue
       }
@@ -34,11 +32,11 @@ export async function POST(request: NextRequest) {
       
       for (const timeSlot of timeSlots) {
         try {
-          console.log(`Generating ${timeSlot} prompt for ${ageGroup}`)
           
           const prompt = await PromptGenerator.generateSlotPrompt({
             ageGroup,
-            timeSlot
+            timeSlot,
+            difficulty: 'easy'
           })
 
           // Store in database
@@ -58,7 +56,6 @@ export async function POST(request: NextRequest) {
             console.error(`Failed to store ${timeSlot} prompt for ${ageGroup}:`, error)
           } else {
             generatedPrompts.push(newPrompt)
-            console.log(`✅ Stored ${timeSlot} prompt for ${ageGroup}`)
           }
 
           // Small delay to avoid rate limiting

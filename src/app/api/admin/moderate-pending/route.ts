@@ -36,7 +36,6 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    console.log(`Found ${pendingPosts.length} pending posts to moderate`)
 
     // Check if OpenAI API key is configured
     if (!process.env.OPENAI_API_KEY) {
@@ -55,7 +54,6 @@ export async function POST(request: NextRequest) {
     // Process each post
     for (const post of pendingPosts) {
       try {
-        console.log(`Moderating post ${post.id}...`)
         
         const moderationResult = await moderateImage(post.image_url)
         const shouldApprove = shouldApproveForChildren(moderationResult)
@@ -74,10 +72,8 @@ export async function POST(request: NextRequest) {
         } else {
           if (shouldApprove) {
             results.approved++
-            console.log(`Post ${post.id} approved`)
           } else {
             results.rejected++
-            console.log(`Post ${post.id} rejected:`, moderationResult.categories)
           }
         }
 

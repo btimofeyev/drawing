@@ -167,7 +167,7 @@ export default function ChildLayout({ children }: ChildLayoutProps) {
                   <span className="text-lg">🎨</span>
                 </div>
                 <div>
-                  <h1 className="text-lg font-bold text-slate-800">Daily Draw</h1>
+                  <h1 className="text-lg font-bold text-slate-800">Daily Scribble</h1>
                   <p className="text-xs text-pink-600 font-medium">Creative Community</p>
                 </div>
               </div>
@@ -271,7 +271,7 @@ export default function ChildLayout({ children }: ChildLayoutProps) {
               <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-pink-400 to-pink-600 flex items-center justify-center shadow-md">
                 <span className="text-sm">🎨</span>
               </div>
-              <span className="font-bold text-slate-800">Daily Draw</span>
+              <span className="font-bold text-slate-800">Daily Scribble</span>
             </div>
             <div className="flex items-center gap-1 text-sm">
               <Star className="h-4 w-4 text-yellow-500" />

@@ -228,15 +228,9 @@ export async function POST(request: NextRequest) {
           moderationStatus = 'approved'
         } else {
           moderationStatus = 'rejected'
-          console.log('Image rejected by moderation:', {
-            childId,
-            fileName,
-            categories: moderationResult.categories
-          })
         }
       } else {
         // If no API key, auto-approve (for development)
-        console.warn('OpenAI API key not configured - auto-approving upload')
         moderationStatus = 'approved'
       }
     } catch (moderationError) {

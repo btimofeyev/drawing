@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { ChildAuth, SessionManager } from '@/lib/auth'
+import { ChildAuth } from '@/lib/auth'
 import { z } from 'zod'
 
 const childSignInSchema = z.object({

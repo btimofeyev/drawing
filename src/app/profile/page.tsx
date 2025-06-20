@@ -57,6 +57,7 @@ interface Achievement {
   earned: boolean
   earnedDate?: string
   progress?: number
+  points: number
   total?: number
   rarity: 'common' | 'rare' | 'epic' | 'legendary'
 }
@@ -96,7 +97,6 @@ export default function ProfilePage() {
     try {
       setIsLoading(true)
       
-      // TODO: Replace with actual API calls to fetch real profile data
       const [profileRes, statsRes, achievementsRes, artworkRes] = await Promise.all([
         fetch('/api/child/profile'),
         fetch('/api/child/stats'), 
@@ -111,7 +111,6 @@ export default function ProfilePage() {
 
       if (statsRes.ok) {
         const statsData = await statsRes.json()
-        console.log('Stats data:', statsData)
         setStats(statsData.stats)
       } else {
         // Set default empty stats if API call fails
@@ -136,10 +135,8 @@ export default function ProfilePage() {
 
       if (artworkRes.ok) {
         const artworkData = await artworkRes.json()
-        console.log('Artworks data:', artworkData)
         setArtworks(artworkData.artworks || [])
       } else {
-        console.error('Failed to fetch artworks:', artworkRes.status)
         setArtworks([])
       }
       

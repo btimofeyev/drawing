@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { 
   Trophy, 
   Crown, 
@@ -9,9 +9,7 @@ import {
   Target,
   Heart,
   Palette,
-  Zap,
   Clock,
-  Award,
   Sparkles,
   Flame
 } from 'lucide-react'
@@ -42,14 +40,9 @@ interface Child {
 
 export default function AchievementsPage() {
   const [achievements, setAchievements] = useState<Achievement[]>([])
-  const [child, setChild] = useState<Child | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [selectedCategory, setSelectedCategory] = useState<string>('all')
   const [searchQuery, setSearchQuery] = useState('')
-
-  useEffect(() => {
-    fetchAchievementsData()
-  }, [])
 
   // Enhanced achievement definitions with metadata
   const getDefaultAchievements = (): Achievement[] => [
@@ -286,7 +279,7 @@ export default function AchievementsPage() {
     {
       id: 'special_1',
       name: 'Welcome Aboard!',
-      description: 'Join the Daily Draw community',
+      description: 'Join the Daily Scribble community',
       icon: '🎉',
       category: 'special',
       earned: false,
@@ -373,40 +366,19 @@ export default function AchievementsPage() {
         setAchievements(getDefaultAchievements())
       }
 
-      if (statsRes.ok) {
-        const statsData = await statsRes.json()
-        setChild({
-          id: statsData.child?.id || '1',
-          username: statsData.child?.username || 'artist',
-          name: statsData.child?.name || 'Young Artist',
-          level: statsData.stats?.level || 1,
-          totalPoints: statsData.stats?.points || 0
-        })
-      } else {
-        // Set default child data if API fails
-        setChild({
-          id: '1',
-          username: 'artist',
-          name: 'Young Artist',
-          level: 1,
-          totalPoints: 0
-        })
-      }
+      // We don't need to store child data separately anymore
     } catch (error) {
       console.error('Failed to load achievements:', error)
       // Use default achievements on error
       setAchievements(getDefaultAchievements())
-      setChild({
-        id: '1',
-        username: 'artist',
-        name: 'Young Artist',
-        level: 1,
-        totalPoints: 0
-      })
     } finally {
       setIsLoading(false)
     }
   }
+
+  useEffect(() => {
+    fetchAchievementsData()
+  }, [])
 
   const getCategoryIcon = (category: Achievement['category']) => {
     switch (category) {

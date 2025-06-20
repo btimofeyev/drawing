@@ -1,4 +1,4 @@
--- DrawingBuddy Database Schema
+-- Daily Scribble Database Schema
 -- Run this in Supabase SQL Editor
 
 -- Enable necessary extensions

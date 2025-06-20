@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Plus, Settings, Shield, Users, Palette, Sparkles } from 'lucide-react'
+import { Plus, Settings, Shield, Users, Palette, Sparkles, Eye, Trash2, AlertTriangle } from 'lucide-react'
 import Link from 'next/link'
 
 interface Child {
@@ -12,12 +12,26 @@ interface Child {
   avatarUrl?: string
   parentalConsent: boolean
   createdAt: string
+  artworkCount?: number
+}
+
+interface Artwork {
+  id: string
+  imageUrl: string
+  promptText: string
+  createdAt: string
+  approved: boolean
+  promptDate: string
+  promptTimeSlot: string
 }
 
 export default function ParentDashboard() {
   const [children, setChildren] = useState<Child[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [showCreateForm, setShowCreateForm] = useState(false)
+  const [selectedChild, setSelectedChild] = useState<Child | null>(null)
+  const [childArtwork, setChildArtwork] = useState<Artwork[]>([])
+  const [showDeleteChildModal, setShowDeleteChildModal] = useState<Child | null>(null)
 
   useEffect(() => {
     fetchChildren()
@@ -32,6 +46,58 @@ export default function ParentDashboard() {
       console.error('Failed to fetch children:', error)
     } finally {
       setIsLoading(false)
+    }
+  }
+
+  const fetchChildArtwork = async (childId: string) => {
+    try {
+      const response = await fetch(`/api/parent/children/${childId}/artwork`)
+      const data = await response.json()
+      if (data.success) {
+        setChildArtwork(data.artwork)
+      }
+    } catch (error) {
+      console.error('Failed to fetch artwork:', error)
+    }
+  }
+
+  const handleViewArtwork = async (child: Child) => {
+    setSelectedChild(child)
+    await fetchChildArtwork(child.id)
+  }
+
+  const handleDeleteArtwork = async (artworkId: string) => {
+    if (!confirm('Are you sure you want to delete this artwork?')) return
+
+    try {
+      const response = await fetch(`/api/parent/artwork/${artworkId}`, {
+        method: 'DELETE'
+      })
+      
+      if (response.ok && selectedChild) {
+        await fetchChildArtwork(selectedChild.id)
+      }
+    } catch (error) {
+      console.error('Failed to delete artwork:', error)
+    }
+  }
+
+  const handleDeleteChild = async (child: Child) => {
+    try {
+      const response = await fetch(`/api/parent/children/${child.id}`, {
+        method: 'DELETE'
+      })
+      
+      if (response.ok) {
+        setShowDeleteChildModal(null)
+        await fetchChildren()
+        if (selectedChild?.id === child.id) {
+          setSelectedChild(null)
+          setChildArtwork([])
+        }
+      }
+    } catch (error) {
+      console.error('Failed to delete child account:', error)
     }
   }
 
@@ -69,7 +135,7 @@ export default function ParentDashboard() {
               </div>
               <div>
                 <h1 className="text-2xl font-bold bg-gradient-to-r from-pink-500 to-purple-500 bg-clip-text text-transparent">
-                  DrawingBuddy
+                  Daily Scribble
                 </h1>
                 <p className="text-slate-600 font-medium">Parent Dashboard</p>
               </div>
@@ -108,7 +174,7 @@ export default function ParentDashboard() {
                 <h2 className="text-5xl font-bold mb-6 bg-gradient-to-r from-pink-500 via-purple-500 to-blue-500 bg-clip-text text-transparent">
                   Welcome to
                   <br />
-                  DrawingBuddy
+                  Daily Scribble
                 </h2>
                 
                 <p className="text-xl text-slate-600 mb-10 max-w-2xl mx-auto">
@@ -172,10 +238,22 @@ export default function ParentDashboard() {
                         </div>
                       </div>
 
-                      <button className="btn btn-primary w-full">
-                        <Settings className="h-4 w-4" />
-                        Manage Profile
-                      </button>
+                      <div className="space-y-3">
+                        <button 
+                          onClick={() => handleViewArtwork(child)}
+                          className="btn btn-primary w-full"
+                        >
+                          <Eye className="h-4 w-4" />
+                          View Artwork
+                        </button>
+                        <button 
+                          onClick={() => setShowDeleteChildModal(child)}
+                          className="btn btn-secondary w-full border-red-200 hover:bg-red-50 hover:border-red-300"
+                        >
+                          <Trash2 className="h-4 w-4 text-red-600" />
+                          <span className="text-red-600">Delete Account</span>
+                        </button>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -188,9 +266,133 @@ export default function ParentDashboard() {
       {/* Create Child Modal */}
       {showCreateForm && <CreateChildModal onClose={() => setShowCreateForm(false)} onSuccess={fetchChildren} />}
       
+      {/* Artwork Viewer Modal */}
+      {selectedChild && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-3xl max-w-6xl w-full max-h-[90vh] overflow-hidden animate-fade-in shadow-2xl">
+            <div className="p-6 border-b border-slate-200">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-2xl font-bold text-slate-800">
+                    {selectedChild.name}'s Artwork
+                  </h2>
+                  <p className="text-slate-600">
+                    {childArtwork.length} drawing{childArtwork.length !== 1 ? 's' : ''}
+                  </p>
+                </div>
+                <button
+                  onClick={() => {
+                    setSelectedChild(null)
+                    setChildArtwork([])
+                  }}
+                  className="btn btn-secondary"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+            
+            <div className="p-6 overflow-y-auto max-h-[calc(90vh-120px)]">
+              {childArtwork.length === 0 ? (
+                <div className="text-center py-20">
+                  <div className="icon-container mint mx-auto mb-4">
+                    <Palette />
+                  </div>
+                  <p className="text-xl text-slate-600">No artwork yet</p>
+                  <p className="text-slate-500 mt-2">
+                    {selectedChild.name} hasn't created any drawings yet
+                  </p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {childArtwork.map((artwork) => (
+                    <div key={artwork.id} className="card">
+                      <div className="relative group">
+                        <img
+                          src={artwork.imageUrl}
+                          alt="Child's drawing"
+                          className="w-full h-64 object-cover rounded-xl"
+                        />
+                        <button
+                          onClick={() => handleDeleteArtwork(artwork.id)}
+                          className="absolute top-2 right-2 btn btn-secondary opacity-0 group-hover:opacity-100 transition-opacity bg-white/90 backdrop-blur-sm"
+                          title="Delete artwork"
+                        >
+                          <Trash2 className="h-4 w-4 text-red-600" />
+                        </button>
+                      </div>
+                      <div className="mt-4">
+                        <p className="text-sm text-slate-600 mb-2">
+                          {artwork.promptText}
+                        </p>
+                        <div className="flex items-center justify-between text-xs text-slate-500">
+                          <span>{new Date(artwork.createdAt).toLocaleDateString()}</span>
+                          <span className={`px-2 py-1 rounded-full ${
+                            artwork.approved 
+                              ? 'bg-green-100 text-green-700' 
+                              : 'bg-yellow-100 text-yellow-700'
+                          }`}>
+                            {artwork.approved ? 'Public' : 'Private'}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* Delete Child Confirmation Modal */}
+      {showDeleteChildModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-3xl max-w-md w-full p-8 animate-fade-in shadow-2xl">
+            <div className="text-center mb-6">
+              <div className="icon-container bg-red-100 mx-auto mb-4">
+                <AlertTriangle className="text-red-600" />
+              </div>
+              <h3 className="text-2xl font-bold text-slate-800 mb-2">
+                Delete Child Account?
+              </h3>
+              <p className="text-slate-600">
+                Are you sure you want to delete <strong>{showDeleteChildModal.name}'s</strong> account?
+              </p>
+              <p className="text-red-600 mt-4 font-medium">
+                ⚠️ This will permanently delete:
+              </p>
+              <ul className="text-sm text-slate-600 mt-2 space-y-1">
+                <li>• All profile information</li>
+                <li>• All artwork and creations</li>
+                <li>• All achievements and progress</li>
+              </ul>
+              <p className="text-red-600 mt-4 font-bold">
+                This action cannot be undone!
+              </p>
+            </div>
+            
+            <div className="flex gap-4">
+              <button
+                onClick={() => setShowDeleteChildModal(null)}
+                className="flex-1 btn btn-secondary"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => handleDeleteChild(showDeleteChildModal)}
+                className="flex-1 btn bg-red-600 hover:bg-red-700 text-white"
+              >
+                Delete Account
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      
       <footer className="py-8 bg-slate-800 text-center">
         <div className="container">
-          <p className="text-slate-400">© 2025 DrawingBuddy</p>
+          <p className="text-slate-400">© 2025 Daily Scribble</p>
         </div>
       </footer>
     </div>

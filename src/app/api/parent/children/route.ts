@@ -58,6 +58,13 @@ export async function POST(request: NextRequest) {
       parent = await ParentAuth.createParentAccount(user.id, user.email!)
     }
 
+    if (!parent) {
+      return NextResponse.json(
+        { error: 'Failed to create parent account' },
+        { status: 500 }
+      )
+    }
+
     const body = await request.json()
     const childData = createChildSchema.parse(body)
 

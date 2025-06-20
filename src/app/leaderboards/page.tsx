@@ -134,7 +134,7 @@ export default function LeaderboardsPage() {
         color: 'green',
         suffix: 'uploads',
         description: 'New artists making their mark in their first month',
-        howToAchieve: 'New to Daily Draw? Upload your first artworks to join the rising stars!'
+        howToAchieve: 'New to Daily Scribble? Upload your first artworks to join the rising stars!'
       },
       mostImproved: {
         title: 'Growth Champions',

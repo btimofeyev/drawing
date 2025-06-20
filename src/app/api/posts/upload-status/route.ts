@@ -81,14 +81,22 @@ export async function GET(request: NextRequest) {
         hasUploaded: !!existingUpload,
         uploadedAt: existingUpload?.uploaded_at || null,
         postId: existingUpload?.post_id || null,
-        post: existingUpload?.posts ? {
-          id: existingUpload.posts.id,
-          imageUrl: existingUpload.posts.image_url,
-          thumbnailUrl: existingUpload.posts.thumbnail_url,
-          altText: existingUpload.posts.alt_text,
-          createdAt: existingUpload.posts.created_at,
-          likesCount: existingUpload.posts.likes_count,
-          moderationStatus: existingUpload.posts.moderation_status
+        post: existingUpload?.posts && Array.isArray(existingUpload.posts) && existingUpload.posts.length > 0 ? {
+          id: existingUpload.posts[0].id,
+          imageUrl: existingUpload.posts[0].image_url,
+          thumbnailUrl: existingUpload.posts[0].thumbnail_url,
+          altText: existingUpload.posts[0].alt_text,
+          createdAt: existingUpload.posts[0].created_at,
+          likesCount: existingUpload.posts[0].likes_count,
+          moderationStatus: existingUpload.posts[0].moderation_status
+        } : existingUpload?.posts && !Array.isArray(existingUpload.posts) ? {
+          id: (existingUpload.posts as any).id,
+          imageUrl: (existingUpload.posts as any).image_url,
+          thumbnailUrl: (existingUpload.posts as any).thumbnail_url,
+          altText: (existingUpload.posts as any).alt_text,
+          createdAt: (existingUpload.posts as any).created_at,
+          likesCount: (existingUpload.posts as any).likes_count,
+          moderationStatus: (existingUpload.posts as any).moderation_status
         } : null
       }
     })

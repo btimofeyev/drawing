@@ -67,7 +67,6 @@ export async function GET(request: NextRequest) {
       error = queryError
     } catch (e) {
       // If the query fails (likely due to missing columns), fall back to basic query
-      console.log('Falling back to basic prompt query (new columns not available yet)')
       
       const { data, error: fallbackError } = await supabaseAdmin
         .from('prompts')
@@ -92,10 +91,10 @@ export async function GET(request: NextRequest) {
     // If no shared prompt exists for today, generate one
     if (!sharedPrompt) {
       try {
-        console.log(`Generating shared daily prompt for ${date}, ${child.age_group}`)
         
         const generatedPrompt = await PromptGenerator.generateSharedDailyPrompt({
-          ageGroup: child.age_group
+          ageGroup: child.age_group,
+          difficulty: 'easy'
         })
 
         // Store the generated prompt in database
@@ -128,7 +127,6 @@ export async function GET(request: NextRequest) {
           insertError = error
         } catch (e) {
           // Fall back to basic insert without new columns
-          console.log('Falling back to basic prompt insert')
           
           const { data, error } = await supabaseAdmin
             .from('prompts')
@@ -162,7 +160,6 @@ export async function GET(request: NextRequest) {
               trending_score: 0
             })
         } catch (e) {
-          console.log('Prompt popularity table not available yet')
         }
 
         return NextResponse.json({

@@ -23,7 +23,6 @@ export async function GET(request: NextRequest) {
     tomorrow.setUTCHours(0, 0, 0, 0)
     const tomorrowStr = tomorrow.toISOString().split('T')[0]
 
-    console.log(`Generating prompts for ${tomorrowStr}${forceOverwrite ? ' (force overwrite)' : ''}`)
 
     const ageGroups = ['kids', 'tweens'] as const
     const results = []

@@ -53,10 +53,8 @@ export default function ParentAuthPage() {
       })
 
       const data = await response.json()
-      console.log('Verify response:', { status: response.status, data })
 
       if (response.ok && data.success) {
-        console.log('Success! Redirecting to /parent')
         // Try multiple redirect methods
         try {
           router.push('/parent')
@@ -69,7 +67,6 @@ export default function ParentAuthPage() {
           window.location.href = '/parent'
         }
       } else {
-        console.log('Verification failed:', data)
         setMessage(data.error || 'Invalid code. Please try again.')
       }
     } catch (error) {
@@ -91,7 +88,7 @@ export default function ParentAuthPage() {
                 <Palette />
               </div>
               <h1 className="text-2xl font-bold text-slate-700">
-                Daily Draw
+                Daily Scribble
               </h1>
             </div>
             <Link 

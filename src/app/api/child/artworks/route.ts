@@ -75,10 +75,14 @@ export async function GET(request: NextRequest) {
       likesCount: post.likes_count,
       timeSlot: post.time_slot,
       moderationStatus: post.moderation_status,
-      challenge: post.prompts ? {
-        id: post.prompts.id,
-        text: post.prompts.prompt_text,
-        difficulty: post.prompts.difficulty
+      challenge: post.prompts && Array.isArray(post.prompts) && post.prompts.length > 0 ? {
+        id: post.prompts[0].id,
+        text: post.prompts[0].prompt_text,
+        difficulty: post.prompts[0].difficulty
+      } : post.prompts && !Array.isArray(post.prompts) ? {
+        id: (post.prompts as any).id,
+        text: (post.prompts as any).prompt_text,
+        difficulty: (post.prompts as any).difficulty
       } : null
     })) || []
 

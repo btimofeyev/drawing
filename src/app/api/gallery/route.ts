@@ -118,7 +118,6 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    console.log(`Gallery query returned ${posts?.length || 0} posts`)
 
     // Get user's likes if authenticated
     let userLikes = new Set<string>()
@@ -139,17 +138,17 @@ export async function GET(request: NextRequest) {
       imageUrl: post.image_url,
       thumbnailUrl: post.thumbnail_url,
       altText: post.alt_text,
-      artistName: post.child_profiles.name,
-      artistUsername: post.child_profiles.username,
+      artistName: Array.isArray(post.child_profiles) ? post.child_profiles[0]?.name : (post.child_profiles as any)?.name,
+      artistUsername: Array.isArray(post.child_profiles) ? post.child_profiles[0]?.username : (post.child_profiles as any)?.username,
       likes: post.likes_count || 0,
       views: post.views_count || 0,
       createdAt: post.created_at,
       promptId: post.prompt_id,
-      promptTitle: extractPromptTitle(post.prompts.prompt_text),
-      promptDescription: post.prompts.prompt_text,
+      promptTitle: extractPromptTitle(Array.isArray(post.prompts) ? post.prompts[0]?.prompt_text : (post.prompts as any)?.prompt_text),
+      promptDescription: Array.isArray(post.prompts) ? post.prompts[0]?.prompt_text : (post.prompts as any)?.prompt_text,
       timeSlot: post.time_slot,
-      difficulty: post.prompts.difficulty,
-      ageGroup: post.child_profiles.age_group,
+      difficulty: Array.isArray(post.prompts) ? post.prompts[0]?.difficulty : (post.prompts as any)?.difficulty,
+      ageGroup: Array.isArray(post.child_profiles) ? post.child_profiles[0]?.age_group : (post.child_profiles as any)?.age_group,
       isLiked: userLikes.has(post.id),
       isOwnPost: currentChildId === post.child_id
     })) || []
@@ -197,7 +196,6 @@ export async function GET(request: NextRequest) {
       console.error('Failed to fetch gallery count:', countError)
     }
 
-    console.log(`Gallery count query returned ${count || 0} total posts`)
 
     return NextResponse.json({
       artworks,

@@ -129,9 +129,9 @@ export async function GET(request: NextRequest) {
             imageUrl: post.image_url,
             thumbnailUrl: post.thumbnail_url,
             artist: {
-              username: post.child_profiles.username,
-              name: post.child_profiles.name,
-              avatarUrl: post.child_profiles.avatar_url
+              username: Array.isArray(post.child_profiles) ? post.child_profiles[0]?.username : (post.child_profiles as any)?.username,
+              name: Array.isArray(post.child_profiles) ? post.child_profiles[0]?.name : (post.child_profiles as any)?.name,
+              avatarUrl: Array.isArray(post.child_profiles) ? post.child_profiles[0]?.avatar_url : (post.child_profiles as any)?.avatar_url
             }
           })) || [],
           hasUserPosted: !!userPost,

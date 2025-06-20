@@ -87,7 +87,7 @@ export default function ChildAuthPage() {
                 <Palette />
               </div>
               <h1 className="text-2xl font-bold text-slate-700">
-                Daily Draw
+                Daily Scribble
               </h1>
             </div>
             <Link 

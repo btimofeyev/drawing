@@ -430,6 +430,7 @@ Age: kids, Difficulty: easy, Time: evening
       const prompt = await this.generateSlotPrompt({
         ageGroup,
         timeSlot,
+        difficulty: 'easy',
         previousPrompts: [...(previousPrompts || []), ...prompts.map(p => p.title)]
       })
       prompts.push(prompt)
@@ -556,6 +557,7 @@ Return ONLY a JSON array with 3 prompts, varying the difficulty (easy/medium/har
         try {
           const prompt = await this.generateSharedDailyPrompt({
             ageGroup,
+            difficulty: 'easy',
             previousPrompts: prompts.map(p => p.title),
             theme: themes[i]
           })

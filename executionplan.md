@@ -1,4 +1,4 @@
-# DrawingBuddy (Daily Draw) – Comprehensive Product Requirements & System Specification
+# Daily Scribble – Comprehensive Product Requirements & System Specification
 
 > **Version:** 1.1  |  **Last Updated:** June 19 2025
 

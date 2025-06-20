@@ -286,7 +286,7 @@ export async function GET(request: NextRequest) {
       {
         id: 'special_1',
         name: 'Welcome Aboard!',
-        description: 'Join the Daily Draw community',
+        description: 'Join the Daily Scribble community',
         criteria: 'posts',
         target: 1,
         points: 100
