@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Plus, Settings, Shield, Users } from 'lucide-react'
+import { Plus, Settings, Shield, Users, Palette, Sparkles } from 'lucide-react'
 import Link from 'next/link'
 
 interface Child {
@@ -46,43 +46,47 @@ export default function ParentDashboard() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-8 h-8 border-2 border-primary-300 border-t-primary-900 rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-primary-600">Loading dashboard...</p>
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center">
+        <div className="text-center animate-fade-in">
+          <div className="icon-container purple mx-auto mb-4">
+            <Palette />
+          </div>
+          <p className="text-slate-600 font-medium">Loading dashboard...</p>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
       {/* Header */}
-      <header className="bg-white/80 backdrop-blur-sm border-b border-blue-100 sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-8 py-6">
+      <header className="py-6 px-4 bg-white/80 backdrop-blur-sm border-b border-slate-200/50">
+        <div className="container">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4 slide-in-left">
-              <div className="w-14 h-14 bg-blue-600 rounded-2xl flex items-center justify-center float">
-                <Shield className="h-8 w-8 text-white" />
+            <div className="flex items-center gap-3">
+              <div className="icon-container pink">
+                <Palette />
               </div>
               <div>
-                <h1 className="text-3xl font-bold text-gray-900">Parent Dashboard</h1>
-                <p className="text-blue-600 font-medium">Safely manage your children's creative accounts</p>
+                <h1 className="text-2xl font-bold bg-gradient-to-r from-pink-500 to-purple-500 bg-clip-text text-transparent">
+                  DrawingBuddy
+                </h1>
+                <p className="text-slate-600 font-medium">Parent Dashboard</p>
               </div>
             </div>
             
             <div className="flex items-center gap-4">
               <button
                 onClick={() => setShowCreateForm(true)}
-                className="bg-blue-600 text-white font-bold py-3 px-6 rounded-2xl hover:bg-blue-700 hover:scale-105 transition-all duration-200 flex items-center gap-2 shadow-lg hover:shadow-xl"
+                className="btn btn-primary"
               >
-                <Plus className="h-5 w-5" />
+                <Plus className="h-4 w-4" />
                 Add Child
               </button>
               
               <button
                 onClick={handleSignOut}
-                className="text-gray-600 hover:text-gray-800 font-semibold py-3 px-6 transition-colors"
+                className="btn btn-secondary"
               >
                 Sign Out
               </button>
@@ -92,92 +96,103 @@ export default function ParentDashboard() {
       </header>
 
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-8 py-16">
-        {children.length === 0 ? (
-          <div className="text-center py-24 fade-in">
-            <div className="w-28 h-28 rounded-3xl flex items-center justify-center mx-auto mb-8 float"
-                 style={{background: 'var(--gradient-secondary)'}}>
-              <Users className="h-14 w-14 text-white" />
-            </div>
-            <h2 className="text-4xl font-bold text-gray-900 mb-6">Welcome to DrawingBuddy</h2>
-            <p className="text-xl text-gray-600 mb-12 max-w-2xl mx-auto">
-              Create your first child profile to get started with daily drawing challenges and creative fun in a safe environment.
-            </p>
-            <button
-              onClick={() => setShowCreateForm(true)}
-              className="bg-blue-600 text-white font-bold text-lg py-5 px-10 rounded-2xl hover:bg-blue-700 hover:scale-105 transition-all duration-200 inline-flex items-center gap-3 shadow-xl hover:shadow-2xl"
-            >
-              <Plus className="h-6 w-6" />
-              Create Child Profile
-              <span>🎨</span>
-            </button>
-          </div>
-        ) : (
-          <div className="space-y-12 fade-in">
-            <div className="text-center">
-              <h2 className="text-4xl font-bold text-gray-900 mb-4">Your Children</h2>
-              <p className="text-xl text-gray-600">Safely manage profiles and settings for each child</p>
-            </div>
+      <main>
+        <section className="section py-20">
+          <div className="container">
+            {children.length === 0 ? (
+              <div className="text-center max-w-4xl mx-auto animate-fade-in">
+                <div className="icon-container purple mx-auto mb-8" style={{width: '4rem', height: '4rem'}}>
+                  <Users style={{width: '2rem', height: '2rem'}} />
+                </div>
+                
+                <h2 className="text-5xl font-bold mb-6 bg-gradient-to-r from-pink-500 via-purple-500 to-blue-500 bg-clip-text text-transparent">
+                  Welcome to
+                  <br />
+                  DrawingBuddy
+                </h2>
+                
+                <p className="text-xl text-slate-600 mb-10 max-w-2xl mx-auto">
+                  Create your first child profile to get started with daily drawing challenges and creative fun in a safe environment
+                </p>
+                
+                <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+                  <button
+                    onClick={() => setShowCreateForm(true)}
+                    className="btn btn-primary btn-large"
+                  >
+                    <Sparkles />
+                    Create Child Profile
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="animate-fade-in">
+                <div className="text-center mb-12">
+                  <h2 className="text-4xl font-bold mb-4 bg-gradient-to-r from-pink-500 via-purple-500 to-blue-500 bg-clip-text text-transparent">Your Children</h2>
+                  <p className="text-xl text-slate-600">Safely manage profiles and settings for each child</p>
+                </div>
 
-            <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-              {children.map((child, index) => (
-                <div key={child.id} className="group bg-white border border-blue-100 rounded-3xl p-8 hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 shadow-lg bounce-in"
-                     style={{animationDelay: `${index * 0.1}s`}}>
-                  <div className="flex items-center gap-4 mb-8">
-                    <div className="w-20 h-20 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300"
-                         style={{background: 'var(--gradient-primary)'}}>
-                      <span className="text-2xl font-bold text-white">
-                        {child.name[0]}
-                      </span>
-                    </div>
-                    <div>
-                      <h3 className="text-xl font-bold text-gray-900">{child.name}</h3>
-                      <p className="text-gray-600 font-medium">
+                <div className="grid grid-3">
+                  {children.map((child, index) => (
+                    <div key={child.id} className="card text-center animate-fade-in" style={{animationDelay: `${index * 0.1}s`}}>
+                      <div className="icon-container mint mx-auto">
+                        <span className="text-2xl font-bold text-white">
+                          {child.name[0]}
+                        </span>
+                      </div>
+                      <h3 className="mb-2">{child.name}</h3>
+                      <p className="text-slate-600 font-medium mb-4">
                         @{child.username}
                       </p>
-                      <span className="inline-block px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-semibold capitalize mt-2">
+                      <span className="inline-block px-3 py-1 bg-pink-100 text-pink-700 rounded-full text-sm font-semibold capitalize mb-6">
                         {child.ageGroup}
                       </span>
-                    </div>
-                  </div>
 
-                  <div className="space-y-4">
-                    <div className="bg-gray-50 rounded-2xl p-4">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm font-semibold text-gray-700">Parental Consent</span>
-                        <span className={`text-sm font-bold px-3 py-1 rounded-full ${
-                          child.parentalConsent 
-                            ? 'bg-green-100 text-green-700' 
-                            : 'bg-yellow-100 text-yellow-700'
-                        }`}>
-                          {child.parentalConsent ? '✅ Approved' : '⏳ Pending'}
-                        </span>
+                      <div className="space-y-4 mb-6">
+                        <div className="bg-slate-50 rounded-2xl p-4">
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="text-sm font-semibold text-slate-700">Parental Consent</span>
+                            <span className={`text-sm font-bold px-3 py-1 rounded-full ${
+                              child.parentalConsent 
+                                ? 'bg-green-100 text-green-700' 
+                                : 'bg-yellow-100 text-yellow-700'
+                            }`}>
+                              {child.parentalConsent ? '✅ Approved' : '⏳ Pending'}
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="bg-slate-50 rounded-2xl p-4">
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm font-semibold text-slate-700">Account Created</span>
+                            <span className="text-sm text-slate-600 font-medium">
+                              {new Date(child.createdAt).toLocaleDateString()}
+                            </span>
+                          </div>
+                        </div>
                       </div>
-                    </div>
 
-                    <div className="bg-gray-50 rounded-2xl p-4">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-semibold text-gray-700">Account Created</span>
-                        <span className="text-sm text-gray-600 font-medium">
-                          {new Date(child.createdAt).toLocaleDateString()}
-                        </span>
-                      </div>
+                      <button className="btn btn-primary w-full">
+                        <Settings className="h-4 w-4" />
+                        Manage Profile
+                      </button>
                     </div>
-
-                    <button className="w-full bg-blue-600 text-white font-bold py-4 px-6 rounded-2xl hover:bg-blue-700 hover:scale-105 transition-all duration-200 flex items-center justify-center gap-2 shadow-lg hover:shadow-xl">
-                      <Settings className="h-5 w-5" />
-                      Manage Profile
-                    </button>
-                  </div>
+                  ))}
                 </div>
-              ))}
-            </div>
+              </div>
+            )}
           </div>
-        )}
+        </section>
       </main>
 
       {/* Create Child Modal */}
       {showCreateForm && <CreateChildModal onClose={() => setShowCreateForm(false)} onSuccess={fetchChildren} />}
+      
+      <footer className="py-8 bg-slate-800 text-center">
+        <div className="container">
+          <p className="text-slate-400">© 2025 DrawingBuddy</p>
+        </div>
+      </footer>
     </div>
   )
 }
@@ -219,14 +234,13 @@ function CreateChildModal({ onClose, onSuccess }: { onClose: () => void; onSucce
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-8 z-50">
-      <div className="bg-white rounded-3xl max-w-lg w-full p-10 fade-in shadow-2xl">
+      <div className="bg-white rounded-3xl max-w-lg w-full p-10 animate-fade-in shadow-2xl">
         <div className="text-center mb-10">
-          <div className="w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-6 float"
-               style={{background: 'var(--gradient-secondary)'}}>
-            <Plus className="h-10 w-10 text-white" />
+          <div className="icon-container orange mx-auto mb-6" style={{width: '4rem', height: '4rem'}}>
+            <Plus style={{width: '2rem', height: '2rem'}} />
           </div>
-          <h2 className="text-3xl font-bold text-gray-900 mb-3">Create Child Profile</h2>
-          <p className="text-gray-600 text-lg">Set up a safe, creative account for your child</p>
+          <h2 className="text-3xl font-bold mb-3 bg-gradient-to-r from-pink-500 via-purple-500 to-blue-500 bg-clip-text text-transparent">Create Child Profile</h2>
+          <p className="text-slate-600 text-lg">Set up a safe, creative account for your child</p>
         </div>
         
         {error && (
@@ -237,7 +251,7 @@ function CreateChildModal({ onClose, onSuccess }: { onClose: () => void; onSucce
 
         <form onSubmit={handleSubmit} className="space-y-8">
           <div>
-            <label className="block text-lg font-semibold text-gray-700 mb-3">
+            <label className="block text-lg font-semibold text-slate-700 mb-3">
               🎨 Username
             </label>
             <input
@@ -247,15 +261,15 @@ function CreateChildModal({ onClose, onSuccess }: { onClose: () => void; onSucce
               placeholder="coolartist123"
               maxLength={20}
               required
-              className="w-full px-6 py-4 border-2 border-blue-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-blue-200 focus:border-blue-500 text-lg font-medium transition-all duration-200 hover:border-blue-300"
+              className="w-full px-6 py-4 border-2 border-slate-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-pink-200 focus:border-pink-500 text-lg font-medium transition-all duration-200 hover:border-pink-300"
             />
-            <p className="text-sm text-gray-500 mt-2">
+            <p className="text-sm text-slate-500 mt-2">
               ✨ 3-20 characters, letters, numbers, and underscores only
             </p>
           </div>
 
           <div>
-            <label className="block text-lg font-semibold text-gray-700 mb-3">
+            <label className="block text-lg font-semibold text-slate-700 mb-3">
               👶 Child's Name
             </label>
             <input
@@ -264,18 +278,18 @@ function CreateChildModal({ onClose, onSuccess }: { onClose: () => void; onSucce
               onChange={(e) => setName(e.target.value)}
               placeholder="Enter full name"
               required
-              className="w-full px-6 py-4 border-2 border-blue-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-blue-200 focus:border-blue-500 text-lg font-medium transition-all duration-200 hover:border-blue-300"
+              className="w-full px-6 py-4 border-2 border-slate-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-pink-200 focus:border-pink-500 text-lg font-medium transition-all duration-200 hover:border-pink-300"
             />
           </div>
 
           <div>
-            <label className="block text-lg font-semibold text-gray-700 mb-3">
+            <label className="block text-lg font-semibold text-slate-700 mb-3">
               🎂 Age Group
             </label>
             <select
               value={ageGroup}
               onChange={(e) => setAgeGroup(e.target.value as 'kids' | 'tweens')}
-              className="w-full px-6 py-4 border-2 border-blue-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-blue-200 focus:border-blue-500 text-lg font-medium transition-all duration-200 hover:border-blue-300"
+              className="w-full px-6 py-4 border-2 border-slate-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-pink-200 focus:border-pink-500 text-lg font-medium transition-all duration-200 hover:border-pink-300"
             >
               <option value="kids">Kids (6-10 years)</option>
               <option value="tweens">Tweens (11-16 years)</option>
@@ -283,7 +297,7 @@ function CreateChildModal({ onClose, onSuccess }: { onClose: () => void; onSucce
           </div>
 
           <div>
-            <label className="block text-lg font-semibold text-gray-700 mb-3">
+            <label className="block text-lg font-semibold text-slate-700 mb-3">
               🔐 4-Digit PIN
             </label>
             <input
@@ -293,9 +307,9 @@ function CreateChildModal({ onClose, onSuccess }: { onClose: () => void; onSucce
               placeholder="1234"
               maxLength={4}
               required
-              className="w-full px-6 py-4 border-2 border-blue-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-blue-200 focus:border-blue-500 text-center text-3xl font-mono tracking-widest transition-all duration-200 hover:border-blue-300"
+              className="w-full px-6 py-4 border-2 border-slate-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-pink-200 focus:border-pink-500 text-center text-3xl font-mono tracking-widest transition-all duration-200 hover:border-pink-300"
             />
-            <p className="text-sm text-gray-500 mt-2 text-center">
+            <p className="text-sm text-slate-500 mt-2 text-center">
               🔑 Your child will use this PIN with their username to sign in
             </p>
           </div>
@@ -304,14 +318,14 @@ function CreateChildModal({ onClose, onSuccess }: { onClose: () => void; onSucce
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 border-2 border-gray-300 text-gray-700 font-bold py-4 px-6 rounded-2xl hover:bg-gray-50 hover:scale-105 transition-all duration-200"
+              className="flex-1 btn btn-secondary"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={isLoading || !username || !name || pin.length !== 4 || username.length < 3}
-              className="flex-1 bg-blue-600 text-white font-bold py-4 px-6 rounded-2xl hover:bg-blue-700 hover:scale-105 disabled:scale-100 disabled:bg-gray-400 transition-all duration-200 shadow-lg hover:shadow-xl"
+              className="flex-1 btn btn-primary disabled:bg-slate-400 disabled:cursor-not-allowed"
             >
               <span className="flex items-center justify-center gap-2">
                 {isLoading ? (
@@ -322,7 +336,7 @@ function CreateChildModal({ onClose, onSuccess }: { onClose: () => void; onSucce
                 ) : (
                   <>
                     Create Profile
-                    <span>🎨</span>
+                    <Sparkles className="h-4 w-4" />
                   </>
                 )}
               </span>

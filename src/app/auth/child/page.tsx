@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { ArrowLeft, User, Lock } from 'lucide-react'
+import { ArrowLeft, User, Lock, Palette, Sparkles } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 
@@ -77,47 +77,46 @@ export default function ChildAuthPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-secondary-50 flex items-center justify-center p-8">
-      <div className="w-full max-w-lg fade-in">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center p-8">
+      <div className="w-full max-w-lg animate-fade-in">
         <div className="text-center mb-12">
           <Link 
             href="/" 
-            className="inline-flex items-center gap-2 text-gray-600 hover:text-primary-600 mb-8 transition-colors font-medium"
+            className="inline-flex items-center gap-2 text-slate-600 hover:text-pink-600 mb-8 transition-colors font-medium"
           >
             <ArrowLeft className="h-4 w-4" />
             Back to home
           </Link>
           
           <div className="mb-8">
-            <div className="w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-6 float"
-                 style={{background: 'var(--gradient-primary)'}}>
+            <div className="icon-container purple mx-auto mb-6" style={{width: '4rem', height: '4rem'}}>
               {step === 'username' ? (
-                <User className="h-10 w-10 text-white" />
+                <Palette style={{width: '2rem', height: '2rem'}} />
               ) : (
-                <Lock className="h-10 w-10 text-white" />
+                <Sparkles style={{width: '2rem', height: '2rem'}} />
               )}
             </div>
           </div>
           
           <h1 className="text-4xl font-bold mb-4">
             {step === 'username' ? (
-              <span className="bg-gradient-to-r from-primary-500 to-secondary-500 bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-pink-500 via-purple-500 to-blue-500 bg-clip-text text-transparent">
                 Welcome Back!
               </span>
             ) : (
-              <span className="bg-gradient-to-r from-secondary-500 to-accent-500 bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-pink-500 via-purple-500 to-blue-500 bg-clip-text text-transparent">
                 Hi, {username}! 🎨
               </span>
             )}
           </h1>
-          <p className="text-gray-600 text-lg">
+          <p className="text-slate-600 text-lg">
             {step === 'username' 
               ? 'Enter your artist username to continue creating!' 
               : 'Enter your secret 4-digit PIN to start drawing'}
           </p>
         </div>
 
-        <div className="bg-white/80 backdrop-blur-sm border border-primary-100 rounded-3xl p-10 shadow-xl">
+        <div className="bg-white/80 backdrop-blur-sm border border-slate-200/50 rounded-3xl p-10 shadow-xl">
           {error && (
             <div className="p-4 bg-red-50 border border-red-200 rounded-2xl text-red-700 text-center mb-6 font-medium">
               {error}
@@ -127,7 +126,7 @@ export default function ChildAuthPage() {
           {step === 'username' ? (
             <form onSubmit={handleUsernameSubmit} className="space-y-8">
               <div>
-                <label htmlFor="username" className="block text-lg font-semibold text-gray-700 mb-3">
+                <label htmlFor="username" className="block text-lg font-semibold text-slate-700 mb-3">
                   🎨 Your Artist Username
                 </label>
                 <input
@@ -138,63 +137,62 @@ export default function ChildAuthPage() {
                   placeholder="coolartist123"
                   maxLength={20}
                   required
-                  className="w-full px-6 py-4 border-2 border-primary-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-primary-200 focus:border-primary-500 text-lg font-medium transition-all duration-200 hover:border-primary-300"
+                  className="w-full px-6 py-4 border-2 border-slate-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-pink-200 focus:border-pink-500 text-lg font-medium transition-all duration-200 hover:border-pink-300"
                 />
-                <p className="text-sm text-gray-500 mt-2">✨ This is how other artists will know you!</p>
+                <p className="text-sm text-slate-500 mt-2">✨ This is how other artists will know you!</p>
               </div>
 
               <button
                 type="submit"
                 disabled={username.length < 3}
-                className="w-full text-white font-bold py-4 px-8 rounded-2xl hover:scale-105 disabled:scale-100 disabled:opacity-60 transition-all duration-200 shadow-lg hover:shadow-xl"
-                style={{background: username.length >= 3 ? 'var(--gradient-primary)' : 'var(--color-gray-300)'}}
+                className={`w-full font-bold py-4 px-8 rounded-2xl transition-all duration-200 shadow-lg hover:shadow-xl ${
+                  username.length >= 3 
+                    ? 'btn btn-primary' 
+                    : 'bg-slate-300 text-slate-500 cursor-not-allowed'
+                }`}
               >
                 <span className="flex items-center justify-center gap-2">
                   Continue Creating
-                  {username.length >= 3 && <span>🎨</span>}
+                  {username.length >= 3 && <Sparkles className="h-4 w-4" />}
                 </span>
               </button>
             </form>
           ) : (
-            <div className="space-y-8">
+            <div className="space-y-6">
               <div className="text-center">
-                <div className="w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-4 wiggle"
-                     style={{background: 'var(--gradient-secondary)'}}>
-                  <span className="text-2xl font-bold text-white">
+                <div className="icon-container mint mx-auto mb-3">
+                  <span className="text-xl font-bold text-white">
                     {username[0]?.toUpperCase()}
                   </span>
                 </div>
-                <p className="text-xl font-bold text-gray-700">@{username}</p>
-                <p className="text-sm text-gray-500">🎨 Ready to create amazing art!</p>
+                <p className="text-lg font-bold text-slate-700">@{username}</p>
+                <p className="text-sm text-slate-500">🎨 Ready to create amazing art!</p>
               </div>
 
-              <div className="space-y-8">
+              <div className="space-y-4">
                 <div className="text-center">
-                  <p className="text-lg font-semibold text-gray-700 mb-4">🔐 Enter your secret PIN</p>
-                  <div className="flex justify-center gap-3">
+                  <p className="text-base font-semibold text-slate-700 mb-3">🔐 Enter your secret PIN</p>
+                  <div className="flex justify-center gap-2">
                     {Array.from({ length: 4 }).map((_, i) => (
                       <div
                         key={i}
-                        className={`w-6 h-6 rounded-full border-3 transition-all duration-200 ${
+                        className={`w-4 h-4 rounded-full border-2 transition-all duration-200 ${
                           i < pin.length
-                            ? 'border-primary-500 scale-110'
-                            : 'border-gray-300'
+                            ? 'bg-gradient-to-r from-pink-500 to-purple-500 border-pink-500 scale-110'
+                            : 'border-slate-300'
                         }`}
-                        style={{
-                          background: i < pin.length ? 'var(--gradient-primary)' : 'transparent'
-                        }}
                       />
                     ))}
                   </div>
                 </div>
 
-                <div className="grid grid-cols-3 gap-4">
+                <div className="grid grid-cols-3 gap-3 max-w-xs mx-auto">
                   {Array.from({ length: 9 }, (_, i) => i + 1).map((digit) => (
                     <button
                       key={digit}
                       onClick={() => handlePinInput(digit.toString())}
                       disabled={isLoading}
-                      className="aspect-square bg-white border-2 border-primary-200 hover:border-primary-400 hover:bg-primary-50 rounded-2xl text-2xl font-bold text-gray-800 transition-all duration-200 hover:scale-105 disabled:opacity-50 shadow-sm hover:shadow-md"
+                      className="w-16 h-16 bg-white border-2 border-slate-200 hover:border-pink-400 hover:bg-pink-50 rounded-xl text-xl font-bold text-slate-800 transition-all duration-200 hover:scale-105 disabled:opacity-50 shadow-sm hover:shadow-md"
                     >
                       {digit}
                     </button>
@@ -202,7 +200,7 @@ export default function ChildAuthPage() {
                   
                   <button
                     onClick={handleBack}
-                    className="aspect-square bg-white border-2 border-gray-200 hover:border-gray-400 hover:bg-gray-50 rounded-2xl text-sm font-bold text-gray-600 transition-all duration-200 hover:scale-105 shadow-sm hover:shadow-md"
+                    className="w-16 h-16 bg-white border-2 border-slate-200 hover:border-slate-400 hover:bg-slate-50 rounded-xl text-xs font-bold text-slate-600 transition-all duration-200 hover:scale-105 shadow-sm hover:shadow-md"
                   >
                     Back
                   </button>
@@ -210,14 +208,14 @@ export default function ChildAuthPage() {
                   <button
                     onClick={() => handlePinInput('0')}
                     disabled={isLoading}
-                    className="aspect-square bg-white border-2 border-primary-200 hover:border-primary-400 hover:bg-primary-50 rounded-2xl text-2xl font-bold text-gray-800 transition-all duration-200 hover:scale-105 disabled:opacity-50 shadow-sm hover:shadow-md"
+                    className="w-16 h-16 bg-white border-2 border-slate-200 hover:border-pink-400 hover:bg-pink-50 rounded-xl text-xl font-bold text-slate-800 transition-all duration-200 hover:scale-105 disabled:opacity-50 shadow-sm hover:shadow-md"
                   >
                     0
                   </button>
                   
                   <button
                     onClick={handlePinDelete}
-                    className="aspect-square bg-white border-2 border-gray-200 hover:border-gray-400 hover:bg-gray-50 rounded-2xl text-xl font-bold text-gray-600 transition-all duration-200 hover:scale-105 shadow-sm hover:shadow-md"
+                    className="w-16 h-16 bg-white border-2 border-slate-200 hover:border-slate-400 hover:bg-slate-50 rounded-xl text-lg font-bold text-slate-600 transition-all duration-200 hover:scale-105 shadow-sm hover:shadow-md"
                   >
                     ←
                   </button>
@@ -225,9 +223,9 @@ export default function ChildAuthPage() {
               </div>
 
               {isLoading && (
-                <div className="text-center p-6 bg-primary-50 rounded-2xl">
-                  <div className="inline-flex items-center gap-3 text-primary-700">
-                    <div className="w-6 h-6 border-3 border-primary-300 border-t-primary-600 rounded-full animate-spin"></div>
+                <div className="text-center p-4 bg-pink-50 rounded-2xl">
+                  <div className="inline-flex items-center gap-3 text-pink-700">
+                    <div className="w-5 h-5 border-2 border-pink-300 border-t-pink-600 rounded-full animate-spin"></div>
                     <span className="font-medium">Getting your art studio ready... 🎨</span>
                   </div>
                 </div>
@@ -239,7 +237,7 @@ export default function ChildAuthPage() {
         <div className="text-center mt-8">
           <Link 
             href="/auth/parent" 
-            className="inline-flex items-center gap-2 text-gray-600 hover:text-blue-600 font-medium transition-colors"
+            className="inline-flex items-center gap-2 text-slate-600 hover:text-pink-600 font-medium transition-colors"
           >
             <span>👨‍👩‍👧‍👦 Are you a parent? Sign in here</span>
             <span>→</span>

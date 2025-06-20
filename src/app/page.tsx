@@ -1,123 +1,107 @@
-import { Palette, Sparkles } from 'lucide-react';
+import { Palette, Sparkles, Shield, Star, Heart } from 'lucide-react';
 import Link from 'next/link';
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-secondary-50">
-      {/* Header */}
-      <header className="border-b border-primary-100 bg-white/80 backdrop-blur-sm">
-        <div className="max-w-6xl mx-auto px-8 py-6">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
+      <header className="py-6 px-4 bg-white/80 backdrop-blur-sm border-b border-slate-200/50">
+        <div className="container">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl flex items-center justify-center" 
-                   style={{background: 'var(--gradient-primary)'}}>
-                <Palette className="h-6 w-6 text-white" />
+              <div className="icon-container pink">
+                <Palette />
               </div>
-              <h1 className="text-xl font-bold text-gray-900">DrawingBuddy</h1>
+              <h1 className="text-2xl font-bold bg-gradient-to-r from-pink-500 to-purple-500 bg-clip-text text-transparent">
+                DrawingBuddy
+              </h1>
             </div>
-            <Link href="/get-started">
-              <button className="text-white font-medium py-2 px-6 rounded-xl hover:scale-105 transition-all duration-200"
-                      style={{background: 'var(--gradient-primary)'}}>
-                Get Started
-              </button>
+            <Link href="/get-started" className="btn btn-secondary">
+              Get Started
             </Link>
           </div>
         </div>
       </header>
 
-      {/* Hero Section - Properly Spaced */}
-      <main className="py-20 px-8">
-        <div className="max-w-6xl mx-auto">
-          {/* Hero Content */}
-          <div className="text-center mb-20">
-            {/* Main Icon */}
-            <div className="w-24 h-24 rounded-3xl flex items-center justify-center mx-auto mb-8 float shadow-2xl"
-                 style={{background: 'var(--gradient-primary)'}}>
-              <Palette className="h-12 w-12 text-white" />
-            </div>
-            
-            {/* Main Heading */}
-            <h2 className="text-5xl md:text-6xl font-bold mb-6 leading-tight">
-              <span className="bg-gradient-to-r from-primary-500 to-secondary-500 bg-clip-text text-transparent">
+      <main>
+        <section className="section py-20">
+          <div className="container">
+            <div className="text-center max-w-4xl mx-auto animate-fade-in">
+              <div className="icon-container purple mx-auto mb-8" style={{width: '4rem', height: '4rem'}}>
+                <Palette style={{width: '2rem', height: '2rem'}} />
+              </div>
+              
+              <h2 className="text-5xl font-bold mb-6 bg-gradient-to-r from-pink-500 via-purple-500 to-blue-500 bg-clip-text text-transparent">
                 Daily Drawing
-              </span>
-              <br />
-              <span className="bg-gradient-to-r from-secondary-500 to-accent-500 bg-clip-text text-transparent">
+                <br />
                 Adventures
-              </span>
-            </h2>
-            
-            {/* Subtitle */}
-            <p className="text-xl text-gray-600 mb-12 max-w-2xl mx-auto leading-relaxed">
-              A safe, creative space for young artists to explore, create, and share artwork through daily challenges
-            </p>
-            
-            {/* Action Buttons */}
-            <div className="flex flex-col sm:flex-row gap-4 justify-center mb-16">
-              <Link href="/auth/child">
-                <button className="text-white font-bold text-lg px-10 py-4 rounded-2xl hover:scale-105 transition-all duration-300 shadow-lg"
-                        style={{background: 'var(--gradient-primary)'}}>
-                  <span className="flex items-center gap-2">
-                    <Sparkles className="h-5 w-5" />
-                    Start Creating
-                    <span>🎨</span>
-                  </span>
-                </button>
-              </Link>
-              <Link href="/auth/parent">
-                <button className="bg-white border-2 border-blue-300 text-blue-700 font-bold text-lg px-10 py-4 rounded-2xl hover:bg-blue-50 hover:scale-105 transition-all duration-300 shadow-lg">
-                  <span className="flex items-center gap-2">
-                    <span>👨‍👩‍👧‍👦</span>
-                    Parent Dashboard
-                  </span>
-                </button>
-              </Link>
+              </h2>
+              
+              <p className="text-xl text-slate-600 mb-10 max-w-2xl mx-auto">
+                A safe, creative space for young artists to explore, create, and share artwork through daily challenges
+              </p>
+              
+              <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+                <Link href="/auth/child" className="btn btn-primary btn-large">
+                  <Sparkles />
+                  Start Creating
+                </Link>
+                <Link href="/auth/parent" className="btn btn-secondary btn-large">
+                  Parent Dashboard
+                </Link>
+              </div>
             </div>
           </div>
+        </section>
 
-          {/* App Features - Properly Spaced */}
-          <div className="grid md:grid-cols-3 gap-8 mb-16">
-            <div className="bg-white/70 backdrop-blur-sm rounded-2xl p-8 border border-primary-100 hover:shadow-lg transition-all duration-300 text-center">
-              <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-6"
-                   style={{background: 'var(--gradient-primary)'}}>
-                <Sparkles className="h-8 w-8 text-white" />
+        <section className="section bg-white/50">
+          <div className="container">
+            <div className="grid grid-3">
+              <div className="card text-center animate-fade-in">
+                <div className="icon-container mint mx-auto">
+                  <Sparkles />
+                </div>
+                <h3 className="mb-4">Daily Challenges</h3>
+                <p>Fresh, fun drawing prompts every day to spark creativity and imagination</p>
               </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-4">Daily Challenges</h3>
-              <p className="text-gray-600 leading-relaxed">Fresh, fun drawing prompts every day to spark creativity and imagination</p>
-            </div>
-            
-            <div className="bg-white/70 backdrop-blur-sm rounded-2xl p-8 border border-secondary-100 hover:shadow-lg transition-all duration-300 text-center">
-              <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-6"
-                   style={{background: 'var(--gradient-secondary)'}}>
-                <Palette className="h-8 w-8 text-white" />
+              
+              <div className="card text-center animate-fade-in" style={{animationDelay: '0.1s'}}>
+                <div className="icon-container blue mx-auto">
+                  <Shield />
+                </div>
+                <h3 className="mb-4">Safe Sharing</h3>
+                <p>Share artwork in a secure, parent-monitored environment designed for kids</p>
               </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-4">Safe Sharing</h3>
-              <p className="text-gray-600 leading-relaxed">Share artwork in a secure, parent-monitored environment designed for kids</p>
-            </div>
-            
-            <div className="bg-white/70 backdrop-blur-sm rounded-2xl p-8 border border-accent-100 hover:shadow-lg transition-all duration-300 text-center">
-              <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-6"
-                   style={{background: 'var(--gradient-accent)'}}>
-                <span className="text-2xl">🎨</span>
+              
+              <div className="card text-center animate-fade-in" style={{animationDelay: '0.2s'}}>
+                <div className="icon-container orange mx-auto">
+                  <Star />
+                </div>
+                <h3 className="mb-4">Creative Growth</h3>
+                <p>Track progress and celebrate artistic milestones with badges and achievements</p>
               </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-4">Creative Growth</h3>
-              <p className="text-gray-600 leading-relaxed">Track progress and celebrate artistic milestones with badges and achievements</p>
             </div>
           </div>
-          
-          {/* Security Message */}
-          <div className="text-center">
-            <div className="inline-block p-6 bg-gradient-to-r from-primary-50 to-secondary-50 rounded-2xl border border-primary-100">
-              <p className="text-lg font-semibold text-gray-700 mb-2">🛡️ Safe & Secure</p>
-              <p className="text-gray-600">Parents create accounts first, then set up supervised profiles for their children</p>
+        </section>
+        
+        <section className="section">
+          <div className="container">
+            <div className="card max-w-3xl mx-auto text-center bg-gradient-to-r from-pink-50 to-purple-50 border-2 border-pink-100">
+              <div className="icon-container peach mx-auto">
+                <Heart />
+              </div>
+              <h3 className="text-2xl font-bold mb-4 text-slate-700">Safe & Secure</h3>
+              <p className="text-lg text-slate-600">
+                Parents create accounts first, then set up supervised profiles for their children
+              </p>
             </div>
           </div>
-        </div>
+        </section>
       </main>
 
-      {/* Footer */}
-      <footer className="text-center py-8 text-gray-500">
-        <p>© 2025 DrawingBuddy</p>
+      <footer className="py-8 bg-slate-800 text-center">
+        <div className="container">
+          <p className="text-slate-400">© 2025 DrawingBuddy</p>
+        </div>
       </footer>
     </div>
   );

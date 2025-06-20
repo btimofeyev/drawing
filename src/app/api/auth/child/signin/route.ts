@@ -33,7 +33,17 @@ export async function POST(request: NextRequest) {
       }
     })
 
-    SessionManager.setChildSession(child.id, response)
+    // Set the child auth cookie that middleware expects
+    response.cookies.set('child_auth', JSON.stringify({
+      childId: child.id,
+      username: child.username,
+      timestamp: Date.now()
+    }), {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 60 * 60 * 24 * 7 // 7 days
+    })
     
     return response
   } catch (error) {

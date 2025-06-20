@@ -23,6 +23,8 @@ interface DailyChallenge {
   description: string
   difficulty: 'easy' | 'medium' | 'hard'
   emoji: string
+  date: string
+  isToday: boolean
 }
 
 interface Achievement {
@@ -33,55 +35,114 @@ interface Achievement {
   earned: boolean
   progress?: number
   total?: number
+  points: number
+  earnedAt?: string
 }
 
 interface UserStats {
   totalPosts: number
-  totalLikes: number
+  totalLikesReceived: number
+  totalLikesGiven: number
   currentStreak: number
+  bestStreak: number
   level: number
   points: number
+  lastPostDate?: string
+}
+
+interface Child {
+  id: string
+  username: string
+  name: string
+  ageGroup: 'kids' | 'tweens'
+}
+
+interface LeaderboardEntry {
+  rank: number
+  username: string
+  name: string
+  ageGroup: 'kids' | 'tweens'
+  count: number
+  isCurrentChild: boolean
+}
+
+interface Leaderboards {
+  weeklyUploads: LeaderboardEntry[]
+  weeklyLikes: LeaderboardEntry[]
+  currentStreaks: LeaderboardEntry[]
 }
 
 export default function ChildHomePage() {
   const [dailyChallenge, setDailyChallenge] = useState<DailyChallenge | null>(null)
   const [achievements, setAchievements] = useState<Achievement[]>([])
   const [userStats, setUserStats] = useState<UserStats | null>(null)
-  const [username, setUsername] = useState('')
+  const [child, setChild] = useState<Child | null>(null)
+  const [leaderboards, setLeaderboards] = useState<Leaderboards | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState('')
 
   useEffect(() => {
-    // Mock data - in real app this would come from API
-    setDailyChallenge({
-      id: '1',
-      title: 'Draw Your Dream Pet',
-      description: 'Create an artwork of your perfect imaginary pet! It can be magical, colorful, or totally unique.',
-      difficulty: 'easy',
-      emoji: '🐾'
-    })
-
-    setAchievements([
-      { id: '1', name: 'First Drawing', icon: '🎨', description: 'Upload your first artwork', earned: true },
-      { id: '2', name: 'Social Butterfly', icon: '👍', description: 'Give 10 likes', earned: true },
-      { id: '3', name: 'Popular Artist', icon: '⭐', description: 'Get 25 likes', earned: false, progress: 12, total: 25 },
-      { id: '4', name: 'Daily Creator', icon: '🔥', description: '7 day streak', earned: false, progress: 3, total: 7 },
-    ])
-
-    setUserStats({
-      totalPosts: 8,
-      totalLikes: 42,
-      currentStreak: 3,
-      level: 2,
-      points: 150
-    })
-
-    setUsername('coolartist123')
-    setIsLoading(false)
+    fetchAllData()
   }, [])
 
-  const handleSignOut = () => {
-    // In real app, call API to sign out
-    window.location.href = '/'
+  const fetchAllData = async () => {
+    try {
+      setIsLoading(true)
+      setError('')
+
+      // Fetch all data in parallel
+      const [promptRes, statsRes, achievementsRes, leaderboardsRes] = await Promise.all([
+        fetch('/api/prompts/daily'),
+        fetch('/api/child/stats'),
+        fetch('/api/child/achievements'),
+        fetch('/api/leaderboards/weekly')
+      ])
+
+      // Handle daily prompt
+      if (promptRes.ok) {
+        const promptData = await promptRes.json()
+        setDailyChallenge(promptData.prompt)
+      }
+
+      // Handle stats
+      if (statsRes.ok) {
+        const statsData = await statsRes.json()
+        setUserStats(statsData.stats)
+        setChild(statsData.child)
+      }
+
+      // Handle achievements
+      if (achievementsRes.ok) {
+        const achievementsData = await achievementsRes.json()
+        setAchievements(achievementsData.achievements)
+      }
+
+      // Handle leaderboards
+      if (leaderboardsRes.ok) {
+        const leaderboardsData = await leaderboardsRes.json()
+        setLeaderboards(leaderboardsData.leaderboards)
+      }
+
+      // If any requests failed, show error
+      if (!promptRes.ok || !statsRes.ok || !achievementsRes.ok || !leaderboardsRes.ok) {
+        setError('Some data could not be loaded')
+      }
+    } catch (error) {
+      console.error('Failed to load data:', error)
+      setError('Failed to load dashboard data')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleSignOut = async () => {
+    try {
+      await fetch('/api/auth/child/signout', { method: 'POST' })
+    } catch (error) {
+      console.error('Sign out failed:', error)
+    } finally {
+      window.location.href = '/'
+    }
   }
 
   if (isLoading) {
@@ -111,14 +172,19 @@ export default function ChildHomePage() {
               </div>
               <div>
                 <h1 className="text-xl font-bold text-gray-900">DrawingBuddy</h1>
-                <p className="text-sm text-primary-600">Welcome back, {username}! 🎨</p>
+                <p className="text-sm text-primary-600">Welcome back, {child?.name || 'Artist'}! 🎨</p>
               </div>
             </div>
             
             <div className="flex items-center gap-4">
+              {error && (
+                <div className="text-sm text-red-600 bg-red-50 px-3 py-1 rounded-full">
+                  {error}
+                </div>
+              )}
               <div className="flex items-center gap-3 px-4 py-2 bg-accent-100 rounded-full">
                 <Star className="h-5 w-5 text-accent-600" />
-                <span className="font-bold text-accent-700">{userStats?.points} points</span>
+                <span className="font-bold text-accent-700">{userStats?.points || 0} points</span>
               </div>
               <button
                 onClick={handleSignOut}
@@ -232,12 +298,12 @@ export default function ChildHomePage() {
                 
                 <div className="grid grid-cols-2 gap-3">
                   <div className="bg-primary-50 rounded-xl p-3 text-center">
-                    <div className="text-lg font-bold text-primary-700">{userStats?.totalPosts}</div>
+                    <div className="text-lg font-bold text-primary-700">{userStats?.totalPosts || 0}</div>
                     <div className="text-xs text-primary-600">Artworks</div>
                   </div>
                   <div className="bg-secondary-50 rounded-xl p-3 text-center">
-                    <div className="text-lg font-bold text-secondary-700">{userStats?.totalLikes}</div>
-                    <div className="text-xs text-secondary-600">Likes</div>
+                    <div className="text-lg font-bold text-secondary-700">{userStats?.totalLikesReceived || 0}</div>
+                    <div className="text-xs text-secondary-600">Likes Received</div>
                   </div>
                 </div>
               </div>
@@ -297,11 +363,14 @@ export default function ChildHomePage() {
                   <div className={`text-4xl mb-3 ${achievement.earned ? 'grayscale-0' : 'grayscale'}`}>
                     {achievement.icon}
                   </div>
-                  <h4 className={`font-bold mb-2 ${
+                  <h4 className={`font-bold mb-1 ${
                     achievement.earned ? 'text-green-700' : 'text-gray-700'
                   }`}>
                     {achievement.name}
                   </h4>
+                  <p className="text-xs text-gray-500 mb-2">
+                    {achievement.points} points
+                  </p>
                   <p className="text-sm text-gray-600 mb-3">
                     {achievement.description}
                   </p>
@@ -330,6 +399,102 @@ export default function ChildHomePage() {
             ))}
           </div>
         </div>
+
+        {/* Weekly Leaderboards */}
+        {leaderboards && (
+          <div className="mt-12 fade-in">
+            <div className="flex items-center gap-3 mb-8">
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center"
+                   style={{background: 'var(--gradient-accent)'}}>
+                <TrendingUp className="h-6 w-6 text-white" />
+              </div>
+              <div>
+                <h3 className="text-2xl font-bold text-gray-900">Weekly Leaderboards</h3>
+                <p className="text-gray-600">See how you stack up with other artists this week!</p>
+              </div>
+            </div>
+
+            <div className="grid lg:grid-cols-3 gap-8">
+              {/* Weekly Uploads */}
+              <div className="bg-white rounded-3xl p-6 shadow-xl border border-primary-100">
+                <div className="flex items-center gap-2 mb-4">
+                  <Camera className="h-5 w-5 text-primary-600" />
+                  <h4 className="font-bold text-gray-900">Most Uploads</h4>
+                </div>
+                <div className="space-y-3">
+                  {leaderboards.weeklyUploads.slice(0, 5).map((entry) => (
+                    <div key={`uploads-${entry.rank}`} className={`flex items-center justify-between p-2 rounded-xl ${
+                      entry.isCurrentChild ? 'bg-primary-50 border border-primary-200' : 'hover:bg-gray-50'
+                    }`}>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-bold text-gray-500">#{entry.rank}</span>
+                        <span className={`font-medium ${entry.isCurrentChild ? 'text-primary-700' : 'text-gray-700'}`}>
+                          {entry.isCurrentChild ? 'You' : entry.name.split(' ')[0]}
+                        </span>
+                      </div>
+                      <span className="font-bold text-primary-600">{entry.count}</span>
+                    </div>
+                  ))}
+                  {leaderboards.weeklyUploads.length === 0 && (
+                    <p className="text-gray-500 text-center py-4">No uploads this week yet!</p>
+                  )}
+                </div>
+              </div>
+
+              {/* Weekly Likes */}
+              <div className="bg-white rounded-3xl p-6 shadow-xl border border-secondary-100">
+                <div className="flex items-center gap-2 mb-4">
+                  <Heart className="h-5 w-5 text-secondary-600" />
+                  <h4 className="font-bold text-gray-900">Most Liked</h4>
+                </div>
+                <div className="space-y-3">
+                  {leaderboards.weeklyLikes.slice(0, 5).map((entry) => (
+                    <div key={`likes-${entry.rank}`} className={`flex items-center justify-between p-2 rounded-xl ${
+                      entry.isCurrentChild ? 'bg-secondary-50 border border-secondary-200' : 'hover:bg-gray-50'
+                    }`}>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-bold text-gray-500">#{entry.rank}</span>
+                        <span className={`font-medium ${entry.isCurrentChild ? 'text-secondary-700' : 'text-gray-700'}`}>
+                          {entry.isCurrentChild ? 'You' : entry.name.split(' ')[0]}
+                        </span>
+                      </div>
+                      <span className="font-bold text-secondary-600">{entry.count} ❤️</span>
+                    </div>
+                  ))}
+                  {leaderboards.weeklyLikes.length === 0 && (
+                    <p className="text-gray-500 text-center py-4">No likes this week yet!</p>
+                  )}
+                </div>
+              </div>
+
+              {/* Current Streaks */}
+              <div className="bg-white rounded-3xl p-6 shadow-xl border border-accent-100">
+                <div className="flex items-center gap-2 mb-4">
+                  <TrendingUp className="h-5 w-5 text-accent-600" />
+                  <h4 className="font-bold text-gray-900">Longest Streaks</h4>
+                </div>
+                <div className="space-y-3">
+                  {leaderboards.currentStreaks.slice(0, 5).map((entry) => (
+                    <div key={`streaks-${entry.rank}`} className={`flex items-center justify-between p-2 rounded-xl ${
+                      entry.isCurrentChild ? 'bg-accent-50 border border-accent-200' : 'hover:bg-gray-50'
+                    }`}>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-bold text-gray-500">#{entry.rank}</span>
+                        <span className={`font-medium ${entry.isCurrentChild ? 'text-accent-700' : 'text-gray-700'}`}>
+                          {entry.isCurrentChild ? 'You' : entry.name.split(' ')[0]}
+                        </span>
+                      </div>
+                      <span className="font-bold text-accent-600">{entry.count} 🔥</span>
+                    </div>
+                  ))}
+                  {leaderboards.currentStreaks.length === 0 && (
+                    <p className="text-gray-500 text-center py-4">No active streaks yet!</p>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Quick Actions */}
         <div className="mt-12 grid md:grid-cols-3 gap-6 fade-in">

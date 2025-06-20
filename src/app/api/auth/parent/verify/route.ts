@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       success: true,
       user: {
         id: data.user.id,
@@ -41,6 +41,20 @@ export async function POST(request: NextRequest) {
       },
       session: data.session
     })
+
+    // Set the parent auth cookie that middleware expects
+    response.cookies.set('parent_auth', JSON.stringify({
+      userId: data.user.id,
+      email: data.user.email,
+      timestamp: Date.now()
+    }), {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 60 * 60 * 24 * 7 // 7 days
+    })
+
+    return response
   } catch (error) {
     console.error('Parent verify error:', error)
     return NextResponse.json(

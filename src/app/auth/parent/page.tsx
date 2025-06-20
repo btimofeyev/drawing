@@ -53,13 +53,27 @@ export default function ParentAuthPage() {
       })
 
       const data = await response.json()
+      console.log('Verify response:', { status: response.status, data })
 
-      if (data.success) {
-        router.push('/parent')
+      if (response.ok && data.success) {
+        console.log('Success! Redirecting to /parent')
+        // Try multiple redirect methods
+        try {
+          router.push('/parent')
+          // Fallback to window.location if router.push fails
+          setTimeout(() => {
+            window.location.href = '/parent'
+          }, 100)
+        } catch (error) {
+          console.error('Router push failed:', error)
+          window.location.href = '/parent'
+        }
       } else {
-        setMessage('Invalid code. Please try again.')
+        console.log('Verification failed:', data)
+        setMessage(data.error || 'Invalid code. Please try again.')
       }
     } catch (error) {
+      console.error('Verification error:', error)
       setMessage('Something went wrong. Please try again.')
     } finally {
       setIsLoading(false)

@@ -176,6 +176,35 @@ export class ChildAuth {
   }
 }
 
+// Child Session Utilities
+export class ChildSession {
+  static getCurrentChildFromRequest(request: Request): { childId: string } | null {
+    try {
+      // Import cookies function dynamically to avoid SSR issues
+      const { cookies } = require('next/headers')
+      const cookieStore = cookies()
+      const authCookie = cookieStore.get('child_auth')
+      
+      if (!authCookie?.value) {
+        return null
+      }
+
+      const authData = JSON.parse(authCookie.value)
+      return { childId: authData.childId }
+    } catch (error) {
+      console.error('Failed to parse child auth cookie:', error)
+      return null
+    }
+  }
+
+  static async getCurrentChild(request: Request): Promise<ChildProfile | null> {
+    const session = this.getCurrentChildFromRequest(request)
+    if (!session) return null
+
+    return await ChildAuth.getChildProfile(session.childId)
+  }
+}
+
 // Session Management
 export class SessionManager {
   static CHILD_SESSION_COOKIE = 'child_session'
