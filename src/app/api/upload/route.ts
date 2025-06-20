@@ -142,7 +142,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate prompt if provided (not required for free draw)
-    let validPromptId = promptId
+    let validPromptId: string | null = promptId
     if (targetTimeSlot !== 'free_draw') {
       if (!promptId) {
         return NextResponse.json(

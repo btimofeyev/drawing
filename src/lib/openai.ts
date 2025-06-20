@@ -209,7 +209,7 @@ ${previousPrompts?.length ? `<avoid_prompts>${previousPrompts.join(', ')}</avoid
 # Examples
 
 <example_request>
-Age: kids, Difficulty: easy, Time: morning
+Age: kids, Difficulty: easy, Time: daily_1
 </example_request>
 
 <example_response>
@@ -219,12 +219,12 @@ Age: kids, Difficulty: easy, Time: morning
   "emoji": "🌅",
   "difficulty": "easy",
   "ageGroup": "kids",
-  "timeSlot": "morning"
+  "timeSlot": "daily_1"
 }
 </example_response>
 
 <example_request>
-Age: tweens, Difficulty: medium, Time: afternoon
+Age: tweens, Difficulty: medium, Time: daily_2
 </example_request>
 
 <example_response>
@@ -234,12 +234,12 @@ Age: tweens, Difficulty: medium, Time: afternoon
   "emoji": "🏖️",
   "difficulty": "medium",
   "ageGroup": "tweens",
-  "timeSlot": "afternoon"
+  "timeSlot": "daily_2"
 }
 </example_response>
 
 <example_request>
-Age: kids, Difficulty: easy, Time: evening
+Age: kids, Difficulty: easy, Time: free_draw
 </example_request>
 
 <example_response>
@@ -249,7 +249,7 @@ Age: kids, Difficulty: easy, Time: evening
   "emoji": "🐕",
   "difficulty": "easy",
   "ageGroup": "kids",
-  "timeSlot": "evening"
+  "timeSlot": "free_draw"
 }
 </example_response>`
 
@@ -423,7 +423,7 @@ Age: kids, Difficulty: easy, Time: evening
 
   // Generate 3 prompts for all time slots for a specific day
   static async generateDailySlots(ageGroup: 'kids' | 'tweens', previousPrompts?: string[]): Promise<GeneratedPrompt[]> {
-    const slots: TimeSlot[] = ['morning', 'afternoon', 'evening']
+    const slots: TimeSlot[] = ['daily_1', 'daily_2', 'free_draw']
     const prompts: GeneratedPrompt[] = []
     
     for (const timeSlot of slots) {

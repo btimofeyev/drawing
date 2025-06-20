@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { PromptGenerator } from '@/lib/openai'
+import { PromptGenerator, TimeSlot } from '@/lib/openai'
 import { supabaseAdmin } from '@/lib/supabase'
 
 export async function POST(request: NextRequest) {
@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
       }
 
       // Generate prompts for each time slot
-      const timeSlots: ('morning' | 'afternoon' | 'evening')[] = ['morning', 'afternoon', 'evening']
+      const timeSlots: TimeSlot[] = ['daily_1', 'daily_2', 'free_draw']
       
       for (const timeSlot of timeSlots) {
         try {

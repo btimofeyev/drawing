@@ -55,9 +55,9 @@ export async function POST(request: NextRequest) {
     }
 
     // Require time slot to be explicitly provided
-    if (!timeSlot || !['morning', 'afternoon', 'evening'].includes(timeSlot)) {
+    if (!timeSlot || !['daily_1', 'daily_2', 'free_draw'].includes(timeSlot)) {
       return NextResponse.json(
-        { error: 'Time slot is required. Must be morning, afternoon, or evening' },
+        { error: 'Time slot is required. Must be daily_1, daily_2, or free_draw' },
         { status: 400 }
       )
     }
@@ -216,7 +216,7 @@ export async function GET(request: NextRequest) {
 
     // Get query parameters
     const { searchParams } = new URL(request.url)
-    const timeSlot = searchParams.get('timeSlot') as 'morning' | 'afternoon' | 'evening' | null
+    const timeSlot = searchParams.get('timeSlot') as 'daily_1' | 'daily_2' | 'free_draw' | null
     const date = searchParams.get('date')
     const limit = parseInt(searchParams.get('limit') || '10')
 
