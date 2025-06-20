@@ -59,7 +59,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    if (!timeSlot || !['morning', 'afternoon', 'evening'].includes(timeSlot)) {
+    if (!timeSlot || !['daily_1', 'daily_2', 'free_draw'].includes(timeSlot)) {
       return NextResponse.json(
         { error: 'Valid time slot is required' },
         { status: 400 }
@@ -107,37 +107,51 @@ export async function POST(request: NextRequest) {
     }
 
     const today = new Date().toISOString().split('T')[0]
-    const targetTimeSlot = timeSlot as 'morning' | 'afternoon' | 'evening'
+    const targetTimeSlot = timeSlot as 'daily_1' | 'daily_2' | 'free_draw'
 
-    // Check if child can upload to this time slot
-    const { data: canUpload, error: canUploadError } = await supabaseAdmin
-      .rpc('can_child_upload_to_slot', {
-        p_child_id: childId,
-        p_date: today,
-        p_time_slot: targetTimeSlot
-      })
+    // For free draw, we don't have a database function yet, so we'll check manually
+    let canUpload = true
+    if (targetTimeSlot !== 'free_draw') {
+      // Check if child can upload to this time slot (only for prompted challenges)
+      const { data: uploadCheck, error: canUploadError } = await supabaseAdmin
+        .from('daily_upload_limits')
+        .select('uploads_count')
+        .eq('child_id', childId)
+        .eq('date', today)
+        .eq('time_slot', targetTimeSlot)
+        .maybeSingle()
 
-    if (canUploadError) {
-      console.error('Error checking upload permissions:', canUploadError)
-      return NextResponse.json(
-        { error: 'Failed to validate upload permissions' },
-        { status: 500 }
-      )
+      if (canUploadError) {
+        console.error('Error checking upload permissions:', canUploadError)
+        return NextResponse.json(
+          { error: 'Failed to validate upload permissions' },
+          { status: 500 }
+        )
+      }
+
+      canUpload = !uploadCheck || uploadCheck.uploads_count === 0
     }
 
     if (!canUpload) {
       return NextResponse.json(
         { 
-          error: `You've already uploaded artwork for the ${targetTimeSlot} slot today. Try a different time slot!`,
+          error: `You've already uploaded artwork for the ${targetTimeSlot === 'daily_1' ? 'Challenge 1' : 'Challenge 2'} today. Try a different challenge!`,
           timeSlot: targetTimeSlot
         },
         { status: 429 }
       )
     }
 
-    // Validate prompt if provided
+    // Validate prompt if provided (not required for free draw)
     let validPromptId = promptId
-    if (promptId) {
+    if (targetTimeSlot !== 'free_draw') {
+      if (!promptId) {
+        return NextResponse.json(
+          { error: 'Prompt ID is required for challenge uploads' },
+          { status: 400 }
+        )
+      }
+
       const { data: prompt, error: promptError } = await supabaseAdmin
         .from('prompts')
         .select('id, date, age_group, time_slot')
@@ -146,23 +160,35 @@ export async function POST(request: NextRequest) {
 
       if (promptError || !prompt) {
         console.warn('Invalid prompt ID provided:', promptId)
-        validPromptId = ''
-      } else if (prompt.age_group !== child.age_group) {
         return NextResponse.json(
-          { error: 'This prompt is not for your age group' },
-          { status: 400 }
-        )
-      } else if (prompt.date !== today) {
-        return NextResponse.json(
-          { error: 'This prompt is not for today' },
-          { status: 400 }
-        )
-      } else if (prompt.time_slot !== targetTimeSlot) {
-        return NextResponse.json(
-          { error: `This prompt is for ${prompt.time_slot}, not ${targetTimeSlot}` },
+          { error: 'Invalid challenge selected' },
           { status: 400 }
         )
       }
+      
+      if (prompt.age_group !== child.age_group) {
+        return NextResponse.json(
+          { error: 'This challenge is not for your age group' },
+          { status: 400 }
+        )
+      }
+      
+      if (prompt.date !== today) {
+        return NextResponse.json(
+          { error: 'This challenge is not for today' },
+          { status: 400 }
+        )
+      }
+      
+      if (prompt.time_slot !== targetTimeSlot) {
+        return NextResponse.json(
+          { error: `This challenge is for ${prompt.time_slot}, not ${targetTimeSlot}` },
+          { status: 400 }
+        )
+      }
+    } else {
+      // For free draw, set promptId to null
+      validPromptId = null
     }
 
     // Generate unique filename
@@ -269,18 +295,24 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Record the upload in daily_upload_limits
-    const { error: recordError } = await supabaseAdmin
-      .rpc('record_upload_to_slot', {
-        p_child_id: childId,
-        p_post_id: newPost.id,
-        p_date: today,
-        p_time_slot: targetTimeSlot
-      })
+    // Record the upload in daily_upload_limits (only for prompted challenges)
+    if (targetTimeSlot !== 'free_draw') {
+      const { error: recordError } = await supabaseAdmin
+        .from('daily_upload_limits')
+        .upsert({
+          child_id: childId,
+          date: today,
+          time_slot: targetTimeSlot,
+          uploads_count: 1,
+          last_upload_at: new Date().toISOString()
+        }, {
+          onConflict: 'child_id,date,time_slot'
+        })
 
-    if (recordError) {
-      console.error('Failed to record upload:', recordError)
-      // Don't fail the request, just log the error
+      if (recordError) {
+        console.error('Failed to record upload:', recordError)
+        // Don't fail the request, just log the error
+      }
     }
 
     // Update user stats

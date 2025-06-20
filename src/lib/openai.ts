@@ -5,7 +5,7 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 })
 
-export type TimeSlot = 'morning' | 'afternoon' | 'evening'
+export type TimeSlot = 'daily_1' | 'daily_2' | 'free_draw'
 
 export interface PromptRequest {
   ageGroup: 'kids' | 'tweens'
@@ -120,23 +120,23 @@ JSON format:
   // Get configuration for each time slot
   static getSlotConfig(timeSlot: TimeSlot) {
     const configs = {
-      morning: {
+      daily_1: {
         difficulty: 'easy' as const,
-        theme: 'Dream breakfasts, perfect morning routines, beautiful sunrise scenes, ideal pets, amazing nature waking up, your perfect start to the day',
-        color: '#FF6B6B', // Warm morning red
-        description: 'Start your day with creativity!'
+        theme: 'Fun adventures, amazing animals, dream vacations, favorite foods, happy families, magical places, your best day ever',
+        color: '#FF6B6B', // Warm red
+        description: 'First daily challenge - easy and fun!'
       },
-      afternoon: {
+      daily_2: {
         difficulty: 'medium' as const, 
-        theme: 'Dream adventures, amazing outdoor places, perfect beach days, ideal sports moments, fun with friends, exploring incredible places',
+        theme: 'Creative inventions, future dreams, friendship adventures, exploring new places, solving problems, helping others, amazing discoveries',
         color: '#4ECDC4', // Energetic teal
-        description: 'Time for adventure and exploration!'
+        description: 'Second daily challenge - more detailed!'
       },
-      evening: {
-        difficulty: 'hard' as const,
-        theme: 'Cozy dream homes, perfect family moments, amazing indoor spaces, your ideal room, beautiful nighttime scenes, peaceful evening activities',
-        color: '#45B7D1', // Calm evening blue
-        description: 'Wind down with thoughtful creativity!'
+      free_draw: {
+        difficulty: 'easy' as const,
+        theme: 'Draw anything your heart desires! Express yourself freely with no limits.',
+        color: '#45B7D1', // Creative blue
+        description: 'Free draw - unleash your creativity!'
       }
     }
     
@@ -298,7 +298,7 @@ Age: kids, Difficulty: easy, Time: evening
 
     // Time slot specific fallback prompts
     const slotFallbacks = {
-      morning: {
+      daily_1: {
         kids: {
           easy: { title: "Sunny Breakfast Party", description: "Draw your favorite breakfast foods having a morning party! What would pancakes, eggs, and fruit do when they wake up?", emoji: "☀️" },
           medium: { title: "Morning Animal Friends", description: "Create a scene of forest animals starting their morning! Show a rabbit brushing teeth or a bird stretching wings.", emoji: "🐰" },
@@ -310,7 +310,7 @@ Age: kids, Difficulty: easy, Time: evening
           hard: { title: "New Day Symbolism", description: "Create artwork that symbolizes new beginnings and fresh starts using symbols and personal meaning.", emoji: "✨" }
         }
       },
-      afternoon: {
+      daily_2: {
         kids: {
           easy: { title: "Playground Adventure", description: "Draw yourself playing at your favorite playground! Include swings, slides, and maybe some new friends.", emoji: "🛝" },
           medium: { title: "Outdoor Explorer", description: "Create an adventure scene where you're exploring a forest or beach! What interesting things do you discover?", emoji: "🏕️" },
@@ -322,7 +322,7 @@ Age: kids, Difficulty: easy, Time: evening
           hard: { title: "Dynamic Movement", description: "Capture movement and energy! Draw dancers, athletes, or any scene full of action and motion.", emoji: "💨" }
         }
       },
-      evening: {
+      free_draw: {
         kids: {
           easy: { title: "Cozy Reading Corner", description: "Draw your perfect cozy spot for reading books! Include soft pillows, warm blankets, and maybe a pet.", emoji: "📚" },
           medium: { title: "Dream Castle", description: "Design a magical castle that exists only in dreams! What rooms would it have? Make it sparkle!", emoji: "🏰" },
@@ -461,24 +461,24 @@ Age: kids, Difficulty: easy, Time: evening
     return prompts
   }
 
-  // Generate 3 random fun prompts - not tied to time slots at all
+  // Generate 2 random fun prompts - not tied to time slots at all
   static async generateMVPCommunityPrompts(ageGroup: 'kids' | 'tweens'): Promise<(GeneratedPrompt & { communityTitle: string })[]> {
-    const timeSlots: TimeSlot[] = ['morning', 'afternoon', 'evening']
+    const timeSlots: TimeSlot[] = ['daily_1', 'daily_2']
 
     try {
       const ageInstruction = ageGroup === 'kids'
-        ? 'You are a playful and inspiring assistant that gives three creative daily drawing challenge prompts to kids aged 6–10.'
-        : 'You are a creative assistant that gives three engaging daily drawing challenge prompts to tweens aged 11–16.'
+        ? 'You are a playful and inspiring assistant that gives two creative daily drawing challenge prompts to kids aged 6–10.'
+        : 'You are a creative assistant that gives two engaging daily drawing challenge prompts to tweens aged 11–16.'
 
       const themeGuidelines = ageGroup === 'kids'
-        ? `Each day, generate **three different prompts** that a child might be excited to draw. The prompts can include any of these themes:
+        ? `Each day, generate **two different prompts** that a child might be excited to draw. The prompts can include any of these themes:
 - Nature (animals, plants, oceans, seasons)
 - Imagination (fantasy, magic, silly inventions, made-up creatures)
 - Real Life (family, home, school, meals, pets)
 - Emotions (what makes them happy, scared, proud)
 - Favorites (favorite toy, food, holiday, person)
 - Memories or dreams (funny dream, favorite trip, yesterday's sunset)`
-        : `Each day, generate **three different prompts** that a tween might find engaging. The prompts can include themes like:
+        : `Each day, generate **two different prompts** that a tween might find engaging. The prompts can include themes like:
 - Nature and science (animals, space, weather phenomena)
 - Creative imagination (inventions, fantasy worlds, character design)
 - Real life experiences (friendships, hobbies, future dreams)
@@ -498,13 +498,13 @@ ${themeGuidelines}
 Guidelines:
 - Prompts must be age-appropriate, friendly, and creative
 - Use simple, playful language that a ${ageGroup === 'kids' ? '6 to 10 year old' : '11 to 16 year old'} can understand and get excited about
-- Do **not** categorize the prompts — just give three unique ones per day
+- Do **not** categorize the prompts — just give two unique ones per day
 - Avoid anything dark, violent, or scary
 - Keep each prompt short and imaginative
-- Make sure all three prompts feel different from each other
-- Create prompts with varying complexity - some simple, some more detailed
+- Make sure both prompts feel different from each other
+- Create prompts with varying complexity - first one easy, second one medium
 
-Return ONLY a JSON array with 3 prompts, varying the difficulty (easy/medium/hard):
+Return ONLY a JSON array with 2 prompts, first easy then medium difficulty:
 [
   {
     "title": "Title (max 6 words)",
@@ -518,7 +518,7 @@ Return ONLY a JSON array with 3 prompts, varying the difficulty (easy/medium/har
           },
           { 
             role: "user", 
-            content: "Generate 3 diverse drawing prompts for today. Make sure they're all different themes and exciting for kids to draw!"
+            content: "Generate 2 diverse drawing prompts for today. Make sure they're different themes and exciting for kids to draw!"
           }
         ],
         temperature: 1.0,
@@ -534,7 +534,7 @@ Return ONLY a JSON array with 3 prompts, varying the difficulty (easy/medium/har
       const promptsData = JSON.parse(response) as { prompts: (GeneratedPrompt & { communityTitle: string })[] } | (GeneratedPrompt & { communityTitle: string })[]
       const prompts = Array.isArray(promptsData) ? promptsData : promptsData.prompts
 
-      if (!prompts || prompts.length !== 3) {
+      if (!prompts || prompts.length !== 2) {
         throw new Error('Invalid prompts format from OpenAI')
       }
 
@@ -551,13 +551,13 @@ Return ONLY a JSON array with 3 prompts, varying the difficulty (easy/medium/har
       
       // Fallback to individual generation
       const prompts: (GeneratedPrompt & { communityTitle: string })[] = []
-      const themes = ['nature', 'imagination', 'real-life']
+      const themes = ['nature', 'imagination']
       
-      for (let i = 0; i < 3; i++) {
+      for (let i = 0; i < 2; i++) {
         try {
           const prompt = await this.generateSharedDailyPrompt({
             ageGroup,
-            difficulty: 'easy',
+            difficulty: i === 0 ? 'easy' : 'medium',
             previousPrompts: prompts.map(p => p.title),
             theme: themes[i]
           })
@@ -582,7 +582,7 @@ Return ONLY a JSON array with 3 prompts, varying the difficulty (easy/medium/har
   ): GeneratedPrompt & { communityTitle: string } {
     const diverseFallbacks = {
       kids: {
-        morning: [
+        daily_1: [
           {
             title: "Busy Morning Animals",
             description: "Draw animals getting ready for their day! Show a bear brushing teeth, a bird doing stretches, or a rabbit getting dressed. What funny morning routine would your favorite animal have?",
@@ -602,7 +602,7 @@ Return ONLY a JSON array with 3 prompts, varying the difficulty (easy/medium/har
             emoji: "🎒"
           }
         ],
-        afternoon: [
+        daily_2: [
           {
             title: "Community Helper Heroes",
             description: "Draw yourself as a community helper! You could be a firefighter, teacher, doctor, or inventor. Show yourself helping others in your neighborhood. What special job would you love to have?",
@@ -622,7 +622,7 @@ Return ONLY a JSON array with 3 prompts, varying the difficulty (easy/medium/har
             emoji: "🤝"
           }
         ],
-        evening: [
+        free_draw: [
           {
             title: "Family Dinner Stories",
             description: "Draw your family having dinner together and sharing stories! What delicious food are you eating? What funny stories are being told? Show your special family mealtime!",
@@ -644,7 +644,7 @@ Return ONLY a JSON array with 3 prompts, varying the difficulty (easy/medium/har
         ]
       },
       tweens: {
-        morning: [
+        daily_1: [
           {
             title: "Personal Morning Ritual",
             description: "Draw your ideal morning routine that gets you excited for the day! Include activities, music, food, or practices that energize and inspire you. What makes your morning perfect?",
@@ -658,7 +658,7 @@ Return ONLY a JSON array with 3 prompts, varying the difficulty (easy/medium/har
             emoji: "🧠"
           }
         ],
-        afternoon: [
+        daily_2: [
           {
             title: "Creative Expression",
             description: "Draw yourself expressing your creativity in your favorite way! Whether it's art, music, writing, dance, or something unique to you. How do you share your inner creativity with the world?",
@@ -672,7 +672,7 @@ Return ONLY a JSON array with 3 prompts, varying the difficulty (easy/medium/har
             emoji: "🏘️"
           }
         ],
-        evening: [
+        free_draw: [
           {
             title: "Reflection and Growth",
             description: "Draw a peaceful scene that represents your personal growth or a meaningful moment of reflection. Show yourself processing the day, setting goals, or appreciating progress you've made.",

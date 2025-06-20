@@ -18,13 +18,13 @@ interface DailyChallenge {
   difficulty: 'easy' | 'medium' | 'hard'
   emoji: string
   date: string
-  timeSlot: 'morning' | 'afternoon' | 'evening'
+  timeSlot: 'daily_1' | 'daily_2' | 'free_draw'
   isToday: boolean
 }
 
 
 interface UploadStatus {
-  timeSlot: 'morning' | 'afternoon' | 'evening'
+  timeSlot: 'daily_1' | 'daily_2' | 'free_draw'
   canUpload: boolean
   hasUploaded: boolean
   uploadedAt: string | null
@@ -101,20 +101,20 @@ export default function ChildHomePage() {
   }
 
 
-  const getSlotIcon = (timeSlot: 'morning' | 'afternoon' | 'evening') => {
+  const getSlotIcon = (timeSlot: 'daily_1' | 'daily_2' | 'free_draw') => {
     switch (timeSlot) {
-      case 'morning': return '🌅'
-      case 'afternoon': return '☀️'
-      case 'evening': return '🌆'
+      case 'daily_1': return '🎯'
+      case 'daily_2': return '⭐'
+      case 'free_draw': return '🎨'
       default: return '✨'
     }
   }
 
-  const getSlotColor = (timeSlot: 'morning' | 'afternoon' | 'evening') => {
+  const getSlotColor = (timeSlot: 'daily_1' | 'daily_2' | 'free_draw') => {
     switch (timeSlot) {
-      case 'morning': return 'from-orange-400 to-yellow-500'
-      case 'afternoon': return 'from-blue-400 to-cyan-500'
-      case 'evening': return 'from-purple-400 to-pink-500'
+      case 'daily_1': return 'from-orange-400 to-yellow-500'
+      case 'daily_2': return 'from-blue-400 to-cyan-500'
+      case 'free_draw': return 'from-purple-400 to-pink-500'
       default: return 'from-gray-400 to-gray-500'
     }
   }
@@ -154,7 +154,7 @@ export default function ChildHomePage() {
               <span className="text-pink-400">Challenges</span>
             </h1>
             <p className="text-xl text-slate-600 max-w-2xl mx-auto text-center mb-6">
-              Three inspiring art challenges await you today! You can complete all three throughout the day.
+              Two daily challenges plus free draw await you today! Express your creativity however you want.
             </p>
             
             {/* Daily Progress */}
@@ -167,7 +167,7 @@ export default function ChildHomePage() {
                   </span>
                 </div>
                 <div className="flex gap-2 mb-3">
-                  {['morning', 'afternoon', 'evening'].map((timeSlot, index) => {
+                  {['daily_1', 'daily_2', 'free_draw'].map((timeSlot, index) => {
                     const status = uploadStatus.find(s => s.timeSlot === timeSlot)
                     const isCompleted = status?.hasUploaded || false
                     return (
@@ -175,9 +175,9 @@ export default function ChildHomePage() {
                         key={timeSlot}
                         className={`flex-1 h-3 rounded-full transition-all duration-300 ${
                           isCompleted 
-                            ? timeSlot === 'morning' 
+                            ? timeSlot === 'daily_1' 
                               ? 'bg-gradient-to-r from-orange-400 to-yellow-500'
-                              : timeSlot === 'afternoon'
+                              : timeSlot === 'daily_2'
                               ? 'bg-gradient-to-r from-blue-400 to-cyan-500' 
                               : 'bg-gradient-to-r from-purple-400 to-pink-500'
                             : 'bg-slate-200'
@@ -188,13 +188,13 @@ export default function ChildHomePage() {
                 </div>
                 <div className="flex justify-between text-xs text-slate-600 mb-2">
                   <span className="flex items-center gap-1">
-                    🌅 Morning
+                    🎯 Challenge 1
                   </span>
                   <span className="flex items-center gap-1">
-                    ☀️ Afternoon  
+                    ⭐ Challenge 2  
                   </span>
                   <span className="flex items-center gap-1">
-                    🌆 Evening
+                    🎨 Free Draw
                   </span>
                 </div>
                 <p className="text-sm text-slate-600 text-center">
@@ -210,22 +210,36 @@ export default function ChildHomePage() {
           {/* Today's Challenges */}
           <div className="text-center mb-8">
             <h2 className="text-3xl font-bold text-slate-800 mb-2">
-              🎨 Today's Art Challenges
+              🎨 Today's Art Adventures
             </h2>
             <p className="text-lg text-slate-600">
-              Three unique challenges for different times of day - complete them all!
+              Two guided challenges plus unlimited free drawing - express yourself however you want!
             </p>
           </div>
 
           {/* Time Slots Grid */}
           {dailyChallenges.length > 0 ? (
             <div className="grid lg:grid-cols-3 gap-8 mb-12">
-              {['morning', 'afternoon', 'evening'].map((timeSlot) => {
+              {['daily_1', 'daily_2', 'free_draw'].map((timeSlot) => {
                 const challenge = dailyChallenges.find(c => c.timeSlot === timeSlot)
                 const slotStatus = uploadStatus.find(s => s.timeSlot === timeSlot)
                 const hasUploadedToSlot = slotStatus?.hasUploaded || false
 
-                if (!challenge) return null
+                // For free draw, create a special challenge object
+                const effectiveChallenge = timeSlot === 'free_draw' 
+                  ? {
+                      id: 'free-draw',
+                      title: 'Free Draw',
+                      description: 'Draw anything your heart desires! No rules, no limits - just pure creativity. What are you inspired to create today?',
+                      difficulty: 'easy' as const,
+                      emoji: '🎨',
+                      date: new Date().toISOString().split('T')[0],
+                      timeSlot: 'free_draw' as const,
+                      isToday: true
+                    }
+                  : challenge
+
+                if (!effectiveChallenge) return null
 
                 return (
                   <div
@@ -237,17 +251,21 @@ export default function ChildHomePage() {
                     <div className={`bg-gradient-to-r ${getSlotColor(timeSlot as any)} p-6 rounded-t-3xl text-white`}>
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
-                          <span className="text-3xl">{challenge.emoji}</span>
+                          <span className="text-3xl">{effectiveChallenge.emoji}</span>
                           <div>
-                            <h3 className="text-xl font-bold">{challenge.title}</h3>
-                            <p className="text-sm opacity-90 capitalize">{timeSlot} Challenge</p>
+                            <h3 className="text-xl font-bold">{effectiveChallenge.title}</h3>
+                            <p className="text-sm opacity-90 capitalize">
+                              {timeSlot === 'daily_1' ? 'Challenge 1' : 
+                               timeSlot === 'daily_2' ? 'Challenge 2' : 
+                               'Free Draw'}
+                            </p>
                           </div>
                         </div>
                         <span className={`px-3 py-1 rounded-full text-xs font-bold bg-white/20 ${
-                          challenge.difficulty === 'easy' ? 'text-green-100' :
-                          challenge.difficulty === 'medium' ? 'text-yellow-100' : 'text-red-100'
+                          effectiveChallenge.difficulty === 'easy' ? 'text-green-100' :
+                          effectiveChallenge.difficulty === 'medium' ? 'text-yellow-100' : 'text-red-100'
                         }`}>
-                          {challenge.difficulty}
+                          {effectiveChallenge.difficulty}
                         </span>
                       </div>
                     </div>
@@ -255,7 +273,7 @@ export default function ChildHomePage() {
                     {/* Slot content */}
                     <div className="p-6 text-center">
                       <p className="text-slate-600 mb-6 leading-relaxed">
-                        {challenge.description}
+                        {effectiveChallenge.description}
                       </p>
 
                       {/* Upload status */}
@@ -308,7 +326,9 @@ export default function ChildHomePage() {
                             className="w-full btn btn-primary"
                           >
                             <Camera className="h-4 w-4" />
-                            Start {timeSlot} Challenge!
+                            Start {timeSlot === 'daily_1' ? 'Challenge 1' : 
+                                   timeSlot === 'daily_2' ? 'Challenge 2' : 
+                                   'Free Draw'}!
                             <Sparkles className="h-4 w-4" />
                           </Link>
                         ) : (
@@ -322,7 +342,9 @@ export default function ChildHomePage() {
                           className="w-full btn btn-secondary"
                         >
                           <Users className="h-4 w-4" />
-                          See {timeSlot} gallery
+                          See {timeSlot === 'daily_1' ? 'Challenge 1' : 
+                               timeSlot === 'daily_2' ? 'Challenge 2' : 
+                               'Free Draw'} gallery
                         </Link>
                       </div>
                     </div>
@@ -343,11 +365,11 @@ export default function ChildHomePage() {
           {/* Encouragement */}
           <div className="bg-gradient-to-br from-pink-50 to-purple-50 rounded-3xl p-8 border border-pink-200 flex flex-col items-center text-center">
             <h3 className="text-2xl font-bold text-slate-800 mb-3 text-center">
-              🎨 Three Daily Challenges!
+              🎨 Two Challenges + Free Draw!
             </h3>
             <p className="text-lg text-slate-600 max-w-2xl mx-auto text-center">
-              Morning, afternoon, and evening - each time brings a new creative challenge! 
-              Complete all three throughout the day to unlock your full artistic potential.
+              Two guided art challenges to inspire you, plus unlimited free drawing to express your unique creativity! 
+              Create whatever your heart desires.
             </p>
           </div>
         </div>

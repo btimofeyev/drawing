@@ -28,10 +28,10 @@ export async function GET(request: NextRequest) {
     const results = []
     const errors = []
 
-    // Generate 3 themed community prompts for each age group using the new MVP approach
+    // Generate 2 themed community prompts for each age group using the new MVP approach
     for (const ageGroup of ageGroups) {
       try {
-        // Generate the 3 themed community prompts
+        // Generate the 2 themed community prompts
         const communityPrompts = await PromptGenerator.generateMVPCommunityPrompts(ageGroup)
 
         for (const prompt of communityPrompts) {
@@ -126,7 +126,7 @@ export async function GET(request: NextRequest) {
       results,
       errors,
       summary: {
-        total: ageGroups.length * 3, // 3 time slots per age group
+        total: ageGroups.length * 2, // 2 time slots per age group
         created: results.filter(r => r.status === 'created').length,
         alreadyExists: results.filter(r => r.status === 'already_exists').length,
         failed: errors.length
@@ -159,10 +159,10 @@ export async function POST(request: NextRequest) {
     const ageGroups = ['kids', 'tweens'] as const
     const results = []
 
-    // Generate 3 themed community prompts for each age group using the new MVP approach
+    // Generate 2 themed community prompts for each age group using the new MVP approach
     for (const ageGroup of ageGroups) {
       try {
-        // Generate the 3 themed community prompts
+        // Generate the 2 themed community prompts
         const communityPrompts = await PromptGenerator.generateMVPCommunityPrompts(ageGroup)
 
         for (const prompt of communityPrompts) {

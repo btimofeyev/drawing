@@ -39,7 +39,7 @@ export async function GET(request: NextRequest) {
 
     // Get query parameters
     const { searchParams } = new URL(request.url)
-    const timeSlot = searchParams.get('slot') as 'morning' | 'afternoon' | 'evening' | null
+    const timeSlot = searchParams.get('slot') as 'daily_1' | 'daily_2' | 'free_draw' | null
     const getAllSlots = searchParams.get('all') === 'true'
 
     // Get today's date
@@ -59,7 +59,7 @@ export async function GET(request: NextRequest) {
       }
 
       // Generate missing prompts
-      const timeSlots: ('morning' | 'afternoon' | 'evening')[] = ['morning', 'afternoon', 'evening']
+      const timeSlots: ('daily_1' | 'daily_2')[] = ['daily_1', 'daily_2']
       const existingSlots = prompts?.map(p => p.time_slot) || []
       const missingSlots = timeSlots.filter(slot => !existingSlots.includes(slot))
 
@@ -111,11 +111,23 @@ export async function GET(request: NextRequest) {
       }
 
       // Sort by time slot order
-      const slotOrder = { morning: 0, afternoon: 1, evening: 2 }
+      const slotOrder = { daily_1: 0, daily_2: 1, free_draw: 2 }
       allPrompts.sort((a, b) => slotOrder[a.time_slot as keyof typeof slotOrder] - slotOrder[b.time_slot as keyof typeof slotOrder])
 
-      return NextResponse.json({
-        prompts: allPrompts.map(prompt => ({
+      // Add free_draw to the response
+      const freeDrawPrompt = {
+        id: 'free-draw',
+        title: 'Free Draw',
+        description: 'Draw anything your heart desires! No rules, no limits - just pure creativity. What are you inspired to create today?',
+        difficulty: 'easy' as const,
+        date: today,
+        timeSlot: 'free_draw' as const,
+        emoji: '🎨',
+        isToday: true
+      }
+
+      const allPromptsWithFreeraw = [
+        ...allPrompts.map(prompt => ({
           id: prompt.id,
           title: getSlotTitle(prompt.time_slot),
           description: prompt.prompt_text,
@@ -124,12 +136,33 @@ export async function GET(request: NextRequest) {
           timeSlot: prompt.time_slot,
           emoji: getSlotEmoji(prompt.time_slot),
           isToday: true
-        }))
+        })),
+        freeDrawPrompt
+      ]
+
+      return NextResponse.json({
+        prompts: allPromptsWithFreeraw
       })
     }
 
     // Get specific time slot or current time slot
     const targetSlot = timeSlot || getCurrentTimeSlot()
+
+    // Handle free_draw specially since it doesn't have database prompts
+    if (targetSlot === 'free_draw') {
+      return NextResponse.json({
+        prompt: {
+          id: 'free-draw',
+          title: 'Free Draw',
+          description: 'Draw anything your heart desires! No rules, no limits - just pure creativity. What are you inspired to create today?',
+          difficulty: 'easy',
+          date: today,
+          timeSlot: 'free_draw',
+          emoji: '🎨',
+          isToday: true
+        }
+      })
+    }
 
     // Fetch today's prompt for child's age group and time slot
     const { data: prompt, error } = await supabaseAdmin
@@ -250,49 +283,34 @@ export async function GET(request: NextRequest) {
   }
 }
 
-function getCurrentTimeSlot(): 'morning' | 'afternoon' | 'evening' {
-  // Get current UTC time and subtract 4 hours for EST equivalent
-  const now = new Date()
-  const utcHour = now.getUTCHours()
-  let hour = utcHour - 4
-  
-  // Handle negative hours (wrap around to previous day)
-  if (hour < 0) {
-    hour = hour + 24
-  }
-  
-  if (hour >= 6 && hour < 12) {
-    return 'morning'
-  } else if (hour >= 12 && hour < 18) {
-    return 'afternoon'
-  } else {
-    return 'evening'
-  }
+function getCurrentTimeSlot(): 'daily_1' | 'daily_2' | 'free_draw' {
+  // For the new system, we'll default to daily_1 since both challenges are available all day
+  return 'daily_1'
 }
 
-function getSlotTitle(timeSlot: 'morning' | 'afternoon' | 'evening'): string {
+function getSlotTitle(timeSlot: 'daily_1' | 'daily_2' | 'free_draw'): string {
   switch (timeSlot) {
-    case 'morning': return 'Morning Challenge'
-    case 'afternoon': return 'Afternoon Challenge'
-    case 'evening': return 'Evening Challenge'
+    case 'daily_1': return 'Challenge 1'
+    case 'daily_2': return 'Challenge 2'
+    case 'free_draw': return 'Free Draw'
     default: return 'Creative Challenge'
   }
 }
 
-function getSlotEmoji(timeSlot: 'morning' | 'afternoon' | 'evening'): string {
+function getSlotEmoji(timeSlot: 'daily_1' | 'daily_2' | 'free_draw'): string {
   switch (timeSlot) {
-    case 'morning': return '🌅'
-    case 'afternoon': return '☀️'
-    case 'evening': return '🌆'
+    case 'daily_1': return '🎯'
+    case 'daily_2': return '⭐'
+    case 'free_draw': return '🎨'
     default: return '✨'
   }
 }
 
-function getSlotDifficulty(timeSlot: 'morning' | 'afternoon' | 'evening'): 'easy' | 'medium' | 'hard' {
+function getSlotDifficulty(timeSlot: 'daily_1' | 'daily_2' | 'free_draw'): 'easy' | 'medium' | 'hard' {
   switch (timeSlot) {
-    case 'morning': return 'easy'    // Start the day easy
-    case 'afternoon': return 'medium' // Ramp up difficulty
-    case 'evening': return 'hard'    // Challenge for the evening
+    case 'daily_1': return 'easy'    // First challenge is easy
+    case 'daily_2': return 'medium'  // Second challenge is medium
+    case 'free_draw': return 'easy'  // Free draw is easy/flexible
     default: return 'easy'
   }
 }

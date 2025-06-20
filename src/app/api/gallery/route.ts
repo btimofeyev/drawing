@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
 
     // Get query parameters
     const url = new URL(request.url)
-    const timeSlot = url.searchParams.get('slot') as 'morning' | 'afternoon' | 'evening' | null
+    const timeSlot = url.searchParams.get('slot') as 'daily_1' | 'daily_2' | 'free_draw' | null
     const difficulty = url.searchParams.get('difficulty') as 'easy' | 'medium' | 'hard' | null
     const search = url.searchParams.get('search') || ''
     const sort = url.searchParams.get('sort') || 'newest'
@@ -49,7 +49,7 @@ export async function GET(request: NextRequest) {
           name,
           age_group
         ),
-        prompts!inner(
+        prompts(
           id,
           prompt_text,
           difficulty,
@@ -143,11 +143,17 @@ export async function GET(request: NextRequest) {
       likes: post.likes_count || 0,
       views: post.views_count || 0,
       createdAt: post.created_at,
-      promptId: post.prompt_id,
-      promptTitle: extractPromptTitle(Array.isArray(post.prompts) ? post.prompts[0]?.prompt_text : (post.prompts as any)?.prompt_text),
-      promptDescription: Array.isArray(post.prompts) ? post.prompts[0]?.prompt_text : (post.prompts as any)?.prompt_text,
+      promptId: post.prompt_id || null,
+      promptTitle: post.time_slot === 'free_draw' 
+        ? 'Free Draw' 
+        : extractPromptTitle(Array.isArray(post.prompts) ? post.prompts[0]?.prompt_text : (post.prompts as any)?.prompt_text),
+      promptDescription: post.time_slot === 'free_draw' 
+        ? 'Free creative expression' 
+        : (Array.isArray(post.prompts) ? post.prompts[0]?.prompt_text : (post.prompts as any)?.prompt_text),
       timeSlot: post.time_slot,
-      difficulty: Array.isArray(post.prompts) ? post.prompts[0]?.difficulty : (post.prompts as any)?.difficulty,
+      difficulty: post.time_slot === 'free_draw' 
+        ? 'easy' 
+        : (Array.isArray(post.prompts) ? post.prompts[0]?.difficulty : (post.prompts as any)?.difficulty),
       ageGroup: Array.isArray(post.child_profiles) ? post.child_profiles[0]?.age_group : (post.child_profiles as any)?.age_group,
       isLiked: userLikes.has(post.id),
       isOwnPost: currentChildId === post.child_id
@@ -158,8 +164,7 @@ export async function GET(request: NextRequest) {
       .from('posts')
       .select(`
         id,
-        child_profiles!inner(id),
-        prompts!inner(id)
+        child_profiles!inner(id)
       `, { count: 'exact', head: true })
       .eq('moderation_status', 'approved')
 

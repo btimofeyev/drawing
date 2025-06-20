@@ -18,7 +18,7 @@ interface Prompt {
   difficulty: 'easy' | 'medium' | 'hard'
   emoji: string
   date: string
-  timeSlot?: 'morning' | 'afternoon' | 'evening'
+  timeSlot?: 'daily_1' | 'daily_2' | 'free_draw'
   isToday: boolean
   promptType?: 'shared_daily' | 'individual' | 'community_remix'
   communityTitle?: string
@@ -27,7 +27,7 @@ interface Prompt {
 export default function CreatePage() {
   const [selectedPrompt, setSelectedPrompt] = useState<Prompt | null>(null)
   const [uploadType, setUploadType] = useState<'challenge' | 'personal' | 'remix' | null>(null)
-  const [selectedTimeSlot, setSelectedTimeSlot] = useState<'morning' | 'afternoon' | 'evening' | null>(null)
+  const [selectedTimeSlot, setSelectedTimeSlot] = useState<'daily_1' | 'daily_2' | 'free_draw' | null>(null)
   const [selectedPromptId, setSelectedPromptId] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -40,18 +40,29 @@ export default function CreatePage() {
   const [uploadSuccess, setUploadSuccess] = useState(false)
   const [uploadError, setUploadError] = useState<string | null>(null)
   const [dragActive, setDragActive] = useState(false)
+  
+  // Free draw inspirations
+  const [freeDrawInspiration, setFreeDrawInspiration] = useState<{
+    suggestion: string
+    emoji: string
+    category: string
+  } | null>(null)
 
   useEffect(() => {
     // Check URL parameters for time slot
     const urlParams = new URLSearchParams(window.location.search)
-    const slot = urlParams.get('slot') as 'morning' | 'afternoon' | 'evening' | null
+    const slot = urlParams.get('slot') as 'daily_1' | 'daily_2' | 'free_draw' | null
     
     if (slot) {
       setSelectedTimeSlot(slot)
-      fetchDailyChallenge(slot)
+      if (slot === 'free_draw') {
+        fetchFreeDrawInspiration()
+      } else {
+        fetchDailyChallenge(slot)
+      }
     } else {
-      // Default to morning if no slot specified
-      fetchDailyChallenge('morning')
+      // Default to daily_1 if no slot specified
+      fetchDailyChallenge('daily_1')
     }
   }, [])
 
@@ -81,6 +92,43 @@ export default function CreatePage() {
     } catch (error) {
       console.error('Failed to load daily challenge:', error)
       setError('Unable to load challenge. Please try again!')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const fetchFreeDrawInspiration = async () => {
+    try {
+      setIsLoading(true)
+      
+      // Create a fake prompt for free draw
+      const freeDrawPrompt: Prompt = {
+        id: 'free-draw',
+        title: 'Free Draw',
+        description: 'Draw anything your heart desires! No rules, no limits - just pure creativity.',
+        difficulty: 'easy',
+        emoji: '🎨',
+        date: new Date().toISOString().split('T')[0],
+        timeSlot: 'free_draw',
+        isToday: true
+      }
+      
+      setSelectedPrompt(freeDrawPrompt)
+      setSelectedPromptId('free-draw')
+      
+      // Fetch inspiration
+      const response = await fetch('/api/free-draw/inspiration?ageGroup=kids&count=1')
+      if (response.ok) {
+        const data = await response.json()
+        if (data.inspirations && data.inspirations.length > 0) {
+          setFreeDrawInspiration(data.inspirations[0])
+        }
+      }
+      
+      setError(null)
+    } catch (error) {
+      console.error('Failed to load free draw inspiration:', error)
+      setError('Unable to load inspiration. Please try again!')
     } finally {
       setIsLoading(false)
     }
@@ -147,7 +195,7 @@ export default function CreatePage() {
       return
     }
 
-    if (!selectedPromptId) {
+    if (!selectedPromptId && selectedTimeSlot !== 'free_draw') {
       setUploadError('No prompt selected.')
       return
     }
@@ -160,7 +208,11 @@ export default function CreatePage() {
       formData.append('file', selectedFile)
       formData.append('altText', altText.trim())
       formData.append('timeSlot', selectedTimeSlot)
-      formData.append('promptId', selectedPromptId)
+      
+      // Only append promptId for non-free-draw slots
+      if (selectedTimeSlot !== 'free_draw' && selectedPromptId) {
+        formData.append('promptId', selectedPromptId)
+      }
 
       const response = await fetch('/api/upload', {
         method: 'POST',
@@ -186,20 +238,20 @@ export default function CreatePage() {
     }
   }
 
-  const getSlotColor = (timeSlot: 'morning' | 'afternoon' | 'evening') => {
+  const getSlotColor = (timeSlot: 'daily_1' | 'daily_2' | 'free_draw') => {
     switch (timeSlot) {
-      case 'morning': return 'from-orange-400 to-yellow-500'
-      case 'afternoon': return 'from-blue-400 to-cyan-500'
-      case 'evening': return 'from-purple-400 to-pink-500'
+      case 'daily_1': return 'from-orange-400 to-yellow-500'
+      case 'daily_2': return 'from-blue-400 to-cyan-500'
+      case 'free_draw': return 'from-purple-400 to-pink-500'
       default: return 'from-gray-400 to-gray-500'
     }
   }
 
-  const getSlotIcon = (timeSlot: 'morning' | 'afternoon' | 'evening') => {
+  const getSlotIcon = (timeSlot: 'daily_1' | 'daily_2' | 'free_draw') => {
     switch (timeSlot) {
-      case 'morning': return '🌅'
-      case 'afternoon': return '☀️'
-      case 'evening': return '🌆'
+      case 'daily_1': return '🎯'
+      case 'daily_2': return '⭐'
+      case 'free_draw': return '🎨'
       default: return '✨'
     }
   }
@@ -267,6 +319,25 @@ export default function CreatePage() {
               <p className="text-slate-600 text-lg leading-relaxed mb-4">
                 {selectedPrompt.description}
               </p>
+              
+              {/* Free draw inspiration */}
+              {selectedTimeSlot === 'free_draw' && freeDrawInspiration && (
+                <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-2xl p-6 border border-purple-200 text-center">
+                  <h4 className="text-purple-800 font-bold mb-3 flex items-center justify-center gap-2">
+                    <span className="text-xl">{freeDrawInspiration.emoji}</span>
+                    Need some inspiration?
+                  </h4>
+                  <p className="text-purple-700 text-base mb-4 leading-relaxed">
+                    {freeDrawInspiration.suggestion}
+                  </p>
+                  <button 
+                    onClick={fetchFreeDrawInspiration}
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-purple-100 hover:bg-purple-200 text-purple-700 hover:text-purple-800 rounded-full transition-colors duration-200 text-sm font-medium"
+                  >
+                    Get another idea ✨
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -281,7 +352,11 @@ export default function CreatePage() {
               </div>
               <h3 className="text-2xl font-bold text-slate-900 mb-4">Artwork Uploaded Successfully! 🎉</h3>
               <p className="text-slate-600 mb-8">
-                Your amazing artwork has been submitted for the {selectedTimeSlot} challenge and is now being reviewed. 
+                Your amazing artwork has been submitted for {
+                  selectedTimeSlot === 'daily_1' ? 'Challenge 1' :
+                  selectedTimeSlot === 'daily_2' ? 'Challenge 2' :
+                  'Free Draw'
+                } and is now being reviewed. 
                 It will appear in the gallery once approved!
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -316,7 +391,11 @@ export default function CreatePage() {
               <h3 className="text-2xl font-bold text-slate-900 mb-4">Upload Your Artwork</h3>
               <p className="text-slate-600 mb-8 max-w-lg mx-auto">
                 {selectedTimeSlot 
-                  ? `Share your ${selectedTimeSlot} challenge creation with the community!`
+                  ? `Share your ${
+                      selectedTimeSlot === 'daily_1' ? 'Challenge 1' :
+                      selectedTimeSlot === 'daily_2' ? 'Challenge 2' :
+                      'Free Draw'
+                    } creation with the community!`
                   : 'Share your creative masterpiece with the community!'
                 } Upload drawings, paintings, digital art, or photos of your physical artwork.
               </p>
@@ -336,11 +415,19 @@ export default function CreatePage() {
                   <div className="flex items-center justify-center gap-2 mb-2">
                     <Calendar className="h-4 w-4 text-yellow-600" />
                     <span className="text-yellow-800 font-semibold text-sm">
-                      Uploading for {selectedTimeSlot} slot
+                      Uploading for {
+                        selectedTimeSlot === 'daily_1' ? 'Challenge 1' :
+                        selectedTimeSlot === 'daily_2' ? 'Challenge 2' :
+                        'Free Draw'
+                      }
                     </span>
                   </div>
                   <p className="text-yellow-700 text-sm">
-                    This artwork will be submitted for your {selectedTimeSlot} challenge today.
+                    This artwork will be submitted for your {
+                      selectedTimeSlot === 'daily_1' ? 'Challenge 1' :
+                      selectedTimeSlot === 'daily_2' ? 'Challenge 2' :
+                      'Free Draw'
+                    } today.
                   </p>
                 </div>
               )}
@@ -452,7 +539,12 @@ export default function CreatePage() {
                   ) : (
                     <div className="flex items-center justify-center gap-2">
                       <Upload className="h-5 w-5" />
-                      Upload to {selectedTimeSlot ? selectedTimeSlot.charAt(0).toUpperCase() + selectedTimeSlot.slice(1) : ''} Gallery
+                      Upload to {
+                        selectedTimeSlot === 'daily_1' ? 'Challenge 1' :
+                        selectedTimeSlot === 'daily_2' ? 'Challenge 2' :
+                        selectedTimeSlot === 'free_draw' ? 'Free Draw' :
+                        ''
+                      } Gallery
                       <Sparkles className="h-5 w-5" />
                     </div>
                   )}
@@ -468,9 +560,9 @@ export default function CreatePage() {
             <div className="icon-container pink mb-4 group-hover:scale-110 transition-transform duration-300">
               <Calendar className="h-6 w-6" />
             </div>
-            <h4 className="text-lg font-bold text-slate-900 mb-2">All Today's Challenges</h4>
+            <h4 className="text-lg font-bold text-slate-900 mb-2">All Today's Adventures</h4>
             <p className="text-slate-600">
-              See all three time slot challenges for today
+              See all challenges and free draw for today
             </p>
           </Link>
 
@@ -482,11 +574,18 @@ export default function CreatePage() {
               <Palette className="h-6 w-6" />
             </div>
             <h4 className="text-lg font-bold text-slate-900 mb-2">
-              {selectedTimeSlot ? `${selectedTimeSlot.charAt(0).toUpperCase() + selectedTimeSlot.slice(1)} Gallery` : 'View Gallery'}
+              {selectedTimeSlot ? 
+                `${selectedTimeSlot === 'daily_1' ? 'Challenge 1' :
+                  selectedTimeSlot === 'daily_2' ? 'Challenge 2' :
+                  'Free Draw'} Gallery` : 'View Gallery'}
             </h4>
             <p className="text-slate-600">
               {selectedTimeSlot 
-                ? `See artwork from other artists' ${selectedTimeSlot} challenges`
+                ? `See artwork from other artists' ${
+                    selectedTimeSlot === 'daily_1' ? 'Challenge 1' :
+                    selectedTimeSlot === 'daily_2' ? 'Challenge 2' :
+                    'Free Draw'
+                  }`
                 : 'Get inspired by amazing artwork from other young artists!'
               }
             </p>

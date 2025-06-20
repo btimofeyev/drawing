@@ -219,57 +219,57 @@ export async function GET(request: NextRequest) {
       // ===== SKILL ACHIEVEMENTS =====
       {
         id: 'skill_1',
-        name: 'Morning Person',
-        description: 'Complete 5 morning challenges',
-        criteria: 'morning_posts',
+        name: 'Challenge One Champion',
+        description: 'Complete 5 Challenge 1 prompts',
+        criteria: 'daily_1_posts',
         target: 5,
         points: 150
       },
       {
         id: 'skill_2',
-        name: 'Afternoon Artist',
-        description: 'Complete 5 afternoon challenges',
-        criteria: 'afternoon_posts',
+        name: 'Challenge Two Master',
+        description: 'Complete 5 Challenge 2 prompts',
+        criteria: 'daily_2_posts',
         target: 5,
         points: 150
       },
       {
         id: 'skill_3',
-        name: 'Night Owl',
-        description: 'Complete 5 evening challenges',
-        criteria: 'evening_posts',
+        name: 'Free Spirit',
+        description: 'Create 5 free draw artworks',
+        criteria: 'free_draw_posts',
         target: 5,
         points: 150
       },
       {
         id: 'skill_4',
-        name: 'Triple Threat',
-        description: 'Complete all 3 challenges in a single day',
+        name: 'Daily Triple',
+        description: 'Complete both challenges plus free draw in a single day',
         criteria: 'triple_day',
         target: 1,
         points: 500
       },
       {
         id: 'skill_5',
-        name: 'Dawn Master',
-        description: 'Complete 25 morning challenges',
-        criteria: 'morning_posts',
+        name: 'Challenge One Expert',
+        description: 'Complete 25 Challenge 1 prompts',
+        criteria: 'daily_1_posts',
         target: 25,
         points: 400
       },
       {
         id: 'skill_6',
-        name: 'Midday Marvel',
-        description: 'Complete 25 afternoon challenges',
-        criteria: 'afternoon_posts',
+        name: 'Challenge Two Virtuoso',
+        description: 'Complete 25 Challenge 2 prompts',
+        criteria: 'daily_2_posts',
         target: 25,
         points: 400
       },
       {
         id: 'skill_7',
-        name: 'Twilight Virtuoso',
-        description: 'Complete 25 evening challenges',
-        criteria: 'evening_posts',
+        name: 'Free Draw Legend',
+        description: 'Create 25 free draw masterpieces',
+        criteria: 'free_draw_posts',
         target: 25,
         points: 400
       },
@@ -438,20 +438,20 @@ function calculateAchievementProgress(criteria: string, target: number, data: an
     case 'best_streak':
       return { current: Math.min(stats?.best_streak || 0, target), total: target }
     
-    case 'morning_posts':
-      const morningPosts = userPosts.filter((post: any) => post.time_slot === 'morning').length
-      return { current: Math.min(morningPosts, target), total: target }
+    case 'daily_1_posts':
+      const daily1Posts = userPosts.filter((post: any) => post.time_slot === 'daily_1').length
+      return { current: Math.min(daily1Posts, target), total: target }
     
-    case 'afternoon_posts':
-      const afternoonPosts = userPosts.filter((post: any) => post.time_slot === 'afternoon').length
-      return { current: Math.min(afternoonPosts, target), total: target }
+    case 'daily_2_posts':
+      const daily2Posts = userPosts.filter((post: any) => post.time_slot === 'daily_2').length
+      return { current: Math.min(daily2Posts, target), total: target }
     
-    case 'evening_posts':
-      const eveningPosts = userPosts.filter((post: any) => post.time_slot === 'evening').length
-      return { current: Math.min(eveningPosts, target), total: target }
+    case 'free_draw_posts':
+      const freeDrawPosts = userPosts.filter((post: any) => post.time_slot === 'free_draw').length
+      return { current: Math.min(freeDrawPosts, target), total: target }
     
     case 'triple_day':
-      // Check if user has posted in all three time slots on the same day
+      // Check if user has posted in all three slots (daily_1, daily_2, free_draw) on the same day
       const postsByDate = userPosts.reduce((acc: any, post: any) => {
         const date = new Date(post.created_at).toDateString()
         if (!acc[date]) acc[date] = new Set()
@@ -459,7 +459,9 @@ function calculateAchievementProgress(criteria: string, target: number, data: an
         return acc
       }, {})
       
-      const tripleDays = Object.values(postsByDate).filter((slots: any) => slots.size === 3).length
+      const tripleDays = Object.values(postsByDate).filter((slots: any) => 
+        slots.has('daily_1') && slots.has('daily_2') && slots.has('free_draw')
+      ).length
       return { current: Math.min(tripleDays, target), total: target }
     
     case 'level':

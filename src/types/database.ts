@@ -69,7 +69,7 @@ export interface Database {
           age_group: 'kids' | 'tweens'
           difficulty: 'easy' | 'medium' | 'hard'
           prompt_text: string
-          time_slot: 'morning' | 'afternoon' | 'evening'
+          time_slot: 'daily_1' | 'daily_2' | 'free_draw'
           created_at: string
         }
         Insert: {
@@ -78,7 +78,7 @@ export interface Database {
           age_group: 'kids' | 'tweens'
           difficulty: 'easy' | 'medium' | 'hard'
           prompt_text: string
-          time_slot: 'morning' | 'afternoon' | 'evening'
+          time_slot: 'daily_1' | 'daily_2' | 'free_draw'
           created_at?: string
         }
         Update: {
@@ -87,7 +87,7 @@ export interface Database {
           age_group?: 'kids' | 'tweens'
           difficulty?: 'easy' | 'medium' | 'hard'
           prompt_text?: string
-          time_slot?: 'morning' | 'afternoon' | 'evening'
+          time_slot?: 'daily_1' | 'daily_2' | 'free_draw'
           created_at?: string
         }
       }
@@ -99,7 +99,7 @@ export interface Database {
           image_url: string
           thumbnail_url: string | null
           alt_text: string
-          time_slot: 'morning' | 'afternoon' | 'evening' | null
+          time_slot: 'daily_1' | 'daily_2' | 'free_draw' | null
           created_at: string
           likes_count: number
           moderation_status: 'pending' | 'approved' | 'rejected'
@@ -111,7 +111,7 @@ export interface Database {
           image_url: string
           thumbnail_url?: string | null
           alt_text: string
-          time_slot?: 'morning' | 'afternoon' | 'evening' | null
+          time_slot?: 'daily_1' | 'daily_2' | 'free_draw' | null
           created_at?: string
           likes_count?: number
           moderation_status?: 'pending' | 'approved' | 'rejected'
@@ -123,7 +123,7 @@ export interface Database {
           image_url?: string
           thumbnail_url?: string | null
           alt_text?: string
-          time_slot?: 'morning' | 'afternoon' | 'evening' | null
+          time_slot?: 'daily_1' | 'daily_2' | 'free_draw' | null
           created_at?: string
           likes_count?: number
           moderation_status?: 'pending' | 'approved' | 'rejected'
@@ -244,7 +244,7 @@ export interface Database {
           id: string
           child_id: string
           date: string
-          time_slot: 'morning' | 'afternoon' | 'evening'
+          time_slot: 'daily_1' | 'daily_2' | 'free_draw'
           uploads_count: number
           last_upload_at: string | null
           created_at: string
@@ -254,7 +254,7 @@ export interface Database {
           id?: string
           child_id: string
           date: string
-          time_slot: 'morning' | 'afternoon' | 'evening'
+          time_slot: 'daily_1' | 'daily_2' | 'free_draw'
           uploads_count?: number
           last_upload_at?: string | null
           created_at?: string
@@ -264,11 +264,37 @@ export interface Database {
           id?: string
           child_id?: string
           date?: string
-          time_slot?: 'morning' | 'afternoon' | 'evening'
+          time_slot?: 'daily_1' | 'daily_2' | 'free_draw'
           uploads_count?: number
           last_upload_at?: string | null
           created_at?: string
           updated_at?: string
+        }
+      }
+      free_draw_inspirations: {
+        Row: {
+          id: string
+          category: 'animals' | 'nature' | 'fantasy' | 'objects' | 'emotions' | 'activities'
+          suggestion: string
+          age_group: 'kids' | 'tweens'
+          emoji: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          category: 'animals' | 'nature' | 'fantasy' | 'objects' | 'emotions' | 'activities'
+          suggestion: string
+          age_group: 'kids' | 'tweens'
+          emoji: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          category?: 'animals' | 'nature' | 'fantasy' | 'objects' | 'emotions' | 'activities'
+          suggestion?: string
+          age_group?: 'kids' | 'tweens'
+          emoji?: string
+          created_at?: string
         }
       }
     }

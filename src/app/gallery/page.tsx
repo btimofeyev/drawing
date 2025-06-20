@@ -15,6 +15,7 @@ import {
 } from 'lucide-react'
 import ChildLayout from '@/components/ChildLayout'
 import { useSearchParams } from 'next/navigation'
+import { Suspense } from 'react'
 
 interface Artwork {
   id: string
@@ -29,7 +30,7 @@ interface Artwork {
   promptId: string
   promptTitle: string
   promptDescription: string
-  timeSlot: 'morning' | 'afternoon' | 'evening'
+  timeSlot: 'daily_1' | 'daily_2' | 'free_draw'
   difficulty: 'easy' | 'medium' | 'hard'
   ageGroup: 'kids' | 'tweens'
   isLiked: boolean
@@ -39,7 +40,7 @@ interface Artwork {
 type SortOption = 'newest' | 'popular' | 'trending' | 'oldest'
 type ViewMode = 'grid' | 'list'
 
-export default function GalleryPage() {
+function GalleryContent() {
   const searchParams = useSearchParams()
   
   const [artworks, setArtworks] = useState<Artwork[]>([])
@@ -49,7 +50,7 @@ export default function GalleryPage() {
   const [totalCount, setTotalCount] = useState(0)
   
   // Filters from URL params or defaults
-  const [timeSlot, setTimeSlot] = useState<'morning' | 'afternoon' | 'evening' | 'all'>(
+  const [timeSlot, setTimeSlot] = useState<'daily_1' | 'daily_2' | 'free_draw' | 'all'>(
     (searchParams?.get('slot') as any) || 'all'
   )
   const [difficulty, setDifficulty] = useState<'easy' | 'medium' | 'hard' | 'all'>('all')
@@ -200,20 +201,20 @@ export default function GalleryPage() {
     }
   }
 
-  const getSlotColor = (slot: 'morning' | 'afternoon' | 'evening') => {
+  const getSlotColor = (slot: 'daily_1' | 'daily_2' | 'free_draw') => {
     switch (slot) {
-      case 'morning': return 'from-orange-400 to-yellow-500'
-      case 'afternoon': return 'from-blue-400 to-cyan-500'
-      case 'evening': return 'from-purple-400 to-pink-500'
+      case 'daily_1': return 'from-orange-400 to-yellow-500'
+      case 'daily_2': return 'from-blue-400 to-cyan-500'
+      case 'free_draw': return 'from-purple-400 to-pink-500'
       default: return 'from-gray-400 to-gray-500'
     }
   }
 
-  const getSlotEmoji = (slot: 'morning' | 'afternoon' | 'evening') => {
+  const getSlotEmoji = (slot: 'daily_1' | 'daily_2' | 'free_draw') => {
     switch (slot) {
-      case 'morning': return '🌅'
-      case 'afternoon': return '☀️'
-      case 'evening': return '🌆'
+      case 'daily_1': return '🎯'
+      case 'daily_2': return '⭐'
+      case 'free_draw': return '🎨'
       default: return '✨'
     }
   }
@@ -273,9 +274,9 @@ export default function GalleryPage() {
                 className="px-4 py-3 border-2 border-slate-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-pink-200 focus:border-pink-400 font-medium transition-all duration-200"
               >
                 <option value="all">🎨 All Time Slots</option>
-                <option value="morning">🌅 Morning</option>
-                <option value="afternoon">☀️ Afternoon</option>
-                <option value="evening">🌆 Evening</option>
+                <option value="daily_1">🎯 Challenge 1</option>
+                <option value="daily_2">⭐ Challenge 2</option>
+                <option value="free_draw">🎨 Free Draw</option>
               </select>
 
               {/* Difficulty Filter */}
@@ -320,7 +321,7 @@ export default function GalleryPage() {
                 <span>Active filters:</span>
                 {timeSlot !== 'all' && (
                   <span className="px-3 py-1 bg-pink-100 text-pink-700 rounded-full font-medium">
-                    {getSlotEmoji(timeSlot as any)} {timeSlot}
+                    {getSlotEmoji(timeSlot as any)} {timeSlot === 'daily_1' ? 'Challenge 1' : timeSlot === 'daily_2' ? 'Challenge 2' : 'Free Draw'}
                   </span>
                 )}
                 {difficulty !== 'all' && (
@@ -423,7 +424,7 @@ export default function GalleryPage() {
                       {/* Time Slot Badge */}
                       <div className="absolute top-3 left-3">
                         <span className={`px-3 py-1 rounded-full text-sm font-bold text-white bg-gradient-to-r ${getSlotColor(artwork.timeSlot)}`}>
-                          {getSlotEmoji(artwork.timeSlot)} {artwork.timeSlot}
+                          {getSlotEmoji(artwork.timeSlot)} {artwork.timeSlot === 'daily_1' ? 'Challenge 1' : artwork.timeSlot === 'daily_2' ? 'Challenge 2' : 'Free Draw'}
                         </span>
                       </div>
                       
@@ -514,5 +515,24 @@ export default function GalleryPage() {
         </div>
       </div>
     </ChildLayout>
+  )
+}
+
+export default function GalleryPage() {
+  return (
+    <Suspense fallback={
+      <ChildLayout>
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="text-center animate-fade-in">
+            <div className="w-16 h-16 rounded-3xl bg-gradient-to-r from-purple-400 to-pink-500 flex items-center justify-center mx-auto mb-6">
+              <Palette className="h-8 w-8 text-white" />
+            </div>
+            <p className="text-xl font-semibold text-slate-700">Loading gallery...</p>
+          </div>
+        </div>
+      </ChildLayout>
+    }>
+      <GalleryContent />
+    </Suspense>
   )
 }

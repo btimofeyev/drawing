@@ -70,10 +70,22 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    // Build status for time slot system
-    const timeSlots = ['morning', 'afternoon', 'evening']
+    // Build status for time slot system (only check prompted challenges, not free draw)
+    const timeSlots = ['daily_1', 'daily_2', 'free_draw']
     uploadStatus = timeSlots.map(slot => {
       const existingUpload = uploadLimits?.find(ul => ul.time_slot === slot)
+      
+      // Free draw has unlimited uploads
+      if (slot === 'free_draw') {
+        return {
+          timeSlot: slot,
+          canUpload: true, // Always can upload to free draw
+          hasUploaded: false, // Don't show as uploaded since unlimited
+          uploadedAt: null,
+          postId: null,
+          post: null
+        }
+      }
       
       return {
         timeSlot: slot,
@@ -109,20 +121,20 @@ export async function GET(request: NextRequest) {
       totalUploadsToday,
       maxUploadsPerDay: 3,
       timeSlots: {
-        morning: {
-          label: 'Morning Challenge',
-          description: 'Start your day with creativity',
-          icon: '🌅'
+        daily_1: {
+          label: 'Challenge 1',
+          description: 'First daily creative challenge',
+          icon: '🎯'
         },
-        afternoon: {
-          label: 'Afternoon Challenge', 
-          description: 'Midday artistic inspiration',
-          icon: '☀️'
+        daily_2: {
+          label: 'Challenge 2', 
+          description: 'Second daily creative challenge',
+          icon: '⭐'
         },
-        evening: {
-          label: 'Evening Challenge',
-          description: 'End your day with art',
-          icon: '🌆'
+        free_draw: {
+          label: 'Free Draw',
+          description: 'Express yourself with unlimited creativity',
+          icon: '🎨'
         }
       }
     })
