@@ -29,16 +29,16 @@ export async function POST(request: NextRequest) {
         continue
       }
 
-      // Generate prompts for each difficulty level
-      const difficulties: ('easy' | 'medium' | 'hard')[] = ['easy', 'medium', 'hard']
+      // Generate prompts for each time slot
+      const timeSlots: ('morning' | 'afternoon' | 'evening')[] = ['morning', 'afternoon', 'evening']
       
-      for (const difficulty of difficulties) {
+      for (const timeSlot of timeSlots) {
         try {
-          console.log(`Generating ${difficulty} prompt for ${ageGroup}`)
+          console.log(`Generating ${timeSlot} prompt for ${ageGroup}`)
           
-          const prompt = await PromptGenerator.generateDailyPrompt({
+          const prompt = await PromptGenerator.generateSlotPrompt({
             ageGroup,
-            difficulty
+            timeSlot
           })
 
           // Store in database
@@ -47,23 +47,24 @@ export async function POST(request: NextRequest) {
             .insert({
               date: dateStr,
               age_group: ageGroup,
-              difficulty: difficulty,
-              prompt_text: prompt.description
+              difficulty: prompt.difficulty,
+              prompt_text: prompt.description,
+              time_slot: timeSlot
             })
             .select()
             .single()
 
           if (error) {
-            console.error(`Failed to store ${difficulty} prompt for ${ageGroup}:`, error)
+            console.error(`Failed to store ${timeSlot} prompt for ${ageGroup}:`, error)
           } else {
             generatedPrompts.push(newPrompt)
-            console.log(`✅ Stored ${difficulty} prompt for ${ageGroup}`)
+            console.log(`✅ Stored ${timeSlot} prompt for ${ageGroup}`)
           }
 
           // Small delay to avoid rate limiting
           await new Promise(resolve => setTimeout(resolve, 500))
         } catch (error) {
-          console.error(`Failed to generate ${difficulty} prompt for ${ageGroup}:`, error)
+          console.error(`Failed to generate ${timeSlot} prompt for ${ageGroup}:`, error)
         }
       }
     }

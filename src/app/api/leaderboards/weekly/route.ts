@@ -6,7 +6,7 @@ import { cookies } from 'next/headers'
 export async function GET(request: NextRequest) {
   try {
     // Get child auth cookie
-    const cookieStore = cookies()
+    const cookieStore = await cookies()
     const authCookie = cookieStore.get('child_auth')
     
     if (!authCookie?.value) {

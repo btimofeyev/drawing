@@ -14,10 +14,10 @@ const poppins = Poppins({
 });
 
 export const metadata: Metadata = {
-  title: "DrawingBuddy - Daily Drawing Challenges for Kids",
-  description: "A safe, fun platform for children to share artwork and participate in daily drawing challenges with parental oversight.",
-  keywords: ["drawing", "kids", "art", "children", "creative", "safe"],
-  authors: [{ name: "DrawingBuddy Team" }],
+  title: "Daily Draw - Draw Every Day, Share Your Art",
+  description: "Join a magical community of young artists in a safe, inspiring space to practice drawing with daily creative challenges and share your masterpieces.",
+  keywords: ["drawing", "kids", "art", "children", "creative", "safe", "daily", "challenges"],
+  authors: [{ name: "Daily Draw Team" }],
   viewport: "width=device-width, initial-scale=1, maximum-scale=1",
 };
 

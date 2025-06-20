@@ -77,46 +77,63 @@ export default function ChildAuthPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center p-8">
-      <div className="w-full max-w-lg animate-fade-in">
-        <div className="text-center mb-12">
-          <Link 
-            href="/" 
-            className="inline-flex items-center gap-2 text-slate-600 hover:text-pink-600 mb-8 transition-colors font-medium"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Back to home
-          </Link>
-          
-          <div className="mb-8">
-            <div className="icon-container purple mx-auto mb-6" style={{width: '4rem', height: '4rem'}}>
-              {step === 'username' ? (
-                <Palette style={{width: '2rem', height: '2rem'}} />
-              ) : (
-                <Sparkles style={{width: '2rem', height: '2rem'}} />
-              )}
+    <div className="min-h-screen bg-white flex flex-col">
+      {/* Header */}
+      <header className="py-6 px-4 bg-white relative z-10">
+        <div className="container">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="icon-container pink">
+                <Palette />
+              </div>
+              <h1 className="text-2xl font-bold text-slate-700">
+                Daily Draw
+              </h1>
             </div>
+            <Link 
+              href="/" 
+              className="inline-flex items-center gap-2 text-slate-600 hover:text-pink-600 transition-colors font-medium"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Back to home
+            </Link>
           </div>
-          
-          <h1 className="text-4xl font-bold mb-4">
-            {step === 'username' ? (
-              <span className="bg-gradient-to-r from-pink-500 via-purple-500 to-blue-500 bg-clip-text text-transparent">
-                Welcome Back!
-              </span>
-            ) : (
-              <span className="bg-gradient-to-r from-pink-500 via-purple-500 to-blue-500 bg-clip-text text-transparent">
-                Hi, {username}! 🎨
-              </span>
-            )}
-          </h1>
-          <p className="text-slate-600 text-lg">
-            {step === 'username' 
-              ? 'Enter your artist username to continue creating!' 
-              : 'Enter your secret 4-digit PIN to start drawing'}
-          </p>
         </div>
+      </header>
 
-        <div className="bg-white/80 backdrop-blur-sm border border-slate-200/50 rounded-3xl p-10 shadow-xl">
+      {/* Main Content */}
+      <div className="flex-1 flex items-center justify-center p-8">
+        <div className="w-full max-w-lg animate-fade-in">
+          <div className="text-center mb-12">
+            <div className="mb-8">
+              <div className="icon-container pink mx-auto mb-6" style={{width: '4rem', height: '4rem'}}>
+                {step === 'username' ? (
+                  <Palette style={{width: '2rem', height: '2rem'}} />
+                ) : (
+                  <Sparkles style={{width: '2rem', height: '2rem'}} />
+                )}
+              </div>
+            </div>
+            
+            <h2 className="text-5xl font-bold mb-6 text-slate-800 leading-tight">
+              {step === 'username' ? (
+                <>
+                  Welcome Back!
+                </>
+              ) : (
+                <>
+                  Hi, <span className="text-pink-400">{username}</span>! 🎨
+                </>
+              )}
+            </h2>
+            <p className="text-xl text-slate-600 leading-relaxed">
+              {step === 'username' 
+                ? 'Enter your artist username to continue creating!' 
+                : 'Enter your secret 4-digit PIN to start drawing'}
+            </p>
+          </div>
+
+          <div className="bg-white border border-slate-200 rounded-3xl p-10 shadow-lg">
           {error && (
             <div className="p-4 bg-red-50 border border-red-200 rounded-2xl text-red-700 text-center mb-6 font-medium">
               {error}
@@ -232,16 +249,17 @@ export default function ChildAuthPage() {
               )}
             </div>
           )}
-        </div>
+          </div>
 
-        <div className="text-center mt-8">
-          <Link 
-            href="/auth/parent" 
-            className="inline-flex items-center gap-2 text-slate-600 hover:text-pink-600 font-medium transition-colors"
-          >
-            <span>👨‍👩‍👧‍👦 Are you a parent? Sign in here</span>
-            <span>→</span>
-          </Link>
+          <div className="text-center mt-8">
+            <Link 
+              href="/auth/parent" 
+              className="inline-flex items-center gap-2 text-slate-600 hover:text-pink-600 font-medium transition-colors"
+            >
+              <span>👨‍👩‍👧‍👦 Are you a parent? Sign in here</span>
+              <span>→</span>
+            </Link>
+          </div>
         </div>
       </div>
     </div>

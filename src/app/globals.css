@@ -1,13 +1,21 @@
 @import "tailwindcss";
 
-/* Modern Color Palette - Pastel Theme */
+@layer base {
+  :root {
+    /* Custom colors for Tailwind */
+    --color-mint-200: 216 245 240;
+    --color-mint-300: 185 235 225;
+  }
+}
+
+/* Modern Color Palette - Softer Pastel Theme */
 :root {
-  --primary-pink: #FFB3D9;
-  --primary-blue: #A8E6CF;
-  --primary-purple: #D4A5FF;
-  --primary-orange: #FFD4A3;
-  --primary-mint: #B8F2E6;
-  --primary-peach: #FFB5A7;
+  --primary-pink: #FDD5E6;
+  --primary-blue: #D1EBF0;
+  --primary-purple: #E8D5F2;
+  --primary-orange: #FFEBD4;
+  --primary-mint: #D8F5F0;
+  --primary-peach: #FFDED8;
   
   --neutral-100: #FAFAFA;
   --neutral-200: #F5F5F5;
@@ -90,19 +98,24 @@ p {
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, var(--primary-pink) 0%, var(--primary-purple) 100%);
+  background: #ff6b9d;
   color: white;
+  border: none;
+}
+
+.btn-primary:hover {
+  background: #ff5a8f;
 }
 
 .btn-secondary {
   background: white;
-  color: var(--neutral-700);
-  border: 2px solid var(--neutral-200);
+  color: var(--neutral-600);
+  border: 1px solid var(--neutral-300);
 }
 
 .btn-secondary:hover {
-  border-color: var(--primary-pink);
-  color: var(--primary-pink);
+  background: #f8fafc;
+  border-color: var(--neutral-400);
 }
 
 .btn-large {

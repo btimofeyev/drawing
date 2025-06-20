@@ -2,20 +2,14 @@
 
 import { useState, useEffect } from 'react'
 import { 
-  Palette, 
-  Star, 
-  Trophy, 
   Calendar, 
   Camera, 
-  Heart, 
-  Users, 
-  Gift, 
   Sparkles,
-  TrendingUp,
-  Clock,
-  Target
+  Users,
+  Palette
 } from 'lucide-react'
 import Link from 'next/link'
+import ChildLayout from '@/components/ChildLayout'
 
 interface DailyChallenge {
   id: string
@@ -24,520 +18,320 @@ interface DailyChallenge {
   difficulty: 'easy' | 'medium' | 'hard'
   emoji: string
   date: string
+  timeSlot: 'morning' | 'afternoon' | 'evening'
   isToday: boolean
 }
 
-interface Achievement {
+interface UploadStatus {
+  timeSlot: 'morning' | 'afternoon' | 'evening'
+  canUpload: boolean
+  hasUploaded: boolean
+  uploadedAt: string | null
+  post: any | null
+}
+
+interface SlotPost {
   id: string
-  name: string
-  description: string
-  icon: string
-  earned: boolean
-  progress?: number
-  total?: number
-  points: number
-  earnedAt?: string
-}
-
-interface UserStats {
-  totalPosts: number
-  totalLikesReceived: number
-  totalLikesGiven: number
-  currentStreak: number
-  bestStreak: number
-  level: number
-  points: number
-  lastPostDate?: string
-}
-
-interface Child {
-  id: string
-  username: string
-  name: string
-  ageGroup: 'kids' | 'tweens'
-}
-
-interface LeaderboardEntry {
-  rank: number
-  username: string
-  name: string
-  ageGroup: 'kids' | 'tweens'
-  count: number
-  isCurrentChild: boolean
-}
-
-interface Leaderboards {
-  weeklyUploads: LeaderboardEntry[]
-  weeklyLikes: LeaderboardEntry[]
-  currentStreaks: LeaderboardEntry[]
+  imageUrl: string
+  thumbnailUrl: string | null
+  altText: string
+  createdAt: string
+  likesCount: number
+  moderationStatus: 'pending' | 'approved' | 'rejected'
 }
 
 export default function ChildHomePage() {
-  const [dailyChallenge, setDailyChallenge] = useState<DailyChallenge | null>(null)
-  const [achievements, setAchievements] = useState<Achievement[]>([])
-  const [userStats, setUserStats] = useState<UserStats | null>(null)
-  const [child, setChild] = useState<Child | null>(null)
-  const [leaderboards, setLeaderboards] = useState<Leaderboards | null>(null)
+  const [dailyChallenges, setDailyChallenges] = useState<DailyChallenge[]>([])
+  const [uploadStatus, setUploadStatus] = useState<UploadStatus[]>([])
+  const [postsBySlot, setPostsBySlot] = useState<Record<string, SlotPost[]>>({})
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState('')
 
   useEffect(() => {
-    fetchAllData()
+    fetchDailyChallengesAndStatus()
   }, [])
 
-  const fetchAllData = async () => {
+  const fetchDailyChallengesAndStatus = async () => {
     try {
       setIsLoading(true)
       setError('')
-
-      // Fetch all data in parallel
-      const [promptRes, statsRes, achievementsRes, leaderboardsRes] = await Promise.all([
-        fetch('/api/prompts/daily'),
-        fetch('/api/child/stats'),
-        fetch('/api/child/achievements'),
-        fetch('/api/leaderboards/weekly')
+      
+      // Fetch all three daily challenges and upload status in parallel
+      const [challengesResponse, statusResponse] = await Promise.all([
+        fetch('/api/prompts/daily?all=true'),
+        fetch('/api/posts/upload-status')
       ])
 
-      // Handle daily prompt
-      if (promptRes.ok) {
-        const promptData = await promptRes.json()
-        setDailyChallenge(promptData.prompt)
+      if (challengesResponse.ok) {
+        const challengesData = await challengesResponse.json()
+        setDailyChallenges(challengesData.prompts || [])
+      } else {
+        setError('Unable to load today\'s challenges. Please try again!')
       }
 
-      // Handle stats
-      if (statsRes.ok) {
-        const statsData = await statsRes.json()
-        setUserStats(statsData.stats)
-        setChild(statsData.child)
-      }
-
-      // Handle achievements
-      if (achievementsRes.ok) {
-        const achievementsData = await achievementsRes.json()
-        setAchievements(achievementsData.achievements)
-      }
-
-      // Handle leaderboards
-      if (leaderboardsRes.ok) {
-        const leaderboardsData = await leaderboardsRes.json()
-        setLeaderboards(leaderboardsData.leaderboards)
-      }
-
-      // If any requests failed, show error
-      if (!promptRes.ok || !statsRes.ok || !achievementsRes.ok || !leaderboardsRes.ok) {
-        setError('Some data could not be loaded')
+      if (statusResponse.ok) {
+        const statusData = await statusResponse.json()
+        setUploadStatus(statusData.uploadStatus || [])
+        
+        // Convert posts to the expected format
+        const postsBySlot: Record<string, SlotPost[]> = {}
+        statusData.uploadStatus?.forEach((status: UploadStatus) => {
+          if (status.post) {
+            postsBySlot[status.timeSlot] = [status.post]
+          }
+        })
+        setPostsBySlot(postsBySlot)
       }
     } catch (error) {
-      console.error('Failed to load data:', error)
-      setError('Failed to load dashboard data')
+      console.error('Failed to load daily challenges:', error)
+      setError('Unable to load today\'s challenges. Please try again!')
     } finally {
       setIsLoading(false)
     }
   }
 
-  const handleSignOut = async () => {
-    try {
-      await fetch('/api/auth/child/signout', { method: 'POST' })
-    } catch (error) {
-      console.error('Sign out failed:', error)
-    } finally {
-      window.location.href = '/'
+  const getSlotIcon = (timeSlot: 'morning' | 'afternoon' | 'evening') => {
+    switch (timeSlot) {
+      case 'morning': return '🌅'
+      case 'afternoon': return '☀️'
+      case 'evening': return '🌆'
+      default: return '✨'
+    }
+  }
+
+  const getSlotColor = (timeSlot: 'morning' | 'afternoon' | 'evening') => {
+    switch (timeSlot) {
+      case 'morning': return 'from-orange-400 to-yellow-500'
+      case 'afternoon': return 'from-blue-400 to-cyan-500'
+      case 'evening': return 'from-purple-400 to-pink-500'
+      default: return 'from-gray-400 to-gray-500'
     }
   }
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-secondary-50 flex items-center justify-center">
-        <div className="text-center fade-in">
-          <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 float"
-               style={{background: 'var(--gradient-rainbow)'}}>
-            <Palette className="h-8 w-8 text-white" />
+      <ChildLayout>
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="text-center animate-fade-in">
+            <div className="icon-container pink mx-auto mb-6" style={{width: '4rem', height: '4rem'}}>
+              <Palette style={{width: '2rem', height: '2rem'}} />
+            </div>
+            <p className="text-xl font-semibold text-slate-700">Loading your art studio... 🎨</p>
           </div>
-          <p className="text-xl font-semibold text-gray-700">Loading your art studio... 🎨</p>
         </div>
-      </div>
+      </ChildLayout>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-secondary-50">
-      {/* Header */}
-      <header className="bg-white/80 backdrop-blur-sm border-b border-primary-100 sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-xl flex items-center justify-center float"
-                   style={{background: 'var(--gradient-primary)'}}>
-                <Palette className="h-7 w-7 text-white" />
-              </div>
-              <div>
-                <h1 className="text-xl font-bold text-gray-900">DrawingBuddy</h1>
-                <p className="text-sm text-primary-600">Welcome back, {child?.name || 'Artist'}! 🎨</p>
+    <ChildLayout>
+      <div className="flex-1 p-8">
+        <div className="w-full max-w-7xl mx-auto animate-fade-in">
+          {error && (
+            <div className="text-center mb-8">
+              <div className="text-sm text-red-600 bg-red-50 px-4 py-3 rounded-xl inline-block">
+                {error}
               </div>
             </div>
+          )}
+
+          {/* Header */}
+          <div className="text-center mb-12 flex flex-col items-center">
+            <h1 className="text-6xl font-bold mb-4 text-slate-800 leading-tight text-center">
+              Today's Creative
+              <br />
+              <span className="text-pink-400">Adventures</span>
+            </h1>
+            <p className="text-xl text-slate-600 max-w-2xl mx-auto text-center mb-6">
+              Three amazing challenges await you today! Pick whichever one inspires you most and create your artwork.
+            </p>
             
-            <div className="flex items-center gap-4">
-              {error && (
-                <div className="text-sm text-red-600 bg-red-50 px-3 py-1 rounded-full">
-                  {error}
+            {/* Daily Progress */}
+            {uploadStatus.length > 0 && (
+              <div className="bg-white rounded-3xl p-6 shadow-lg border border-slate-200 max-w-md w-full">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-bold text-slate-800">Today's Progress</h3>
+                  <span className="text-2xl font-bold text-pink-600">
+                    {uploadStatus.filter(s => s.hasUploaded).length}/3
+                  </span>
                 </div>
-              )}
-              <div className="flex items-center gap-3 px-4 py-2 bg-accent-100 rounded-full">
-                <Star className="h-5 w-5 text-accent-600" />
-                <span className="font-bold text-accent-700">{userStats?.points || 0} points</span>
-              </div>
-              <button
-                onClick={handleSignOut}
-                className="text-gray-600 hover:text-gray-800 font-medium transition-colors"
-              >
-                Sign Out
-              </button>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-6 py-8">
-        {/* Welcome Section */}
-        <div className="text-center mb-12 fade-in">
-          <h2 className="text-4xl font-bold mb-4">
-            <span className="bg-gradient-to-r from-primary-500 to-secondary-500 bg-clip-text text-transparent">
-              Ready to Create
-            </span>
-            <br />
-            <span className="bg-gradient-to-r from-secondary-500 to-accent-500 bg-clip-text text-transparent">
-              Something Amazing?
-            </span>
-          </h2>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            Your creative journey continues! Check out today's challenge and see what other artists are creating.
-          </p>
-        </div>
-
-        <div className="grid lg:grid-cols-3 gap-8">
-          {/* Daily Challenge - Featured */}
-          <div className="lg:col-span-2">
-            <div className="bg-white rounded-3xl p-8 shadow-xl border border-primary-100 hover:shadow-2xl transition-all duration-300 bounce-in">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-12 h-12 rounded-2xl flex items-center justify-center"
-                     style={{background: 'var(--gradient-accent)'}}>
-                  <Calendar className="h-6 w-6 text-white" />
+                <div className="flex gap-2 mb-3">
+                  {['morning', 'afternoon', 'evening'].map((slot, index) => {
+                    const status = uploadStatus.find(s => s.timeSlot === slot)
+                    const isCompleted = status?.hasUploaded || false
+                    return (
+                      <div
+                        key={slot}
+                        className={`flex-1 h-3 rounded-full transition-all duration-300 ${
+                          isCompleted 
+                            ? slot === 'morning' 
+                              ? 'bg-gradient-to-r from-orange-400 to-yellow-500'
+                              : slot === 'afternoon'
+                              ? 'bg-gradient-to-r from-blue-400 to-cyan-500' 
+                              : 'bg-gradient-to-r from-purple-400 to-pink-500'
+                            : 'bg-slate-200'
+                        }`}
+                      />
+                    )
+                  })}
                 </div>
-                <div>
-                  <h3 className="text-2xl font-bold text-gray-900">Today's Challenge</h3>
-                  <p className="text-accent-600 font-semibold">New adventure awaits! ✨</p>
-                </div>
-              </div>
-              
-              {dailyChallenge && (
-                <div className="space-y-6">
-                  <div className="flex items-center gap-4">
-                    <span className="text-4xl">{dailyChallenge.emoji}</span>
-                    <div>
-                      <h4 className="text-xl font-bold text-gray-900">{dailyChallenge.title}</h4>
-                      <span className={`inline-block px-3 py-1 rounded-full text-sm font-semibold ${
-                        dailyChallenge.difficulty === 'easy' 
-                          ? 'bg-green-100 text-green-700'
-                          : dailyChallenge.difficulty === 'medium'
-                          ? 'bg-yellow-100 text-yellow-700'  
-                          : 'bg-red-100 text-red-700'
-                      }`}>
-                        {dailyChallenge.difficulty} level
-                      </span>
-                    </div>
-                  </div>
-                  
-                  <p className="text-gray-600 text-lg leading-relaxed">
-                    {dailyChallenge.description}
-                  </p>
-                  
-                  <div className="flex gap-4">
-                    <Link href="/create">
-                      <button className="text-white font-bold py-4 px-8 rounded-2xl hover:scale-105 transition-all duration-200 shadow-lg hover:shadow-xl"
-                              style={{background: 'var(--gradient-primary)'}}>
-                        <span className="flex items-center gap-2">
-                          <Camera className="h-5 w-5" />
-                          Start Creating
-                          <Sparkles className="h-5 w-5" />
-                        </span>
-                      </button>
-                    </Link>
-                    <Link href="/gallery">
-                      <button className="bg-white border-2 border-secondary-200 text-secondary-700 font-bold py-4 px-8 rounded-2xl hover:bg-secondary-50 hover:scale-105 transition-all duration-200 shadow-md hover:shadow-lg">
-                        <span className="flex items-center gap-2">
-                          <Users className="h-5 w-5" />
-                          See Others' Art
-                        </span>
-                      </button>
-                    </Link>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Stats & Level */}
-          <div className="space-y-6">
-            {/* Level & Progress */}
-            <div className="bg-white rounded-3xl p-6 shadow-xl border border-purple-100 slide-in-left">
-              <div className="text-center mb-6">
-                <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4"
-                     style={{background: 'var(--gradient-purple)'}}>
-                  <Trophy className="h-8 w-8 text-white" />
-                </div>
-                <h3 className="text-2xl font-bold text-gray-900">Level {userStats?.level}</h3>
-                <p className="text-purple-600 font-semibold">Creative Artist</p>
-              </div>
-              
-              <div className="space-y-4">
-                <div className="bg-purple-50 rounded-2xl p-4 text-center">
-                  <div className="text-2xl font-bold text-purple-700">{userStats?.points}</div>
-                  <div className="text-sm text-purple-600">Total Points</div>
-                </div>
-                
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="bg-primary-50 rounded-xl p-3 text-center">
-                    <div className="text-lg font-bold text-primary-700">{userStats?.totalPosts || 0}</div>
-                    <div className="text-xs text-primary-600">Artworks</div>
-                  </div>
-                  <div className="bg-secondary-50 rounded-xl p-3 text-center">
-                    <div className="text-lg font-bold text-secondary-700">{userStats?.totalLikesReceived || 0}</div>
-                    <div className="text-xs text-secondary-600">Likes Received</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Streak Counter */}
-            <div className="bg-white rounded-3xl p-6 shadow-xl border border-accent-100 slide-in-left" 
-                 style={{animationDelay: '0.2s'}}>
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 rounded-xl flex items-center justify-center"
-                     style={{background: 'var(--gradient-accent)'}}>
-                  <TrendingUp className="h-5 w-5 text-white" />
-                </div>
-                <div>
-                  <h4 className="font-bold text-gray-900">Daily Streak</h4>
-                  <p className="text-sm text-gray-600">Keep creating!</p>
-                </div>
-              </div>
-              
-              <div className="text-center">
-                <div className="text-3xl font-bold text-accent-600 mb-2">
-                  {userStats?.currentStreak} 🔥
-                </div>
-                <p className="text-sm text-gray-600">
-                  {userStats?.currentStreak === 1 ? 'day' : 'days'} in a row
+                <p className="text-sm text-slate-600 text-center">
+                  {uploadStatus.filter(s => s.hasUploaded).length === 3 
+                    ? "🎉 All challenges completed! Amazing work!" 
+                    : `${3 - uploadStatus.filter(s => s.hasUploaded).length} more to go today!`
+                  }
                 </p>
               </div>
-            </div>
+            )}
           </div>
-        </div>
 
-        {/* Achievements */}
-        <div className="mt-12 fade-in">
-          <div className="flex items-center gap-3 mb-8">
-            <div className="w-10 h-10 rounded-xl flex items-center justify-center"
-                 style={{background: 'var(--gradient-secondary)'}}>
-              <Gift className="h-6 w-6 text-white" />
-            </div>
-            <div>
-              <h3 className="text-2xl font-bold text-gray-900">Your Achievements</h3>
-              <p className="text-gray-600">Collect badges as you create and explore!</p>
-            </div>
-          </div>
-          
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {achievements.map((achievement, index) => (
-              <div
-                key={achievement.id}
-                className={`bg-white rounded-2xl p-6 shadow-lg border transition-all duration-300 hover:scale-105 bounce-in ${
-                  achievement.earned 
-                    ? 'border-green-200 bg-green-50' 
-                    : 'border-gray-200 hover:border-gray-300'
-                }`}
-                style={{animationDelay: `${index * 0.1}s`}}
-              >
-                <div className="text-center">
-                  <div className={`text-4xl mb-3 ${achievement.earned ? 'grayscale-0' : 'grayscale'}`}>
-                    {achievement.icon}
-                  </div>
-                  <h4 className={`font-bold mb-1 ${
-                    achievement.earned ? 'text-green-700' : 'text-gray-700'
-                  }`}>
-                    {achievement.name}
-                  </h4>
-                  <p className="text-xs text-gray-500 mb-2">
-                    {achievement.points} points
-                  </p>
-                  <p className="text-sm text-gray-600 mb-3">
-                    {achievement.description}
-                  </p>
-                  
-                  {!achievement.earned && achievement.progress && achievement.total && (
-                    <div className="space-y-2">
-                      <div className="bg-gray-200 rounded-full h-2">
-                        <div 
-                          className="bg-gradient-to-r from-primary-500 to-secondary-500 h-2 rounded-full transition-all duration-300"
-                          style={{ width: `${(achievement.progress / achievement.total) * 100}%` }}
-                        />
+          {/* Time Slots Grid */}
+          {dailyChallenges.length > 0 ? (
+            <div className="grid lg:grid-cols-3 gap-8 mb-12">
+              {['morning', 'afternoon', 'evening'].map((timeSlot) => {
+                const challenge = dailyChallenges.find(c => c.timeSlot === timeSlot)
+                const status = uploadStatus.find(s => s.timeSlot === timeSlot)
+                const posts = postsBySlot[timeSlot] || []
+                const hasUploaded = status?.hasUploaded || posts.length > 0
+
+                if (!challenge) return null
+
+                return (
+                  <div
+                    key={timeSlot}
+                    className="relative bg-white rounded-3xl shadow-lg border-2 border-slate-200 hover:border-slate-300 transition-all duration-300 hover:shadow-xl"
+                  >
+
+                    {/* Slot header */}
+                    <div className={`bg-gradient-to-r ${getSlotColor(timeSlot as any)} p-6 rounded-t-3xl text-white`}>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <span className="text-3xl">{challenge.emoji}</span>
+                          <div>
+                            <h3 className="text-xl font-bold">{challenge.title}</h3>
+                            <p className="text-sm opacity-90 capitalize">{timeSlot} Challenge</p>
+                          </div>
+                        </div>
+                        <span className={`px-3 py-1 rounded-full text-xs font-bold bg-white/20 ${
+                          challenge.difficulty === 'easy' ? 'text-green-100' :
+                          challenge.difficulty === 'medium' ? 'text-yellow-100' : 'text-red-100'
+                        }`}>
+                          {challenge.difficulty}
+                        </span>
                       </div>
-                      <p className="text-xs text-gray-500">
-                        {achievement.progress}/{achievement.total}
+                    </div>
+
+                    {/* Slot content */}
+                    <div className="p-6 text-center">
+                      <p className="text-slate-600 mb-6 leading-relaxed">
+                        {challenge.description}
                       </p>
+
+                      {/* Upload status */}
+                      {hasUploaded ? (
+                        <div className="mb-6">
+                          <div className="bg-green-50 border border-green-200 rounded-2xl p-4">
+                            <div className="flex items-center justify-center gap-2 mb-2">
+                              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                              <span className="text-green-700 font-semibold text-sm">
+                                Artwork uploaded!
+                              </span>
+                            </div>
+                            {status?.post && (
+                              <div className="flex items-center justify-center gap-3">
+                                <div className="w-12 h-12 rounded-lg overflow-hidden bg-slate-100">
+                                  <img 
+                                    src={status.post.thumbnailUrl || status.post.imageUrl}
+                                    alt={status.post.altText}
+                                    className="w-full h-full object-cover"
+                                  />
+                                </div>
+                                <div className="flex-1 text-center">
+                                  <p className="text-slate-600 text-sm">{status.post.altText}</p>
+                                  <p className="text-xs text-slate-500">
+                                    Uploaded: {new Date(status.post.createdAt).toLocaleDateString()}
+                                  </p>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      ) : status?.canUpload ? (
+                        <div className="mb-6">
+                          <div className="bg-blue-50 border border-blue-200 rounded-2xl p-4">
+                            <div className="flex items-center justify-center gap-2">
+                              <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                              <span className="text-blue-700 font-semibold text-sm">
+                                Ready for your artwork!
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="mb-6">
+                          <div className="bg-orange-50 border border-orange-200 rounded-2xl p-4">
+                            <div className="flex items-center justify-center gap-2">
+                              <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
+                              <span className="text-orange-700 font-semibold text-sm">
+                                Slot filled for today
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Action buttons */}
+                      <div className="space-y-3">
+                        {!hasUploaded ? (
+                          <Link 
+                            href={`/create?slot=${timeSlot}&prompt=${challenge.id}`}
+                            className="w-full btn btn-primary"
+                          >
+                            <Camera className="h-4 w-4" />
+                            Create for {timeSlot}
+                            <Sparkles className="h-4 w-4" />
+                          </Link>
+                        ) : (
+                          <div className="w-full bg-green-100 text-green-700 py-3 px-4 rounded-2xl font-semibold text-center border border-green-200">
+                            ✅ Completed for today!
+                          </div>
+                        )}
+                        
+                        <Link 
+                          href={`/gallery?slot=${timeSlot}`}
+                          className="w-full btn btn-secondary"
+                        >
+                          <Users className="h-4 w-4" />
+                          See {timeSlot} gallery
+                        </Link>
+                      </div>
                     </div>
-                  )}
-                  
-                  {achievement.earned && (
-                    <div className="text-green-600 font-semibold text-sm">
-                      ✅ Earned!
-                    </div>
-                  )}
-                </div>
+                  </div>
+                )
+              })}
+            </div>
+          ) : (
+            <div className="text-center py-12">
+              <div className="icon-container pink mx-auto mb-6" style={{width: '4rem', height: '4rem'}}>
+                <Calendar style={{width: '2rem', height: '2rem'}} />
               </div>
-            ))}
+              <h3 className="text-2xl font-bold text-slate-900 mb-2">No challenges yet</h3>
+              <p className="text-xl text-slate-600">Check back soon for today's creative adventures!</p>
+            </div>
+          )}
+
+          {/* Encouragement */}
+          <div className="bg-gradient-to-br from-pink-50 to-purple-50 rounded-3xl p-8 border border-pink-200 flex flex-col items-center text-center">
+            <h3 className="text-2xl font-bold text-slate-800 mb-3 text-center">
+              🎨 Your Creative Journey Awaits!
+            </h3>
+            <p className="text-lg text-slate-600 max-w-2xl mx-auto text-center">
+              Each time slot offers a unique creative challenge designed just for you. 
+              Start with any slot you like and build your daily art collection!
+            </p>
           </div>
         </div>
-
-        {/* Weekly Leaderboards */}
-        {leaderboards && (
-          <div className="mt-12 fade-in">
-            <div className="flex items-center gap-3 mb-8">
-              <div className="w-10 h-10 rounded-xl flex items-center justify-center"
-                   style={{background: 'var(--gradient-accent)'}}>
-                <TrendingUp className="h-6 w-6 text-white" />
-              </div>
-              <div>
-                <h3 className="text-2xl font-bold text-gray-900">Weekly Leaderboards</h3>
-                <p className="text-gray-600">See how you stack up with other artists this week!</p>
-              </div>
-            </div>
-
-            <div className="grid lg:grid-cols-3 gap-8">
-              {/* Weekly Uploads */}
-              <div className="bg-white rounded-3xl p-6 shadow-xl border border-primary-100">
-                <div className="flex items-center gap-2 mb-4">
-                  <Camera className="h-5 w-5 text-primary-600" />
-                  <h4 className="font-bold text-gray-900">Most Uploads</h4>
-                </div>
-                <div className="space-y-3">
-                  {leaderboards.weeklyUploads.slice(0, 5).map((entry) => (
-                    <div key={`uploads-${entry.rank}`} className={`flex items-center justify-between p-2 rounded-xl ${
-                      entry.isCurrentChild ? 'bg-primary-50 border border-primary-200' : 'hover:bg-gray-50'
-                    }`}>
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-bold text-gray-500">#{entry.rank}</span>
-                        <span className={`font-medium ${entry.isCurrentChild ? 'text-primary-700' : 'text-gray-700'}`}>
-                          {entry.isCurrentChild ? 'You' : entry.name.split(' ')[0]}
-                        </span>
-                      </div>
-                      <span className="font-bold text-primary-600">{entry.count}</span>
-                    </div>
-                  ))}
-                  {leaderboards.weeklyUploads.length === 0 && (
-                    <p className="text-gray-500 text-center py-4">No uploads this week yet!</p>
-                  )}
-                </div>
-              </div>
-
-              {/* Weekly Likes */}
-              <div className="bg-white rounded-3xl p-6 shadow-xl border border-secondary-100">
-                <div className="flex items-center gap-2 mb-4">
-                  <Heart className="h-5 w-5 text-secondary-600" />
-                  <h4 className="font-bold text-gray-900">Most Liked</h4>
-                </div>
-                <div className="space-y-3">
-                  {leaderboards.weeklyLikes.slice(0, 5).map((entry) => (
-                    <div key={`likes-${entry.rank}`} className={`flex items-center justify-between p-2 rounded-xl ${
-                      entry.isCurrentChild ? 'bg-secondary-50 border border-secondary-200' : 'hover:bg-gray-50'
-                    }`}>
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-bold text-gray-500">#{entry.rank}</span>
-                        <span className={`font-medium ${entry.isCurrentChild ? 'text-secondary-700' : 'text-gray-700'}`}>
-                          {entry.isCurrentChild ? 'You' : entry.name.split(' ')[0]}
-                        </span>
-                      </div>
-                      <span className="font-bold text-secondary-600">{entry.count} ❤️</span>
-                    </div>
-                  ))}
-                  {leaderboards.weeklyLikes.length === 0 && (
-                    <p className="text-gray-500 text-center py-4">No likes this week yet!</p>
-                  )}
-                </div>
-              </div>
-
-              {/* Current Streaks */}
-              <div className="bg-white rounded-3xl p-6 shadow-xl border border-accent-100">
-                <div className="flex items-center gap-2 mb-4">
-                  <TrendingUp className="h-5 w-5 text-accent-600" />
-                  <h4 className="font-bold text-gray-900">Longest Streaks</h4>
-                </div>
-                <div className="space-y-3">
-                  {leaderboards.currentStreaks.slice(0, 5).map((entry) => (
-                    <div key={`streaks-${entry.rank}`} className={`flex items-center justify-between p-2 rounded-xl ${
-                      entry.isCurrentChild ? 'bg-accent-50 border border-accent-200' : 'hover:bg-gray-50'
-                    }`}>
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-bold text-gray-500">#{entry.rank}</span>
-                        <span className={`font-medium ${entry.isCurrentChild ? 'text-accent-700' : 'text-gray-700'}`}>
-                          {entry.isCurrentChild ? 'You' : entry.name.split(' ')[0]}
-                        </span>
-                      </div>
-                      <span className="font-bold text-accent-600">{entry.count} 🔥</span>
-                    </div>
-                  ))}
-                  {leaderboards.currentStreaks.length === 0 && (
-                    <p className="text-gray-500 text-center py-4">No active streaks yet!</p>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Quick Actions */}
-        <div className="mt-12 grid md:grid-cols-3 gap-6 fade-in">
-          <Link href="/gallery">
-            <div className="group bg-white rounded-3xl p-8 shadow-lg border border-secondary-100 hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 cursor-pointer">
-              <div className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300"
-                   style={{background: 'var(--gradient-secondary)'}}>
-                <Users className="h-7 w-7 text-white" />
-              </div>
-              <h4 className="text-xl font-bold text-gray-900 text-center mb-3">Art Gallery</h4>
-              <p className="text-gray-600 text-center">
-                Explore amazing artwork from artists around the world! 🌍
-              </p>
-            </div>
-          </Link>
-
-          <Link href="/profile">
-            <div className="group bg-white rounded-3xl p-8 shadow-lg border border-purple-100 hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 cursor-pointer">
-              <div className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300"
-                   style={{background: 'var(--gradient-purple)'}}>
-                <Star className="h-7 w-7 text-white" />
-              </div>
-              <h4 className="text-xl font-bold text-gray-900 text-center mb-3">My Profile</h4>
-              <p className="text-gray-600 text-center">
-                Check your stats, achievements, and customize your artist profile! ⭐
-              </p>
-            </div>
-          </Link>
-
-          <Link href="/challenges">
-            <div className="group bg-white rounded-3xl p-8 shadow-lg border border-accent-100 hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 cursor-pointer">
-              <div className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300"
-                   style={{background: 'var(--gradient-accent)'}}>
-                <Target className="h-7 w-7 text-white" />
-              </div>
-              <h4 className="text-xl font-bold text-gray-900 text-center mb-3">All Challenges</h4>
-              <p className="text-gray-600 text-center">
-                Browse all creative challenges and find your next adventure! 🎯
-              </p>
-            </div>
-          </Link>
-        </div>
-      </main>
-    </div>
+      </div>
+    </ChildLayout>
   )
 }

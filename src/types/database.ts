@@ -69,6 +69,7 @@ export interface Database {
           age_group: 'kids' | 'tweens'
           difficulty: 'easy' | 'medium' | 'hard'
           prompt_text: string
+          time_slot: 'morning' | 'afternoon' | 'evening'
           created_at: string
         }
         Insert: {
@@ -77,6 +78,7 @@ export interface Database {
           age_group: 'kids' | 'tweens'
           difficulty: 'easy' | 'medium' | 'hard'
           prompt_text: string
+          time_slot: 'morning' | 'afternoon' | 'evening'
           created_at?: string
         }
         Update: {
@@ -85,6 +87,7 @@ export interface Database {
           age_group?: 'kids' | 'tweens'
           difficulty?: 'easy' | 'medium' | 'hard'
           prompt_text?: string
+          time_slot?: 'morning' | 'afternoon' | 'evening'
           created_at?: string
         }
       }
@@ -96,6 +99,7 @@ export interface Database {
           image_url: string
           thumbnail_url: string | null
           alt_text: string
+          time_slot: 'morning' | 'afternoon' | 'evening' | null
           created_at: string
           likes_count: number
           moderation_status: 'pending' | 'approved' | 'rejected'
@@ -107,6 +111,7 @@ export interface Database {
           image_url: string
           thumbnail_url?: string | null
           alt_text: string
+          time_slot?: 'morning' | 'afternoon' | 'evening' | null
           created_at?: string
           likes_count?: number
           moderation_status?: 'pending' | 'approved' | 'rejected'
@@ -118,6 +123,7 @@ export interface Database {
           image_url?: string
           thumbnail_url?: string | null
           alt_text?: string
+          time_slot?: 'morning' | 'afternoon' | 'evening' | null
           created_at?: string
           likes_count?: number
           moderation_status?: 'pending' | 'approved' | 'rejected'
@@ -230,6 +236,38 @@ export interface Database {
           level?: number
           total_points?: number
           last_post_date?: string | null
+          updated_at?: string
+        }
+      }
+      daily_upload_limits: {
+        Row: {
+          id: string
+          child_id: string
+          date: string
+          time_slot: 'morning' | 'afternoon' | 'evening'
+          uploads_count: number
+          last_upload_at: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          child_id: string
+          date: string
+          time_slot: 'morning' | 'afternoon' | 'evening'
+          uploads_count?: number
+          last_upload_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          child_id?: string
+          date?: string
+          time_slot?: 'morning' | 'afternoon' | 'evening'
+          uploads_count?: number
+          last_upload_at?: string | null
+          created_at?: string
           updated_at?: string
         }
       }
