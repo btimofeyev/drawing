@@ -354,8 +354,8 @@ node scripts/moderate-pending-posts.js
 - **Daily limits**: Maximum 3 uploads per child per day (one per time slot)
 - **File constraints**: 5MB maximum, image formats only
 - **Alt text requirement**: Accessibility and content description
-- **Duplicate prevention**: Database constraints prevent multiple uploads per slot
-- **Re-upload after deletion**: When artwork is deleted, the upload limit is cleared allowing re-upload to the same slot on the same day
+- **Duplicate prevention**: Upload endpoint checks posts table directly to prevent multiple uploads per slot
+- **Re-upload after deletion**: When artwork is deleted, users can immediately re-upload to the same slot since limits are checked against existing posts
 
 ## Security Considerations
 

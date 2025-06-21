@@ -72,24 +72,8 @@ export async function DELETE(
       return NextResponse.json({ error: 'Failed to delete artwork' }, { status: 500 })
     }
 
-    // Clear the upload limit for this time slot so the child can upload again
-    const postDate = new Date(artwork.created_at).toISOString().split('T')[0]
-    const today = new Date().toISOString().split('T')[0]
-    
-    // Only clear the limit if the post was from today
-    if (postDate === today && artwork.time_slot) {
-      const { error: limitError } = await supabaseAdmin
-        .from('daily_upload_limits')
-        .delete()
-        .eq('child_id', artwork.child_id)
-        .eq('date', today)
-        .eq('time_slot', artwork.time_slot)
-      
-      if (limitError) {
-        console.error('Failed to clear upload limit:', limitError)
-        // Don't fail the request, the post is already deleted
-      }
-    }
+    // Note: We no longer need to clear daily_upload_limits since
+    // the upload endpoint now checks the posts table directly
 
     // Update user stats for the child
     const { error: statsError } = await supabaseAdmin

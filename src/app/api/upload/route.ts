@@ -109,24 +109,32 @@ export async function POST(request: NextRequest) {
     const today = new Date().toISOString().split('T')[0]
     const targetTimeSlot = timeSlot as 'daily_1' | 'daily_2' | 'free_draw'
 
-    // Check if child can upload to this time slot (applies to all time slots including free_draw)
-    const { data: uploadCheck, error: canUploadError } = await supabaseAdmin
-      .from('daily_upload_limits')
-      .select('uploads_count')
+    // Check if child already has a post in this time slot today
+    const { data: existingPost, error: checkError } = await supabaseAdmin
+      .from('posts')
+      .select('id')
       .eq('child_id', childId)
-      .eq('date', today)
       .eq('time_slot', targetTimeSlot)
+      .gte('created_at', `${today}T00:00:00Z`)
+      .lt('created_at', `${today}T23:59:59Z`)
       .maybeSingle()
 
-    if (canUploadError) {
-      console.error('Error checking upload permissions:', canUploadError)
+    if (checkError) {
+      console.error('Error checking existing posts:', checkError)
       return NextResponse.json(
         { error: 'Failed to validate upload permissions' },
         { status: 500 }
       )
     }
 
-    const canUpload = !uploadCheck || uploadCheck.uploads_count === 0
+    console.log('Upload check:', {
+      childId,
+      date: today,
+      timeSlot: targetTimeSlot,
+      hasExistingPost: !!existingPost
+    })
+
+    const canUpload = !existingPost
 
     if (!canUpload) {
       const timeSlotDisplay = targetTimeSlot === 'daily_1' ? 'Challenge 1' : 
@@ -294,23 +302,8 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Record the upload in daily_upload_limits (applies to all time slots)
-    const { error: recordError } = await supabaseAdmin
-      .from('daily_upload_limits')
-      .upsert({
-        child_id: childId,
-        date: today,
-        time_slot: targetTimeSlot,
-        uploads_count: 1,
-        last_upload_at: new Date().toISOString()
-      }, {
-        onConflict: 'child_id,date,time_slot'
-      })
-
-    if (recordError) {
-      console.error('Failed to record upload:', recordError)
-      // Don't fail the request, just log the error
-    }
+    // Note: We no longer need to record in daily_upload_limits table
+    // since we're checking the posts table directly for upload limits
 
     // Update user stats
     const { error: statsError } = await supabaseAdmin
