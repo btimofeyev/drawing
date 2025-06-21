@@ -8,7 +8,7 @@ const openai = new OpenAI({
 export type TimeSlot = 'daily_1' | 'daily_2' | 'free_draw'
 
 export interface PromptRequest {
-  ageGroup: 'kids' | 'tweens'
+  ageGroup: 'preschoolers' | 'kids' | 'tweens'
   difficulty: 'easy' | 'medium' | 'hard'
   timeSlot?: TimeSlot
   theme?: string
@@ -19,7 +19,7 @@ export interface GeneratedPrompt {
   title: string
   description: string
   difficulty: 'easy' | 'medium' | 'hard'
-  ageGroup: 'kids' | 'tweens'
+  ageGroup: 'preschoolers' | 'kids' | 'tweens'
   timeSlot?: TimeSlot
   emoji: string
 }
@@ -49,8 +49,10 @@ export class PromptGenerator {
     const { ageGroup, previousPrompts, theme } = request
 
     // Create age-appropriate instructions using structured prompting
-    const ageInstructions = ageGroup === 'kids' 
-      ? "children ages 6-10. Focus on real-life experiences, everyday activities, nature, pets, family, school, sports, and things they see around them. Use simple, encouraging language."
+    const ageInstructions = ageGroup === 'preschoolers'
+      ? "preschoolers ages 4-6. Focus on very simple concepts, basic shapes, colors, familiar animals and objects. Use extremely simple language and concepts they can understand. Emphasize big, simple elements and basic motor skill development."
+      : ageGroup === 'kids' 
+      ? "children ages 7-10. Focus on real-life experiences, everyday activities, nature, pets, family, school, sports, and things they see around them. Use simple, encouraging language."
       : "tweens ages 11-16. Focus on realistic scenarios, hobbies, interests, social situations, future aspirations, and personal experiences. Include creative challenges that allow self-expression."
     
     // Build structured developer message for shared prompts
@@ -60,8 +62,10 @@ export class PromptGenerator {
       ? 'Create an IMAGINATION drawing prompt about magical creatures, inventions, fantasy, or superheroes.'
       : 'Create a REAL LIFE drawing prompt about family, home, food, pets, or favorite things.'
 
-    const ageInstruction = ageGroup === 'kids'
-      ? 'For children aged 6-10. Keep it simple, playful and easy to understand.'
+    const ageInstruction = ageGroup === 'preschoolers'
+      ? 'For preschoolers aged 4-6. Keep it extremely simple with basic shapes, colors, and familiar objects. Use very easy language.'
+      : ageGroup === 'kids'
+      ? 'For children aged 7-10. Keep it simple, playful and easy to understand.'
       : 'For tweens aged 11-16. Make it engaging with more creative challenges.'
 
     const developerInstructions = `${themeInstruction}
@@ -147,8 +151,10 @@ JSON format:
     const { ageGroup, difficulty, timeSlot, theme, previousPrompts } = request
 
     // Create age-appropriate instructions using structured prompting
-    const ageInstructions = ageGroup === 'kids' 
-      ? "children ages 6-10. Focus on real-life experiences, everyday activities, nature, pets, family, school, sports, and things they see around them. Use simple, encouraging language."
+    const ageInstructions = ageGroup === 'preschoolers'
+      ? "preschoolers ages 4-6. Focus on very simple concepts, basic shapes, colors, familiar animals and objects. Use extremely simple language and concepts they can understand. Emphasize big, simple elements and basic motor skill development."
+      : ageGroup === 'kids' 
+      ? "children ages 7-10. Focus on real-life experiences, everyday activities, nature, pets, family, school, sports, and things they see around them. Use simple, encouraging language."
       : "tweens ages 11-16. Focus on realistic scenarios, hobbies, interests, social situations, future aspirations, and personal experiences. Include creative challenges that allow self-expression."
 
     const timeSlotContext = timeSlot ? this.getSlotConfig(timeSlot) : null
@@ -251,6 +257,21 @@ Age: kids, Difficulty: easy, Time: free_draw
   "ageGroup": "kids",
   "timeSlot": "free_draw"
 }
+</example_response>
+
+<example_request>
+Age: preschoolers, Difficulty: easy, Time: daily_1
+</example_request>
+
+<example_response>
+{
+  "title": "Happy Sun Drawing",
+  "description": "Draw a big, happy sun! Make a big circle and give it a smiley face. Add some lines around it for the sunshine. You can use yellow, orange, or any bright colors you like! What kind of face will your sun have?",
+  "emoji": "☀️",
+  "difficulty": "easy",
+  "ageGroup": "preschoolers",
+  "timeSlot": "daily_1"
+}
 </example_response>`
 
     try {
@@ -299,6 +320,11 @@ Age: kids, Difficulty: easy, Time: free_draw
     // Time slot specific fallback prompts
     const slotFallbacks = {
       daily_1: {
+        preschoolers: {
+          easy: { title: "Big Happy Sun", description: "Draw a big, happy sun! Make a big circle and give it a smiley face. Add some lines around it for sunshine!", emoji: "☀️" },
+          medium: { title: "Colorful Animal", description: "Draw your favorite animal! Make it big and use lots of bright colors. Maybe a cat, dog, or bird!", emoji: "🐱" },
+          hard: { title: "My Family", description: "Draw your family! You can use stick figures or simple shapes. Make everyone happy and together!", emoji: "👨‍👩‍👧‍👦" }
+        },
         kids: {
           easy: { title: "Sunny Breakfast Party", description: "Draw your favorite breakfast foods having a morning party! What would pancakes, eggs, and fruit do when they wake up?", emoji: "☀️" },
           medium: { title: "Morning Animal Friends", description: "Create a scene of forest animals starting their morning! Show a rabbit brushing teeth or a bird stretching wings.", emoji: "🐰" },
@@ -311,6 +337,11 @@ Age: kids, Difficulty: easy, Time: free_draw
         }
       },
       daily_2: {
+        preschoolers: {
+          easy: { title: "Pretty Flower", description: "Draw a big, pretty flower! Make a circle in the middle and add petals all around. Use your favorite colors!", emoji: "🌸" },
+          medium: { title: "My House", description: "Draw your house! Make a square for the house, a triangle for the roof, and don't forget the door and windows!", emoji: "🏠" },
+          hard: { title: "Fun Playground", description: "Draw a playground with swings and slides! Add yourself playing and having fun!", emoji: "🛝" }
+        },
         kids: {
           easy: { title: "Playground Adventure", description: "Draw yourself playing at your favorite playground! Include swings, slides, and maybe some new friends.", emoji: "🛝" },
           medium: { title: "Outdoor Explorer", description: "Create an adventure scene where you're exploring a forest or beach! What interesting things do you discover?", emoji: "🏕️" },
@@ -323,6 +354,11 @@ Age: kids, Difficulty: easy, Time: free_draw
         }
       },
       free_draw: {
+        preschoolers: {
+          easy: { title: "Colorful Rainbow", description: "Draw a big rainbow! Use red, orange, yellow, green, blue, and purple. Make it stretch across your paper!", emoji: "🌈" },
+          medium: { title: "Favorite Toy", description: "Draw your favorite toy! It could be a teddy bear, a ball, or toy car. Make it look fun and colorful!", emoji: "🧸" },
+          hard: { title: "Happy Tree", description: "Draw a big tree with lots of leaves! Add some birds or flowers around it. Make it a happy tree!", emoji: "🌳" }
+        },
         kids: {
           easy: { title: "Cozy Reading Corner", description: "Draw your perfect cozy spot for reading books! Include soft pillows, warm blankets, and maybe a pet.", emoji: "📚" },
           medium: { title: "Dream Castle", description: "Design a magical castle that exists only in dreams! What rooms would it have? Make it sparkle!", emoji: "🏰" },
@@ -338,6 +374,11 @@ Age: kids, Difficulty: easy, Time: free_draw
 
     // Default fallbacks if no time slot
     const generalFallbacks = {
+      preschoolers: {
+        easy: { title: "Big Circle Fun", description: "Draw a big circle and turn it into something fun! Maybe a face, a ball, or the sun!", emoji: "⭕" },
+        medium: { title: "Favorite Animal", description: "Draw your favorite animal! Make it big and colorful. Don't forget to give it a happy face!", emoji: "🐕" },
+        hard: { title: "Me and My Friend", description: "Draw yourself with your best friend! Use stick figures or simple shapes. Show you both having fun!", emoji: "👫" }
+      },
       kids: {
         easy: { title: "Happy Animal Friend", description: "Draw your favorite animal wearing a colorful hat! Make them look super happy and friendly.", emoji: "🐾" },
         medium: { title: "Magical Garden", description: "Create a secret garden where flowers have faces and butterflies are rainbow colored!", emoji: "🌸" },
@@ -365,10 +406,30 @@ Age: kids, Difficulty: easy, Time: free_draw
     }
   }
 
-  static getFallbackSharedPrompt(request: { ageGroup: 'kids' | 'tweens', difficulty: 'medium' }): GeneratedPrompt & { communityTitle: string } {
+  static getFallbackSharedPrompt(request: { ageGroup: 'preschoolers' | 'kids' | 'tweens', difficulty: 'medium' }): GeneratedPrompt & { communityTitle: string } {
     const { ageGroup } = request
 
     const sharedFallbacks = {
+      preschoolers: [
+        {
+          title: "Happy Animals",
+          description: "Draw a happy animal! Make it big and give it a smiley face. You can draw a cat, dog, bird, or any animal you like! Use lots of bright colors to make your animal happy and fun!",
+          communityTitle: "🐾 Our Happy Animal Friends!",
+          emoji: "😊"
+        },
+        {
+          title: "Big Colorful Shapes",
+          description: "Draw big, colorful shapes! Make circles, squares, triangles, and stars. Fill them with your favorite colors and make them bright and cheerful!",
+          communityTitle: "🌈 Beautiful Colorful Shapes!",
+          emoji: "🔴"
+        },
+        {
+          title: "My Favorite Things",
+          description: "Draw your favorite things! Maybe your favorite food, toy, or something that makes you happy. Make it big and use lots of colors!",
+          communityTitle: "❤️ Things That Make Us Happy!",
+          emoji: "⭐"
+        }
+      ],
       kids: [
         {
           title: "Dream Pet Adventure",
@@ -462,15 +523,25 @@ Age: kids, Difficulty: easy, Time: free_draw
   }
 
   // Generate 2 random fun prompts - not tied to time slots at all
-  static async generateMVPCommunityPrompts(ageGroup: 'kids' | 'tweens'): Promise<(GeneratedPrompt & { communityTitle: string })[]> {
+  static async generateMVPCommunityPrompts(ageGroup: 'preschoolers' | 'kids' | 'tweens'): Promise<(GeneratedPrompt & { communityTitle: string })[]> {
     const timeSlots: TimeSlot[] = ['daily_1', 'daily_2']
 
     try {
-      const ageInstruction = ageGroup === 'kids'
-        ? 'You are a playful and inspiring assistant that gives two creative daily drawing challenge prompts to kids aged 6–10.'
+      const ageInstruction = ageGroup === 'preschoolers'
+        ? 'You are a cheerful and encouraging assistant that gives two very simple daily drawing challenge prompts to preschoolers aged 4–6.'
+        : ageGroup === 'kids'
+        ? 'You are a playful and inspiring assistant that gives two creative daily drawing challenge prompts to kids aged 7–10.'
         : 'You are a creative assistant that gives two engaging daily drawing challenge prompts to tweens aged 11–16.'
 
-      const themeGuidelines = ageGroup === 'kids'
+      const themeGuidelines = ageGroup === 'preschoolers'
+        ? `Each day, generate **two different prompts** that a preschooler might enjoy drawing. Keep them very simple:
+- Basic shapes (circles, squares, hearts, stars)
+- Simple animals (cat, dog, fish, bird)
+- Familiar objects (sun, house, car, ball)
+- Simple nature (flower, tree, rainbow)
+- Basic emotions (happy face, sad face)
+- Things they love (favorite toy, family members)`
+        : ageGroup === 'kids'
         ? `Each day, generate **two different prompts** that a child might be excited to draw. The prompts can include any of these themes:
 - Nature (animals, plants, oceans, seasons)
 - Imagination (fantasy, magic, silly inventions, made-up creatures)
@@ -576,11 +647,73 @@ Return ONLY a JSON array with 2 prompts, first easy then medium difficulty:
 
   // Fallback community prompts with diverse themes
   static getFallbackCommunityPrompt(
-    ageGroup: 'kids' | 'tweens', 
+    ageGroup: 'preschoolers' | 'kids' | 'tweens', 
     timeSlot: TimeSlot, 
     theme: string
   ): GeneratedPrompt & { communityTitle: string } {
     const diverseFallbacks = {
+      preschoolers: {
+        daily_1: [
+          {
+            title: "Big Happy Sun",
+            description: "Draw a big, happy sun! Make a big circle and give it a smiley face. Add some lines around it for sunshine!",
+            communityTitle: "☀️ Our Sunny Day Pictures!",
+            emoji: "☀️"
+          },
+          {
+            title: "My Pet Friend",
+            description: "Draw your pet or a pet you would like! Make it colorful and happy. Don't forget to give it a smiley face!",
+            communityTitle: "🐕 Our Animal Friends!",
+            emoji: "🐱"
+          },
+          {
+            title: "Pretty Flower",
+            description: "Draw a big, pretty flower! Make a circle in the middle and add petals all around. Use your favorite colors!",
+            communityTitle: "🌸 Our Beautiful Flowers!",
+            emoji: "🌸"
+          }
+        ],
+        daily_2: [
+          {
+            title: "My House",
+            description: "Draw your house! Make a square for the house, a triangle for the roof, and don't forget the door and windows!",
+            communityTitle: "🏠 Our Happy Homes!",
+            emoji: "🏠"
+          },
+          {
+            title: "Colorful Rainbow",
+            description: "Draw a big rainbow! Use red, orange, yellow, green, blue, and purple. Make it stretch across your paper!",
+            communityTitle: "🌈 Our Colorful Rainbows!",
+            emoji: "🌈"
+          },
+          {
+            title: "Happy Tree",
+            description: "Draw a big tree with lots of leaves! Add some birds or flowers around it. Make it a happy tree!",
+            communityTitle: "🌳 Our Happy Trees!",
+            emoji: "🌳"
+          }
+        ],
+        free_draw: [
+          {
+            title: "My Family",
+            description: "Draw your family! You can use stick figures or simple shapes. Make everyone happy and together!",
+            communityTitle: "👨‍👩‍👧‍👦 Our Families!",
+            emoji: "❤️"
+          },
+          {
+            title: "Favorite Toy",
+            description: "Draw your favorite toy! It could be a teddy bear, a ball, or toy car. Make it look fun and colorful!",
+            communityTitle: "🧸 Our Favorite Toys!",
+            emoji: "🎲"
+          },
+          {
+            title: "Big Circle Fun",
+            description: "Draw a big circle and turn it into something fun! Maybe a face, a ball, or the sun!",
+            communityTitle: "⭕ Our Circle Creations!",
+            emoji: "🔴"
+          }
+        ]
+      },
       kids: {
         daily_1: [
           {

@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
     const tomorrowStr = tomorrow.toISOString().split('T')[0]
 
 
-    const ageGroups = ['kids', 'tweens'] as const
+    const ageGroups = ['preschoolers', 'kids', 'tweens'] as const
     const results = []
     const errors = []
 
@@ -156,7 +156,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const ageGroups = ['kids', 'tweens'] as const
+    const ageGroups = ['preschoolers', 'kids', 'tweens'] as const
     const results = []
 
     // Generate 2 themed community prompts for each age group using the new MVP approach

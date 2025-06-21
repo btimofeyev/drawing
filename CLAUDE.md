@@ -2,18 +2,19 @@
 
 ## Project Overview
 
-**Daily Scribble** is a safe, child-friendly creative platform that provides daily drawing challenges for young artists. The application is designed as a mobile-first Progressive Web App (PWA) with comprehensive safety features, parental oversight, and AI-powered content moderation.
+**Daily Scribble** is a safe, child-friendly creative platform that provides daily drawing challenges for young artists ages 4-16. The application is designed as a mobile-first Progressive Web App (PWA) with comprehensive safety features, parental oversight, and AI-powered content moderation.
 
 ### Core Purpose
-- Provide daily creative prompts for children aged 6-16
+- Provide daily creative prompts for children aged 4-16
 - Create a safe community for sharing artwork
 - Enable parental oversight and control
 - Encourage creativity through gamification and achievements
 
 ### Target Users
-- **Kids** (ages 6-10): Simpler prompts and interface
-- **Tweens** (ages 11-16): More complex challenges
-- **Parents**: Full oversight and management capabilities
+- **Preschoolers** (ages 4-6): Very simple concepts, basic shapes, colors, and familiar objects with large UI elements
+- **Kids** (ages 7-10): Simple prompts and engaging activities with age-appropriate complexity
+- **Tweens** (ages 11-16): More complex challenges and creative expression opportunities
+- **Parents**: Full oversight and management capabilities across all age groups
 
 ## Technology Stack
 
@@ -33,20 +34,35 @@
 
 ### Key Dependencies
 - **react-hook-form**: 7.58.1 + zod 3.25.67 (Form handling and validation)
+- **@hookform/resolvers**: 5.1.1 (Form validation resolvers)
 - **lucide-react**: 0.518.0 (Icon library)
 - **react-dropzone**: 14.3.8 (File upload handling)
 - **browser-image-compression**: 2.0.2 (Client-side image optimization)
 - **bcryptjs**: 3.0.2 (PIN hashing for child authentication)
+- **@supabase/auth-helpers-nextjs**: 0.10.0 (Supabase Next.js integration)
+- **@supabase/supabase-js**: 2.50.0 (Supabase JavaScript client)
+- **openai**: 5.5.1 (OpenAI API integration)
+- **workbox-webpack-plugin**: 7.3.0 (PWA service worker generation)
+
+### Development Tools
+- **Turbopack**: Fast development bundler (enabled via `--turbopack` flag)
+- **ESLint**: 9.x with Next.js configuration
+- **TypeScript**: 5.x with strict mode and ES2017 target
+- **Tailwind CSS**: 4.x with PostCSS integration
 
 ## App Functionality
 
 ### Core Features
 
 #### Daily Creative Challenges
-- **Three time slots per day**: Morning (easy), Afternoon (medium), Evening (hard)
-- **AI-generated prompts**: Using GPT-4o-mini with age-appropriate themes
-- **Upload limits**: One artwork per time slot per day to encourage quality
-- **Age-specific content**: Different prompt complexity for kids vs tweens
+- **Two daily challenges**: Daily Challenge 1 and Daily Challenge 2 with varying difficulty levels
+- **Free Draw System**: Unlimited creative expression with AI-powered inspiration prompts
+- **AI-generated prompts**: Using GPT-4o-mini with age-appropriate themes across 6 categories
+- **Upload limits**: One artwork per slot per day (2 daily challenges + unlimited free draw)
+- **Age-specific content**: Different prompt complexity across three age groups (preschoolers, kids, tweens)
+- **Motor skill development**: Basic shape and color exercises for preschoolers
+- **Developmental progression**: Content that grows with children from ages 4-16
+- **Inspiration Categories**: Animals, Nature, Fantasy, Objects, Emotions, and Activities
 
 #### Authentication System
 **Dual authentication model**:
@@ -54,16 +70,44 @@
 - **Children**: Username + 4-digit PIN system with session management
 
 #### Community Features
-- **Moderated gallery**: AI + manual content moderation
-- **Like system**: Children can appreciate each other's artwork
-- **View tracking**: Engagement metrics for popular content
-- **Search & filtering**: By time slot, difficulty, and date
+- **Moderated gallery**: AI + manual content moderation with real-time status updates
+- **Like system**: Children can appreciate each other's artwork (cannot like own posts)
+- **View tracking**: Engagement metrics for popular content and trending detection
+- **Search & filtering**: By time slot, difficulty, date, and search terms
+- **Trending System**: Community-driven prompt discovery and remix functionality
+- **Community Remix**: Users can create artwork based on popular community prompts
+- **Prompt-Specific Pages**: Dedicated pages showing all artwork for specific challenges
+
+#### Leaderboard System
+**Eight Competitive Categories**:
+- **Weekly Creative**: Most uploads in current week
+- **Weekly Loved**: Most likes received in current week
+- **Dedication Champions**: Longest current creation streaks
+- **Monthly Creative**: Most uploads in current month
+- **Monthly Loved**: Most likes received in current month
+- **Rising Stars**: New artists with rapid engagement growth
+- **Growth Champions**: Most improved artists (week-over-week metrics)
+- **Community Heroes**: Most likes given to other artists
+
+**Leaderboard Features**:
+- **Real-time Updates**: Live ranking changes and position tracking
+- **Historical Data**: Previous week/month performance comparison
+- **Fair Competition**: Age-appropriate grouping and balanced metrics
+- **Recognition System**: Special badges for leaderboard achievements
 
 #### Gamification & Achievements
-- **Creation badges**: Upload milestones (1, 5, 10, 25, 50, 100 artworks)
-- **Social engagement**: Like giving/receiving achievements
-- **Streak system**: Consecutive daily creation (3, 7, 14, 30 days)
-- **Skill progression**: Time slot completion and daily triple achievements
+**Five Achievement Categories**:
+- **Creation**: Upload milestones (1, 5, 10, 25, 50, 100 artworks)
+- **Social**: Like giving/receiving achievements and community engagement
+- **Streak**: Consecutive daily creation (3, 7, 14, 30 days)
+- **Skill**: Time slot completion and challenge variety achievements
+- **Special**: Unique accomplishments and seasonal achievements
+
+**Achievement System Features**:
+- **Rarity Levels**: Common, Rare, Epic, and Legendary achievements
+- **Point System**: Each achievement awards points contributing to user levels
+- **Progress Tracking**: Visual progress bars and completion status
+- **Level Progression**: Non-linear level system with increasing point requirements
 
 ### Safety Features
 - **Multi-layered content moderation**: OpenAI API + manual review
@@ -111,63 +155,146 @@ npm run lint
 1. Create new Supabase project
 2. Run schema from `database/schema.sql` in SQL Editor
 3. Follow migration instructions in `scripts/run-migration.md`
-4. Configure storage bucket policies for public artwork access
+4. For existing databases, run `database/migration-add-preschooler-age-group.sql`
+5. Configure storage bucket policies for public artwork access
 
 ## Architecture Overview
 
 ### Database Schema
 **Core tables**:
 - `parent_accounts` - Parent user records linked to Supabase Auth
-- `child_profiles` - Child accounts with PIN authentication
-- `prompts` - Daily drawing prompts with time slots and age targeting
+- `child_profiles` - Child accounts with PIN authentication (supports preschoolers, kids, tweens)
+- `prompts` - Daily drawing prompts with time slots and age targeting (all three age groups)
 - `posts` - Artwork submissions with moderation status
 - `child_likes` - Like relationships with proper constraints
 - `achievements` + `user_achievements` - Gamification system
 - `user_stats` - Aggregated metrics (streaks, levels, points)
 - `daily_upload_limits` - Enforcement of upload restrictions
+- `free_draw_inspirations` - Creative inspiration prompts by age group
 
 ### API Structure
-**Authentication endpoints**:
-- `/api/auth/parent/*` - Parent OTP authentication
-- `/api/auth/child/*` - Child PIN authentication
+**32 API endpoints organized across 10 functional categories:**
 
-**Content endpoints**:
-- `/api/prompts/daily` - Fetch daily challenges with AI fallback
-- `/api/upload` - Artwork upload with automatic moderation
-- `/api/gallery` - Browse community artwork with pagination
-- `/api/posts/*` - Like, view, and content management
+#### Authentication Endpoints (5)
+- **POST** `/api/auth/parent/signin` - Send OTP code to parent email
+- **POST** `/api/auth/parent/verify` - Verify OTP code and create parent session
+- **POST** `/api/auth/parent/signout` - Sign out parent and clear session
+- **POST** `/api/auth/child/signin` - Child username/PIN authentication
+- **POST** `/api/auth/child/signout` - Sign out child and clear session
 
-**Admin/Parent endpoints**:
-- `/api/parent/*` - Child profile management
-- `/api/admin/*` - Moderation and administrative functions
+#### Content Management (5)
+- **POST** `/api/posts` - Create new artwork post with automatic AI moderation
+- **GET** `/api/posts` - Fetch child's own posts with filtering and pagination
+- **POST** `/api/posts/like` - Like/unlike artwork posts with optimistic updates
+- **POST** `/api/posts/view` - Record view count for engagement tracking
+- **GET** `/api/posts/upload-status` - Check daily upload limits and slot availability
 
-### Content Moderation Pipeline
-1. **Upload**: Image immediately sent to OpenAI moderation API
-2. **Categories**: Sexual, violent, harmful, hateful content detection
-3. **Status assignment**: 
-   - `approved` - Visible in gallery
-   - `rejected` - Hidden from public view
-   - `pending` - Awaiting manual review (API failures)
-4. **Fallback behavior**: Auto-approve if no API key (development mode)
+#### Prompt & Challenge System (2)
+- **GET** `/api/prompts/daily` - Fetch daily challenges with AI fallback and age filtering
+- **GET** `/api/prompts/shared-daily` - Fetch shared daily prompts across age groups
+
+#### Upload & Storage (1)
+- **POST** `/api/upload` - File upload with automatic compression and AI moderation
+
+#### Gallery & Discovery (1)
+- **GET** `/api/gallery` - Browse community artwork with advanced filtering and pagination
+
+#### Child Profile Management (4)
+- **GET** `/api/child/achievements` - Fetch child's achievements, badges, and progress
+- **GET** `/api/child/artworks` - Fetch child's complete artwork collection
+- **GET** `/api/child/profile` - Get child profile information and settings
+- **GET** `/api/child/stats` - Get child's statistics, level, and performance metrics
+
+#### Parent Dashboard (4)
+- **GET** `/api/parent/children` - List all children under parental supervision
+- **GET** `/api/parent/children/[childId]` - Get specific child's detailed information
+- **GET** `/api/parent/children/[childId]/artwork` - Get child's artwork for parental review
+- **DELETE** `/api/parent/artwork/[artworkId]` - Delete child's artwork (parental control)
+
+#### Community Features (2)
+- **GET** `/api/community/trending` - Get trending prompts with community engagement metrics
+- **GET** `/api/community/prompt/[promptId]` - Get specific prompt with all community artwork
+
+#### Leaderboards & Competition (1)
+- **GET** `/api/leaderboards/weekly` - Weekly leaderboards across 8 categories (uploads, likes, streaks, etc.)
+
+#### Free Draw System (1)
+- **GET** `/api/free-draw/inspiration` - Get creative inspiration prompts from 6 categories
+
+#### Administrative Functions (2)
+- **POST** `/api/admin/generate-prompts` - Manually trigger daily prompt generation
+- **POST** `/api/admin/moderate-pending` - Moderate pending content with bulk actions
+
+#### Automated Tasks (1)
+- **POST** `/api/cron/generate-daily-prompts` - Automated daily prompt generation (4:00 AM UTC)
+
+#### Development & Debug (3)
+- **GET** `/api/children/list` - List children (utility endpoint for development)
+- **GET** `/api/debug/check-table` - Database table debugging and health checks
+- **GET** `/api/debug/supabase` - Supabase connection testing and configuration validation
+- **POST** `/api/debug/test-otp` - OTP system testing and email delivery verification
+
+### Component Architecture
+**Centralized Layout Pattern**:
+- **ChildLayout Component** (`src/components/ChildLayout.tsx`): Main layout wrapper for all child-facing pages
+- **Real-time Features**: Live stats fetching from `/api/child/stats` and `/api/child/achievements`
+- **Level System**: Non-linear progression with sophisticated point calculation
+- **Responsive Design**: Mobile-first with collapsible sidebar and backdrop overlay
+- **Page-Level Components**: Individual components per page rather than shared UI library
+
+**Gamification Integration**:
+- **Level Calculation**: Dynamic level progression based on achievement points
+- **Progress Tracking**: Real-time progress bars and "points to next level" display
+- **User Stats**: Combined data from multiple API endpoints for comprehensive dashboard
 
 ### Authentication Middleware
 Located in `src/middleware.ts`:
-- **Parent routes** (`/parent/*`): Requires Supabase Auth session
-- **Child routes** (`/child-home/*`, `/child/*`): Requires PIN session
-- **Server-side validation**: HTTP-only cookie verification
+- **Parent routes** (`/parent/*`): Requires `parent_auth` HTTP-only cookie
+- **Child routes** (`/child-home/*`, `/child/*`): Requires `child_auth` HTTP-only cookie
+- **Session Duration**: 7-day cookie expiration for both parent and child sessions
+- **Security Features**: Secure flag in production, SameSite=Strict policy
+- **Redirect Logic**: Invalid sessions redirect to appropriate authentication pages
+
+### Content Moderation Pipeline
+1. **Upload**: Image immediately sent to OpenAI `omni-moderation-latest` model
+2. **Categories**: Sexual, violent, self-harm, harassment, hate speech detection
+3. **Child-Specific Thresholds**: Lower tolerance levels appropriate for children's content
+4. **Status assignment**: 
+   - `approved` - Visible in gallery and community features
+   - `rejected` - Hidden from public view with parental notification
+   - `pending` - Awaiting manual review (API failures or edge cases)
+5. **Fallback behavior**: Auto-approve in development mode when API key missing
+6. **Real-time Updates**: Moderation status reflected immediately in user interface
+7. **Parental Override**: Parents can review and manage children's rejected content
 
 ## Deployment Configuration
 
 ### Vercel Setup
-- **Build optimization**: ESLint errors ignored during builds
-- **Image processing**: Sharp for server-side optimization
-- **Cron jobs**: Daily prompt generation at 4:00 AM UTC
+- **Build optimization**: ESLint errors ignored during builds via `ignoreDuringBuilds: true`
+- **Image processing**: Sharp for server-side optimization via `serverExternalPackages: ['sharp']`
+- **Image Configuration**: Remote patterns configured for `*.supabase.co` hostname
+- **Cron jobs**: Daily prompt generation at 4:00 AM UTC via `vercel.json`
 - **Environment**: Production vs development moderation modes
+- **SEO Optimization**: OpenGraph and Twitter Card meta tags configured
+- **Font Loading**: Google Fonts (Inter, Poppins) with optimal loading strategy
+
+### Development Configuration
+- **Turbopack**: Fast development bundler enabled via `--turbopack` flag
+- **TypeScript**: ES2017 target with bundler module resolution
+- **Path Aliases**: `@/*` mapped to `./src/*` for clean imports
+- **PWA Ready**: Dependencies configured but manifest files need completion
+
+### Build & Deployment Features
+- **Next.js 15.3.4**: App Router with server/client component optimization
+- **Static Generation**: Pre-rendered pages for optimal performance
+- **Middleware**: Route-based authentication enforcement
+- **Environmental Variables**: Comprehensive `.env.example` provided
+- **Database Migrations**: SQL schema and migration scripts included
 
 ### Automated Tasks
 **Daily prompt generation** (`/api/cron/generate-daily-prompts`):
-- Generates 6 prompts daily (3 difficulties × 2 age groups)
-- Uses OpenAI with themed templates
+- Generates 6 prompts daily (3 difficulties × 3 age groups × 2 daily slots)
+- Uses OpenAI with themed templates for all three age groups
 - Fallback to predefined prompts on API failure
 
 **Manual moderation script**:
@@ -183,6 +310,7 @@ node scripts/moderate-pending-posts.js
 3. Implement frontend components with proper TypeScript types
 4. Add authentication middleware protection
 5. Test content moderation pipeline if applicable
+6. **Always update CLAUDE.md when making changes**
 
 ### Database Migrations
 1. Write migration SQL in `database/` directory
@@ -207,11 +335,14 @@ node scripts/moderate-pending-posts.js
 
 ## Key Business Logic
 
-### Time Slot System
-- **Morning** (6 AM - 12 PM): Easy, energizing prompts
-- **Afternoon** (12 PM - 6 PM): Medium, adventure-themed prompts  
-- **Evening** (6 PM - 12 AM): Hard, reflective prompts
+### Challenge Slot System
+- **Daily Challenge 1**: First daily prompt with age-appropriate difficulty
+- **Daily Challenge 2**: Second daily prompt with varied themes and complexity
+- **Free Draw**: Unlimited creative expression with AI-powered inspiration
+- **Upload Limits**: One artwork per slot per day (2 daily + unlimited free draw)
+- **Slot Tracking**: Database-enforced via `daily_upload_limits` table
 - **Timezone**: UTC-4 (Eastern Time) for consistent daily cycles
+- **Inspiration Categories**: 60 prompts across Animals, Nature, Fantasy, Objects, Emotions, Activities
 
 ### Achievement Calculations
 - **Creation streaks**: Consecutive days with at least one upload
@@ -229,14 +360,50 @@ node scripts/moderate-pending-posts.js
 
 ### Child Safety
 - **PIN authentication**: 4-digit PINs with bcrypt hashing (12 rounds)
-- **Session management**: 24-hour expiration with secure HTTP-only cookies
-- **Content filtering**: AI-powered with human moderation backup
-- **Parental control**: Full oversight and deletion capabilities
+- **Session management**: 7-day expiration with secure HTTP-only cookies
+- **Cookie security**: Secure flag in production, SameSite=Strict policy
+- **Content filtering**: AI-powered with child-specific lower thresholds
+- **Advanced moderation**: `omni-moderation-latest` model with custom categories
+- **Parental control**: Full oversight, content review, and deletion capabilities
+- **Upload restrictions**: File size (1KB-10MB), type validation, and daily limits
+- **Real-time protection**: Immediate moderation status updates and notifications
 
 ### Data Protection
-- **Row Level Security**: Database-level access control
-- **COPPA compliance**: Parental consent workflow
-- **No PII collection**: Minimal data collection from children
-- **Secure storage**: Encrypted database with access logging
+- **Row Level Security**: Comprehensive RLS policies on all user-accessible tables
+- **COPPA compliance**: Parental consent workflow with consent flags
+- **No PII collection**: Minimal data collection from children (username + PIN only)
+- **Secure storage**: Encrypted Supabase database with audit logging
+- **File security**: Automatic cleanup of rejected uploads and thumbnails
+- **Database functions**: SECURITY DEFINER for elevated privilege operations
+- **Atomic operations**: Transaction-safe like/unlike and statistics updates
 
-This application represents a production-ready, scalable platform for child-safe creative expression with comprehensive safety measures and modern development practices.
+### Advanced Security Features
+- **Dual authentication model**: Separate OTP (parents) and PIN (children) systems
+- **Environment-aware security**: Development vs production moderation modes
+- **Graceful degradation**: Auto-approval when moderation API unavailable
+- **Content categorization**: Multi-category detection (sexual, violence, harassment, etc.)
+- **Upload validation**: Comprehensive file type, size, and content checking
+- **Session validation**: JSON parsing error handling and automatic cleanup
+
+## Age Group Implementation Details
+
+### Preschoolers (Ages 4-6)
+- **Simplified UI**: Larger buttons, more visual elements, minimal text
+- **Basic Concepts**: Simple shapes, primary colors, familiar objects
+- **Motor Skills**: Focus on large movements and basic drawing techniques
+- **Immediate Feedback**: Instant positive reinforcement and simple animations
+- **Parental Guidance**: Enhanced oversight with simplified reporting
+
+### Kids (Ages 7-10)
+- **Balanced Interface**: Age-appropriate complexity with guided interactions
+- **Creative Exploration**: More detailed prompts with imaginative elements
+- **Skill Building**: Progressive difficulty and technique introduction
+- **Social Learning**: Limited community interaction with strong moderation
+
+### Tweens (Ages 11-16)
+- **Advanced Features**: Full platform functionality with creative challenges
+- **Self-Expression**: Complex prompts encouraging personal artistic voice
+- **Community Engagement**: Active participation in trending and social features
+- **Skill Mastery**: Advanced techniques and artistic development
+
+This application represents a production-ready, scalable platform for child-safe creative expression with comprehensive safety measures, sophisticated community features, advanced gamification systems, and modern development practices. The platform includes 32 API endpoints, 8-category leaderboard system, multi-layered content moderation, real-time statistics, and extensive parental oversight capabilities - making it a comprehensive creative community platform designed specifically for children's safety and engagement across three distinct developmental age groups.

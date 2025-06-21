@@ -27,7 +27,7 @@ export interface Database {
           parent_id: string
           username: string
           name: string
-          age_group: 'kids' | 'tweens'
+          age_group: 'preschoolers' | 'kids' | 'tweens'
           pin_hash: string
           avatar_url: string | null
           bio: string | null
@@ -40,7 +40,7 @@ export interface Database {
           parent_id: string
           username: string
           name: string
-          age_group: 'kids' | 'tweens'
+          age_group: 'preschoolers' | 'kids' | 'tweens'
           pin_hash: string
           avatar_url?: string | null
           bio?: string | null
@@ -53,7 +53,7 @@ export interface Database {
           parent_id?: string
           username?: string
           name?: string
-          age_group?: 'kids' | 'tweens'
+          age_group?: 'preschoolers' | 'kids' | 'tweens'
           pin_hash?: string
           avatar_url?: string | null
           bio?: string | null
@@ -66,7 +66,7 @@ export interface Database {
         Row: {
           id: string
           date: string
-          age_group: 'kids' | 'tweens'
+          age_group: 'preschoolers' | 'kids' | 'tweens'
           difficulty: 'easy' | 'medium' | 'hard'
           prompt_text: string
           time_slot: 'daily_1' | 'daily_2' | 'free_draw'
@@ -75,7 +75,7 @@ export interface Database {
         Insert: {
           id?: string
           date: string
-          age_group: 'kids' | 'tweens'
+          age_group: 'preschoolers' | 'kids' | 'tweens'
           difficulty: 'easy' | 'medium' | 'hard'
           prompt_text: string
           time_slot: 'daily_1' | 'daily_2' | 'free_draw'
@@ -84,7 +84,7 @@ export interface Database {
         Update: {
           id?: string
           date?: string
-          age_group?: 'kids' | 'tweens'
+          age_group?: 'preschoolers' | 'kids' | 'tweens'
           difficulty?: 'easy' | 'medium' | 'hard'
           prompt_text?: string
           time_slot?: 'daily_1' | 'daily_2' | 'free_draw'
@@ -276,7 +276,7 @@ export interface Database {
           id: string
           category: 'animals' | 'nature' | 'fantasy' | 'objects' | 'emotions' | 'activities'
           suggestion: string
-          age_group: 'kids' | 'tweens'
+          age_group: 'preschoolers' | 'kids' | 'tweens'
           emoji: string
           created_at: string
         }
@@ -284,7 +284,7 @@ export interface Database {
           id?: string
           category: 'animals' | 'nature' | 'fantasy' | 'objects' | 'emotions' | 'activities'
           suggestion: string
-          age_group: 'kids' | 'tweens'
+          age_group: 'preschoolers' | 'kids' | 'tweens'
           emoji: string
           created_at?: string
         }
@@ -292,7 +292,7 @@ export interface Database {
           id?: string
           category?: 'animals' | 'nature' | 'fantasy' | 'objects' | 'emotions' | 'activities'
           suggestion?: string
-          age_group?: 'kids' | 'tweens'
+          age_group?: 'preschoolers' | 'kids' | 'tweens'
           emoji?: string
           created_at?: string
         }

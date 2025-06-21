@@ -5,7 +5,7 @@ import { z } from 'zod'
 const createChildSchema = z.object({
   username: z.string().min(3).max(20).regex(/^[a-zA-Z0-9_]+$/, 'Username can only contain letters, numbers, and underscores'),
   name: z.string().min(1).max(50),
-  ageGroup: z.enum(['kids', 'tweens']),
+  ageGroup: z.enum(['preschoolers', 'kids', 'tweens']),
   pin: z.string().length(4).regex(/^\d+$/),
   avatarUrl: z.string().url().optional()
 })

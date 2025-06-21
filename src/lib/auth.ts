@@ -81,7 +81,7 @@ export class ChildAuth {
     parentId: string
     username: string
     name: string
-    ageGroup: 'kids' | 'tweens'
+    ageGroup: 'preschoolers' | 'kids' | 'tweens'
     pin: string
     avatarUrl?: string
   }) {
