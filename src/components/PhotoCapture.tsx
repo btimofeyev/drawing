@@ -21,17 +21,21 @@ export default function PhotoCapture({ isOpen, onClose, onPhotoSelected }: Photo
   const [showFrameSelector, setShowFrameSelector] = useState(false)
   const [selectedFrameId, setSelectedFrameId] = useState('museum-white')
   const [isApplyingFrame, setIsApplyingFrame] = useState(false)
+  const [hasFrame, setHasFrame] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const originalFileRef = useRef<File | null>(null)
+  const unframedFileRef = useRef<File | null>(null)
 
   const handleFileSelect = useCallback(async (file: File) => {
     originalFileRef.current = file
+    unframedFileRef.current = file
     
     // Create preview URL
     const url = URL.createObjectURL(file)
     setCapturedPhoto(url)
     setShowEnhanced(false)
     setEnhancedPhoto(null)
+    setHasFrame(false)
   }, [])
 
   const handleCameraClick = () => {
@@ -65,6 +69,7 @@ export default function PhotoCapture({ isOpen, onClose, onPhotoSelected }: Photo
       
       // Update the file reference to the enhanced version
       originalFileRef.current = enhancedFile
+      unframedFileRef.current = enhancedFile
     } catch (error) {
       console.error('Enhancement failed:', error)
     } finally {
@@ -94,26 +99,30 @@ export default function PhotoCapture({ isOpen, onClose, onPhotoSelected }: Photo
 
   const handleCropComplete = (croppedFile: File) => {
     originalFileRef.current = croppedFile
+    unframedFileRef.current = croppedFile
     const url = URL.createObjectURL(croppedFile)
     setCapturedPhoto(url)
     setShowCropTool(false)
     setShowEnhanced(false)
     setEnhancedPhoto(null)
+    setHasFrame(false)
   }
 
   const handleFrameSelect = async (frameId: string) => {
-    if (!originalFileRef.current) return
+    if (!unframedFileRef.current || hasFrame) return
     
     setIsApplyingFrame(true)
     setSelectedFrameId(frameId)
     
     try {
-      const framedFile = await applyFrameToImage(originalFileRef.current, frameId)
+      // Always apply frame to the unframed version
+      const framedFile = await applyFrameToImage(unframedFileRef.current, frameId)
       originalFileRef.current = framedFile
       
       const url = URL.createObjectURL(framedFile)
       setCapturedPhoto(url)
       setShowFrameSelector(false)
+      setHasFrame(true)
     } catch (error) {
       console.error('Failed to apply frame:', error)
     } finally {
@@ -133,7 +142,9 @@ export default function PhotoCapture({ isOpen, onClose, onPhotoSelected }: Photo
     setShowFrameSelector(false)
     setSelectedFrameId('museum-white')
     setIsApplyingFrame(false)
+    setHasFrame(false)
     originalFileRef.current = null
+    unframedFileRef.current = null
     onClose()
   }
 
@@ -281,15 +292,15 @@ export default function PhotoCapture({ isOpen, onClose, onPhotoSelected }: Photo
 
               <button
                 onClick={() => setShowFrameSelector(true)}
-                disabled={isApplyingFrame}
-                className="bg-purple-500 text-white px-3 py-3 rounded-full font-bold hover:bg-purple-600 transition-colors flex items-center gap-2 disabled:opacity-50"
+                disabled={isApplyingFrame || hasFrame}
+                className={`${hasFrame ? 'bg-green-500 cursor-not-allowed' : 'bg-purple-500 hover:bg-purple-600'} text-white px-3 py-3 rounded-full font-bold transition-colors flex items-center gap-2 disabled:opacity-50`}
               >
                 {isApplyingFrame ? (
                   <RefreshCw className="h-5 w-5 animate-spin" />
                 ) : (
                   <Frame className="h-5 w-5" />
                 )}
-                <span className="hidden sm:inline">Frame</span>
+                <span className="hidden sm:inline">{hasFrame ? 'Frame Applied ✓' : 'Add Frame'}</span>
               </button>
               
               <button

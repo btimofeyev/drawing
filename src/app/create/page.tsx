@@ -49,6 +49,8 @@ export default function CreatePage() {
   const [showFrameSelector, setShowFrameSelector] = useState(false)
   const [selectedFrameId, setSelectedFrameId] = useState('museum-white')
   const [isApplyingFrame, setIsApplyingFrame] = useState(false)
+  const [hasFrame, setHasFrame] = useState(false)
+  const [originalFile, setOriginalFile] = useState<File | null>(null)
   
   // Free draw inspirations
   const [freeDrawInspiration, setFreeDrawInspiration] = useState<{
@@ -166,7 +168,9 @@ export default function CreatePage() {
     }
 
     setSelectedFile(file)
+    setOriginalFile(file)
     setUploadError(null)
+    setHasFrame(false)
 
     // Create preview URL
     const url = URL.createObjectURL(file)
@@ -186,13 +190,14 @@ export default function CreatePage() {
   }
 
   const handleFrameSelect = async (frameId: string) => {
-    if (!selectedFile) return
+    if (!selectedFile || !originalFile || hasFrame) return
     
     setIsApplyingFrame(true)
     setSelectedFrameId(frameId)
     
     try {
-      const framedFile = await applyFrameToImage(selectedFile, frameId)
+      // Always apply frame to the original unframed file
+      const framedFile = await applyFrameToImage(originalFile, frameId)
       
       // Update the selected file and preview
       setSelectedFile(framedFile)
@@ -205,6 +210,7 @@ export default function CreatePage() {
       setPreviewUrl(newPreviewUrl)
       
       setShowFrameSelector(false)
+      setHasFrame(true)
     } catch (error) {
       console.error('Failed to apply frame:', error)
       setUploadError('Failed to apply frame. Please try again.')
@@ -547,8 +553,10 @@ export default function CreatePage() {
                         <button 
                           onClick={() => {
                             setSelectedFile(null)
+                            setOriginalFile(null)
                             setPreviewUrl(null)
                             setAltText('')
+                            setHasFrame(false)
                           }}
                           className="absolute -top-2 -right-2 w-8 h-8 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors"
                         >
@@ -565,13 +573,17 @@ export default function CreatePage() {
                       {/* Frame Selection Button */}
                       <button
                         onClick={() => setShowFrameSelector(true)}
-                        disabled={isApplyingFrame}
-                        className="bg-purple-500 text-white px-4 py-2 rounded-full font-medium hover:bg-purple-600 transition-colors flex items-center gap-2 mx-auto disabled:opacity-50"
+                        disabled={isApplyingFrame || hasFrame}
+                        className={`${hasFrame ? 'bg-green-500 cursor-not-allowed' : 'bg-purple-500 hover:bg-purple-600'} text-white px-4 py-2 rounded-full font-medium transition-colors flex items-center gap-2 mx-auto disabled:opacity-50`}
                       >
                         {isApplyingFrame ? (
                           <>
                             <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                             Applying Frame...
+                          </>
+                        ) : hasFrame ? (
+                          <>
+                            ✓ Frame Applied
                           </>
                         ) : (
                           <>

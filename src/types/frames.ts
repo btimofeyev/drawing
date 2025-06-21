@@ -41,6 +41,22 @@ export const frameTemplates: FrameTemplate[] = [
     preview: '⬜',
     description: 'Clean white frame like in art galleries'
   },
+  {
+    id: 'bronze-vintage',
+    name: 'Bronze Vintage',
+    category: 'classic',
+    cssClass: 'frame-bronze-vintage',
+    preview: '🥉',
+    description: 'Antique bronze frame with vintage patina'
+  },
+  {
+    id: 'black-elegant',
+    name: 'Midnight Black',
+    category: 'classic',
+    cssClass: 'frame-black-elegant',
+    preview: '⬛',
+    description: 'Sophisticated black frame for dramatic effect'
+  },
 
   // Fun Frames
   {
@@ -74,6 +90,22 @@ export const frameTemplates: FrameTemplate[] = [
     cssClass: 'frame-glitter-sparkle',
     preview: '✨',
     description: 'Glittery frame that sparkles'
+  },
+  {
+    id: 'neon-glow',
+    name: 'Neon Dreams',
+    category: 'fun',
+    cssClass: 'frame-neon-glow',
+    preview: '💫',
+    description: 'Electric neon frame with glowing edges'
+  },
+  {
+    id: 'candy-stripes',
+    name: 'Candy Stripes',
+    category: 'fun',
+    cssClass: 'frame-candy-stripes',
+    preview: '🍭',
+    description: 'Sweet candy-striped frame with bright colors'
   },
 
   // Themed Frames
@@ -109,6 +141,22 @@ export const frameTemplates: FrameTemplate[] = [
     preview: '🔶',
     description: 'Modern geometric pattern frame'
   },
+  {
+    id: 'jungle-adventure',
+    name: 'Jungle Explorer',
+    category: 'themed',
+    cssClass: 'frame-jungle-adventure',
+    preview: '🌿',
+    description: 'Wild jungle frame with tropical leaves'
+  },
+  {
+    id: 'medieval-castle',
+    name: 'Royal Castle',
+    category: 'themed',
+    cssClass: 'frame-medieval-castle',
+    preview: '🏰',
+    description: 'Majestic castle frame for royal artwork'
+  },
 
   // Seasonal Frames
   {
@@ -142,7 +190,15 @@ export const frameTemplates: FrameTemplate[] = [
     cssClass: 'frame-summer-sun',
     preview: '☀️',
     description: 'Bright summer frame with sun rays'
-  }
+  },
+  {
+    id: 'halloween-spooky',
+    name: 'Spooky Halloween',
+    category: 'seasonal',
+    cssClass: 'frame-halloween-spooky',
+    preview: '🎃',
+    description: 'Fun Halloween frame with pumpkins and bats'
+  },
 ]
 
 export const getFramesByCategory = (category: FrameTemplate['category']) => {
