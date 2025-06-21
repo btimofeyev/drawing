@@ -447,26 +447,6 @@ function GalleryContent() {
                           </button>
                         </div>
                       </div>
-
-                      {/* Time Slot Badge */}
-                      <div className="absolute top-3 left-3">
-                        <span className={`px-3 py-1 rounded-full text-sm font-bold text-white bg-gradient-to-r ${getSlotColor(artwork.timeSlot)}`}>
-                          {getSlotEmoji(artwork.timeSlot)} {artwork.timeSlot === 'daily_1' ? 'Challenge 1' : artwork.timeSlot === 'daily_2' ? 'Challenge 2' : 'Free Draw'}
-                        </span>
-                      </div>
-                      
-                      {/* Difficulty Badge */}
-                      <div className="absolute top-3 right-3">
-                        <span className={`px-3 py-1 rounded-full text-sm font-bold ${
-                          artwork.difficulty === 'easy' 
-                            ? 'bg-green-100 text-green-700'
-                            : artwork.difficulty === 'medium'
-                            ? 'bg-yellow-100 text-yellow-700'
-                            : 'bg-red-100 text-red-700'
-                        }`}>
-                          {artwork.difficulty === 'easy' ? '🟢' : artwork.difficulty === 'medium' ? '🟡' : '🔴'} {artwork.difficulty}
-                        </span>
-                      </div>
                     </div>
 
                     {/* Content */}
@@ -480,21 +460,27 @@ function GalleryContent() {
                           <span className="font-medium">{artwork.artistName}</span>
                           <span className="text-slate-400">@{artwork.artistUsername}</span>
                           <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                            artwork.ageGroup === 'kids' ? 'bg-blue-100 text-blue-700' : 'bg-purple-100 text-purple-700'
+                            artwork.ageGroup === 'kids' ? 'bg-blue-100 text-blue-700' : artwork.ageGroup === 'tweens' ? 'bg-purple-100 text-purple-700' : 'bg-green-100 text-green-700'
                           }`}>
                             {artwork.ageGroup}
                           </span>
                         </div>
-                      </div>
 
-                      {/* Prompt Info */}
-                      <div className="mb-4 p-3 bg-slate-50 rounded-2xl">
-                        <p className="text-sm font-medium text-slate-700 mb-1">
-                          🎯 Prompt: {artwork.promptTitle}
-                        </p>
-                        <p className="text-xs text-slate-600 line-clamp-2">
-                          {artwork.promptDescription}
-                        </p>
+                        {/* Challenge and Difficulty Tags */}
+                        <div className="flex items-center gap-2 mb-3">
+                          <span className={`px-3 py-1 rounded-full text-sm font-bold text-white bg-gradient-to-r ${getSlotColor(artwork.timeSlot)}`}>
+                            {getSlotEmoji(artwork.timeSlot)} {artwork.timeSlot === 'daily_1' ? 'Challenge 1' : artwork.timeSlot === 'daily_2' ? 'Challenge 2' : 'Free Draw'}
+                          </span>
+                          <span className={`px-3 py-1 rounded-full text-sm font-bold ${
+                            artwork.difficulty === 'easy' 
+                              ? 'bg-green-100 text-green-700'
+                              : artwork.difficulty === 'medium'
+                              ? 'bg-yellow-100 text-yellow-700'
+                              : 'bg-red-100 text-red-700'
+                          }`}>
+                            {artwork.difficulty === 'easy' ? '🟢' : artwork.difficulty === 'medium' ? '🟡' : '🔴'} {artwork.difficulty}
+                          </span>
+                        </div>
                       </div>
 
                       {/* Stats */}
