@@ -54,6 +54,16 @@
 
 ### Core Features
 
+#### Enhanced Photo Capture System
+- **Camera-first upload experience**: Primary "Take a Photo" button with `capture="environment"` for rear camera
+- **Real-world artwork focus**: Optimized for photographing drawings, paintings, and physical artwork
+- **Photo enhancement pipeline**: Built-in image optimization using browser-image-compression
+- **Simple crop/rotate tools**: Basic adjustment tools for better artwork framing
+- **Decorative frame system**: 16 beautiful frames across 4 categories (Classic, Fun, Themed, Seasonal)
+- **Frame application**: Canvas-based frame compositing with real-time preview
+- **Child-friendly interface**: Large buttons, photo tips, and encouraging messaging
+- **Progressive enhancement**: Before/after comparison for photo improvements
+
 #### Daily Creative Challenges
 - **Two daily challenges**: Daily Challenge 1 and Daily Challenge 2 with varying difficulty levels
 - **Free Draw System**: Unlimited creative expression with AI-powered inspiration prompts
@@ -237,6 +247,9 @@ npm run lint
 ### Component Architecture
 **Centralized Layout Pattern**:
 - **ChildLayout Component** (`src/components/ChildLayout.tsx`): Main layout wrapper for all child-facing pages
+- **PhotoCapture Component** (`src/components/PhotoCapture.tsx`): Camera capture with enhancement and framing
+- **FrameSelector Component** (`src/components/FrameSelector.tsx`): Interactive frame selection interface
+- **SimpleCropTool Component** (`src/components/SimpleCropTool.tsx`): Basic crop and rotate functionality
 - **Real-time Features**: Live stats fetching from `/api/child/stats` and `/api/child/achievements`
 - **Level System**: Non-linear progression with sophisticated point calculation
 - **Responsive Design**: Mobile-first with collapsible sidebar and backdrop overlay
@@ -343,6 +356,21 @@ node scripts/moderate-pending-posts.js
 - **Slot Tracking**: Database-enforced via `daily_upload_limits` table
 - **Timezone**: UTC-4 (Eastern Time) for consistent daily cycles
 - **Inspiration Categories**: 60 prompts across Animals, Nature, Fantasy, Objects, Emotions, Activities
+
+### Decorative Frame System
+**16 Frame Templates across 4 Categories**:
+- **Classic Frames**: Golden Gallery, Silver Modern, Rustic Wood, Museum White
+- **Fun Frames**: Rainbow Magic, Crayon Box, Paint Splash, Sparkle Frame
+- **Themed Frames**: Cosmic Adventure, Ocean Deep, Flower Garden, Geometric Art
+- **Seasonal Frames**: Autumn Leaves, Winter Wonder, Spring Bloom, Summer Sunshine
+
+**Frame Application Features**:
+- **Real-time Preview**: Live preview of artwork with selected frame in FrameSelector
+- **Canvas Compositing**: HTML5 Canvas-based frame application with proper scaling
+- **Responsive Design**: Frame styles adapt to different screen sizes
+- **CSS3 Animations**: Animated frames (rainbow shifts, glitter effects, bubble floating)
+- **Performance Optimized**: Lightweight CSS-based frames with minimal JavaScript
+- **Child-Friendly Interface**: Large preview thumbnails with emoji indicators
 
 ### Achievement Calculations
 - **Creation streaks**: Consecutive days with at least one upload

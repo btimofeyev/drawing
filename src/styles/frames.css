@@ -1,0 +1,273 @@
+/* Artwork Frame Styles */
+
+.artwork-frame {
+  position: relative;
+  display: inline-block;
+  padding: 20px;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.artwork-frame img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* Classic Frames */
+.frame-gold-ornate {
+  background: linear-gradient(45deg, #d4af37, #ffd700, #b8860b);
+  border: 8px solid transparent;
+  background-image: 
+    repeating-linear-gradient(45deg, #d4af37 0, #d4af37 2px, #ffd700 2px, #ffd700 4px),
+    repeating-linear-gradient(-45deg, #b8860b 0, #b8860b 2px, #daa520 2px, #daa520 4px);
+  box-shadow: 
+    inset 0 0 20px rgba(212, 175, 55, 0.8),
+    0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.frame-silver-modern {
+  background: linear-gradient(135deg, #c0c0c0, #e5e5e5, #a8a8a8);
+  border: 4px solid #b8b8b8;
+  box-shadow: 
+    inset 0 2px 4px rgba(255, 255, 255, 0.6),
+    inset 0 -2px 4px rgba(0, 0, 0, 0.2),
+    0 4px 16px rgba(0, 0, 0, 0.2);
+}
+
+.frame-wood-rustic {
+  background: 
+    linear-gradient(45deg, #8b4513, #a0522d, #cd853f),
+    repeating-linear-gradient(90deg, #8b4513 0, #8b4513 3px, #a0522d 3px, #a0522d 6px);
+  border: 6px solid #654321;
+  box-shadow: 
+    inset 0 0 20px rgba(139, 69, 19, 0.7),
+    0 6px 24px rgba(0, 0, 0, 0.4);
+}
+
+.frame-museum-white {
+  background: linear-gradient(135deg, #ffffff, #f8f8f8, #eeeeee);
+  border: 8px solid #e0e0e0;
+  box-shadow: 
+    inset 0 2px 8px rgba(0, 0, 0, 0.1),
+    0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+/* Fun Frames */
+.frame-rainbow-gradient {
+  background: linear-gradient(45deg, 
+    #ff0000, #ff8000, #ffff00, #00ff00, 
+    #0080ff, #8000ff, #ff0080, #ff0000);
+  background-size: 400% 400%;
+  animation: rainbow-shift 3s ease-in-out infinite;
+  border: 4px solid transparent;
+  box-shadow: 0 0 30px rgba(255, 255, 255, 0.8);
+}
+
+@keyframes rainbow-shift {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+.frame-crayon-texture {
+  background: 
+    linear-gradient(45deg, #ff6b6b, #4ecdc4, #45b7d1, #f9ca24, #f0932b, #eb4d4b),
+    repeating-linear-gradient(90deg, 
+      transparent 0px, transparent 8px,
+      rgba(255, 255, 255, 0.3) 8px, rgba(255, 255, 255, 0.3) 12px
+    );
+  border: 6px solid #2c2c2c;
+  box-shadow: 
+    inset 0 0 20px rgba(0, 0, 0, 0.2),
+    0 6px 20px rgba(0, 0, 0, 0.3);
+}
+
+.frame-paint-splatter {
+  background: #ffffff;
+  border: 8px solid #f0f0f0;
+  position: relative;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+}
+
+.frame-paint-splatter::before {
+  content: '';
+  position: absolute;
+  top: -8px;
+  left: -8px;
+  right: -8px;
+  bottom: -8px;
+  background-image: 
+    radial-gradient(circle at 20% 20%, #ff6b6b 2px, transparent 2px),
+    radial-gradient(circle at 80% 30%, #4ecdc4 3px, transparent 3px),
+    radial-gradient(circle at 60% 80%, #f9ca24 2px, transparent 2px),
+    radial-gradient(circle at 30% 70%, #6c5ce7 2px, transparent 2px),
+    radial-gradient(circle at 90% 80%, #fd79a8 2px, transparent 2px);
+  background-size: 60px 60px, 80px 80px, 70px 70px, 90px 90px, 50px 50px;
+  z-index: -1;
+}
+
+.frame-glitter-sparkle {
+  background: linear-gradient(45deg, #ffd700, #ffff00, #ff69b4, #00ffff);
+  background-size: 200% 200%;
+  animation: glitter-sparkle 2s ease-in-out infinite;
+  border: 4px solid #daa520;
+  box-shadow: 
+    0 0 20px rgba(255, 215, 0, 0.8),
+    inset 0 0 20px rgba(255, 255, 255, 0.5);
+}
+
+@keyframes glitter-sparkle {
+  0%, 100% { 
+    background-position: 0% 0%;
+    box-shadow: 
+      0 0 20px rgba(255, 215, 0, 0.8),
+      inset 0 0 20px rgba(255, 255, 255, 0.5);
+  }
+  50% { 
+    background-position: 100% 100%;
+    box-shadow: 
+      0 0 30px rgba(255, 105, 180, 0.8),
+      inset 0 0 30px rgba(255, 255, 255, 0.8);
+  }
+}
+
+/* Themed Frames */
+.frame-space-stars {
+  background: 
+    radial-gradient(circle at 20% 30%, #ffffff 1px, transparent 1px),
+    radial-gradient(circle at 70% 20%, #ffff00 1px, transparent 1px),
+    radial-gradient(circle at 30% 80%, #ffffff 1px, transparent 1px),
+    radial-gradient(circle at 80% 70%, #ffffff 0.5px, transparent 0.5px),
+    linear-gradient(135deg, #1a1a2e, #16213e, #0f3460);
+  background-size: 100px 100px, 150px 150px, 120px 120px, 80px 80px, 100% 100%;
+  border: 6px solid #0f3460;
+  box-shadow: 
+    0 0 30px rgba(26, 26, 46, 0.8),
+    inset 0 0 20px rgba(255, 255, 255, 0.1);
+}
+
+.frame-underwater-bubbles {
+  background: 
+    radial-gradient(circle at 25% 25%, rgba(255, 255, 255, 0.4) 2px, transparent 2px),
+    radial-gradient(circle at 75% 50%, rgba(255, 255, 255, 0.3) 3px, transparent 3px),
+    radial-gradient(circle at 50% 75%, rgba(255, 255, 255, 0.5) 1px, transparent 1px),
+    linear-gradient(180deg, #4facfe, #00f2fe, #0093e9);
+  background-size: 80px 80px, 120px 120px, 60px 60px, 100% 100%;
+  animation: bubble-float 4s ease-in-out infinite;
+  border: 6px solid #0093e9;
+  box-shadow: 
+    0 0 25px rgba(79, 172, 254, 0.6),
+    inset 0 0 20px rgba(255, 255, 255, 0.2);
+}
+
+@keyframes bubble-float {
+  0%, 100% { background-position: 0% 0%, 0% 0%, 0% 0%, 0% 0%; }
+  50% { background-position: 10px -10px, -15px 10px, 5px 5px, 0% 0%; }
+}
+
+.frame-flower-garden {
+  background: 
+    linear-gradient(45deg, #ff9a9e, #fecfef, #fecfef, #ff9a9e),
+    url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ff69b4' fill-opacity='0.3'%3E%3Ccircle cx='30' cy='30' r='4'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  border: 8px solid #ff69b4;
+  box-shadow: 
+    0 0 20px rgba(255, 105, 180, 0.5),
+    inset 0 0 20px rgba(255, 255, 255, 0.3);
+}
+
+.frame-geometric-modern {
+  background: 
+    linear-gradient(45deg, #667eea, #764ba2),
+    repeating-linear-gradient(45deg, transparent, transparent 8px, rgba(255,255,255,0.1) 8px, rgba(255,255,255,0.1) 16px);
+  border: 4px solid #667eea;
+  box-shadow: 
+    0 8px 32px rgba(102, 126, 234, 0.4),
+    inset 0 0 20px rgba(255, 255, 255, 0.1);
+}
+
+/* Seasonal Frames */
+.frame-autumn-leaves {
+  background: 
+    linear-gradient(45deg, #ff6b35, #f7931e, #ffcc02, #c13584),
+    url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23d2691e' fill-opacity='0.4'%3E%3Cpath d='M20 20l-8-8 8-8 8 8z'/%3E%3C/g%3E%3C/svg%3E");
+  border: 6px solid #8b4513;
+  box-shadow: 
+    0 6px 24px rgba(139, 69, 19, 0.4),
+    inset 0 0 20px rgba(255, 204, 2, 0.3);
+}
+
+.frame-winter-snowflakes {
+  background: 
+    radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.8) 2px, transparent 2px),
+    radial-gradient(circle at 80% 80%, rgba(255, 255, 255, 0.6) 1px, transparent 1px),
+    radial-gradient(circle at 60% 30%, rgba(255, 255, 255, 0.7) 1px, transparent 1px),
+    linear-gradient(135deg, #e3f2fd, #bbdefb, #90caf9);
+  background-size: 60px 60px, 40px 40px, 80px 80px, 100% 100%;
+  animation: snowfall 6s ease-in-out infinite;
+  border: 6px solid #1976d2;
+  box-shadow: 
+    0 0 30px rgba(25, 118, 210, 0.3),
+    inset 0 0 20px rgba(255, 255, 255, 0.6);
+}
+
+@keyframes snowfall {
+  0%, 100% { background-position: 0% 0%, 0% 0%, 0% 0%, 0% 0%; }
+  50% { background-position: 0% 20px, 10px 0%, -10px 15px, 0% 0%; }
+}
+
+.frame-spring-flowers {
+  background: 
+    linear-gradient(45deg, #a8e6cf, #dcedc1, #ffd3a5, #fd9853),
+    url("data:image/svg+xml,%3Csvg width='50' height='50' viewBox='0 0 50 50' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23ff69b4' fill-opacity='0.4'%3E%3Ccircle cx='25' cy='25' r='3'/%3E%3Ccircle cx='15' cy='15' r='2'/%3E%3Ccircle cx='35' cy='35' r='2'/%3E%3C/g%3E%3C/svg%3E");
+  border: 6px solid #4caf50;
+  box-shadow: 
+    0 6px 24px rgba(76, 175, 80, 0.4),
+    inset 0 0 20px rgba(255, 255, 255, 0.4);
+}
+
+.frame-summer-sun {
+  background: 
+    radial-gradient(circle at center, #ffd54f, #ffca28, #ffb300),
+    repeating-linear-gradient(0deg, transparent, transparent 8px, rgba(255, 255, 255, 0.2) 8px, rgba(255, 255, 255, 0.2) 10px);
+  border: 6px solid #ff8f00;
+  animation: summer-glow 3s ease-in-out infinite;
+  box-shadow: 
+    0 0 30px rgba(255, 193, 7, 0.6),
+    inset 0 0 20px rgba(255, 255, 255, 0.3);
+}
+
+@keyframes summer-glow {
+  0%, 100% { 
+    box-shadow: 
+      0 0 30px rgba(255, 193, 7, 0.6),
+      inset 0 0 20px rgba(255, 255, 255, 0.3);
+  }
+  50% { 
+    box-shadow: 
+      0 0 40px rgba(255, 193, 7, 0.8),
+      inset 0 0 30px rgba(255, 255, 255, 0.5);
+  }
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .artwork-frame {
+    padding: 12px;
+  }
+  
+  .frame-gold-ornate,
+  .frame-museum-white {
+    border-width: 6px;
+  }
+  
+  .frame-wood-rustic,
+  .frame-space-stars,
+  .frame-underwater-bubbles,
+  .frame-autumn-leaves,
+  .frame-winter-snowflakes,
+  .frame-spring-flowers,
+  .frame-summer-sun {
+    border-width: 4px;
+  }
+}

@@ -6,10 +6,15 @@ import {
   Palette,
   Sparkles,
   Target,
-  Calendar
+  Calendar,
+  Camera,
+  Image
 } from 'lucide-react'
 import Link from 'next/link'
 import ChildLayout from '@/components/ChildLayout'
+import PhotoCapture from '@/components/PhotoCapture'
+import FrameSelector from '@/components/FrameSelector'
+import { applyFrameToImage } from '@/utils/frameCompositor'
 
 interface Prompt {
   id: string
@@ -40,6 +45,10 @@ export default function CreatePage() {
   const [uploadSuccess, setUploadSuccess] = useState(false)
   const [uploadError, setUploadError] = useState<string | null>(null)
   const [dragActive, setDragActive] = useState(false)
+  const [showPhotoCapture, setShowPhotoCapture] = useState(false)
+  const [showFrameSelector, setShowFrameSelector] = useState(false)
+  const [selectedFrameId, setSelectedFrameId] = useState('museum-white')
+  const [isApplyingFrame, setIsApplyingFrame] = useState(false)
   
   // Free draw inspirations
   const [freeDrawInspiration, setFreeDrawInspiration] = useState<{
@@ -163,10 +172,45 @@ export default function CreatePage() {
     const url = URL.createObjectURL(file)
     setPreviewUrl(url)
 
-    // Generate default alt text from filename
-    const fileName = file.name.split('.')[0]
-    const defaultAlt = fileName.replace(/[_-]/g, ' ')
+    // Generate intelligent alt text for artwork photos
+    const isPhotoCapture = file.name.includes('camera') || file.name.includes('photo') || file.type === 'image/jpeg'
+    const defaultAlt = isPhotoCapture 
+      ? `My ${selectedPrompt?.title?.toLowerCase() || 'artwork'} creation`
+      : file.name.split('.')[0].replace(/[_-]/g, ' ')
     setAltText(defaultAlt)
+  }
+
+  const handlePhotoSelected = (file: File) => {
+    handleFileSelect(file)
+    setShowPhotoCapture(false)
+  }
+
+  const handleFrameSelect = async (frameId: string) => {
+    if (!selectedFile) return
+    
+    setIsApplyingFrame(true)
+    setSelectedFrameId(frameId)
+    
+    try {
+      const framedFile = await applyFrameToImage(selectedFile, frameId)
+      
+      // Update the selected file and preview
+      setSelectedFile(framedFile)
+      
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl)
+      }
+      
+      const newPreviewUrl = URL.createObjectURL(framedFile)
+      setPreviewUrl(newPreviewUrl)
+      
+      setShowFrameSelector(false)
+    } catch (error) {
+      console.error('Failed to apply frame:', error)
+      setUploadError('Failed to apply frame. Please try again.')
+    } finally {
+      setIsApplyingFrame(false)
+    }
   }
 
   const handleDrop = (e: React.DragEvent) => {
@@ -350,14 +394,14 @@ export default function CreatePage() {
               <div className="w-20 h-20 rounded-3xl bg-gradient-to-r from-green-400 to-green-500 flex items-center justify-center mx-auto mb-6">
                 <Sparkles className="h-10 w-10 text-white" />
               </div>
-              <h3 className="text-2xl font-bold text-slate-900 mb-4">Artwork Uploaded Successfully! 🎉</h3>
+              <h3 className="text-2xl font-bold text-slate-900 mb-4">Amazing Work! Your Art is Uploaded! 🎉</h3>
               <p className="text-slate-600 mb-8">
-                Your amazing artwork has been submitted for {
+                Your beautiful {
                   selectedTimeSlot === 'daily_1' ? 'Challenge 1' :
                   selectedTimeSlot === 'daily_2' ? 'Challenge 2' :
                   'Free Draw'
-                } and is now being reviewed. 
-                It will appear in the gallery once approved!
+                } artwork has been submitted and is being reviewed by our art curators. 
+                It will appear in the community gallery once approved for everyone to admire!
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <button 
@@ -388,7 +432,7 @@ export default function CreatePage() {
                 <Upload className="h-10 w-10 text-white" />
               </div>
               
-              <h3 className="text-2xl font-bold text-slate-900 mb-4">Upload Your Artwork</h3>
+              <h3 className="text-2xl font-bold text-slate-900 mb-4">Share Your Artwork</h3>
               <p className="text-slate-600 mb-8 max-w-lg mx-auto">
                 {selectedTimeSlot 
                   ? `Share your ${
@@ -397,7 +441,7 @@ export default function CreatePage() {
                       'Free Draw'
                     } creation with the community!`
                   : 'Share your creative masterpiece with the community!'
-                } Upload drawings, paintings, digital art, or photos of your physical artwork.
+                } Take a photo of your drawings, paintings, or upload digital artwork.
               </p>
               
               {/* Error Display */}
@@ -431,77 +475,114 @@ export default function CreatePage() {
                   </p>
                 </div>
               )}
-              
-              {/* Upload Area */}
-              <div 
-                className={`border-2 border-dashed rounded-2xl p-8 mb-6 transition-colors ${
-                  dragActive 
-                    ? 'border-pink-500 bg-pink-50' 
-                    : previewUrl 
-                      ? 'border-green-400 bg-green-50'
-                      : 'border-slate-300 hover:border-pink-400'
-                }`}
-                onDrop={handleDrop}
-                onDragOver={(e) => {
-                  e.preventDefault()
-                  setDragActive(true)
-                }}
-                onDragLeave={() => setDragActive(false)}
-              >
-                {previewUrl ? (
-                  // File Preview
-                  <div className="text-center">
-                    <div className="relative inline-block mb-4">
-                      <img 
-                        src={previewUrl} 
-                        alt="Preview" 
-                        className="max-w-full max-h-64 rounded-2xl shadow-lg"
-                      />
-                      <button 
-                        onClick={() => {
-                          setSelectedFile(null)
-                          setPreviewUrl(null)
-                          setAltText('')
+
+              {!previewUrl ? (
+                // Camera-First Upload Options
+                <div className="mb-6">
+                  {/* Primary Camera Button */}
+                  <button
+                    onClick={() => setShowPhotoCapture(true)}
+                    className="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white p-8 rounded-3xl mb-4 hover:scale-105 transition-transform duration-200 shadow-xl"
+                  >
+                    <div className="flex flex-col items-center">
+                      <Camera className="h-16 w-16 mb-4" />
+                      <h4 className="text-2xl font-bold mb-2">Take a Photo</h4>
+                      <p className="text-blue-100">
+                        Best for drawings, paintings & physical artwork
+                      </p>
+                    </div>
+                  </button>
+
+                  <div className="text-center text-slate-500 mb-4">or</div>
+
+                  {/* Secondary Upload Options */}
+                  <div 
+                    className={`border-2 border-dashed rounded-2xl p-6 transition-colors ${
+                      dragActive 
+                        ? 'border-pink-500 bg-pink-50' 
+                        : 'border-slate-300 hover:border-pink-400'
+                    }`}
+                    onDrop={handleDrop}
+                    onDragOver={(e) => {
+                      e.preventDefault()
+                      setDragActive(true)
+                    }}
+                    onDragLeave={() => setDragActive(false)}
+                  >
+                    <div className="text-center">
+                      <Image className="h-10 w-10 text-slate-400 mx-auto mb-3" />
+                      <p className="text-slate-700 font-medium mb-3">
+                        Choose from Gallery
+                      </p>
+                      <input
+                        type="file"
+                        accept="image/jpeg,image/png,image/gif,image/webp"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0]
+                          if (file) handleFileSelect(file)
                         }}
-                        className="absolute -top-2 -right-2 w-8 h-8 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors"
+                        className="hidden"
+                        id="file-input"
+                      />
+                      <label htmlFor="file-input" className="btn btn-secondary cursor-pointer">
+                        Browse Files
+                      </label>
+                      <p className="text-sm text-slate-500 mt-3">
+                        Drag & drop or click • JPG, PNG, GIF, WebP (max 10MB)
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                // File Preview
+                <div className="mb-6">
+                  <div className="border-2 border-green-400 bg-green-50 rounded-2xl p-6">
+                    <div className="text-center">
+                      <div className="relative inline-block mb-4">
+                        <img 
+                          src={previewUrl} 
+                          alt="Preview" 
+                          className="max-w-full max-h-64 rounded-2xl shadow-lg"
+                        />
+                        <button 
+                          onClick={() => {
+                            setSelectedFile(null)
+                            setPreviewUrl(null)
+                            setAltText('')
+                          }}
+                          className="absolute -top-2 -right-2 w-8 h-8 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors"
+                        >
+                          ×
+                        </button>
+                      </div>
+                      <p className="text-green-700 font-semibold mb-2">
+                        📸 Photo ready! {selectedFile?.name}
+                      </p>
+                      <p className="text-sm text-slate-600 mb-4">
+                        Size: {selectedFile ? (selectedFile.size / 1024 / 1024).toFixed(2) : 0} MB
+                      </p>
+                      
+                      {/* Frame Selection Button */}
+                      <button
+                        onClick={() => setShowFrameSelector(true)}
+                        disabled={isApplyingFrame}
+                        className="bg-purple-500 text-white px-4 py-2 rounded-full font-medium hover:bg-purple-600 transition-colors flex items-center gap-2 mx-auto disabled:opacity-50"
                       >
-                        ×
+                        {isApplyingFrame ? (
+                          <>
+                            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                            Applying Frame...
+                          </>
+                        ) : (
+                          <>
+                            🖼️ Add Decorative Frame
+                          </>
+                        )}
                       </button>
                     </div>
-                    <p className="text-green-700 font-semibold mb-2">
-                      File selected: {selectedFile?.name}
-                    </p>
-                    <p className="text-sm text-slate-600">
-                      Size: {selectedFile ? (selectedFile.size / 1024 / 1024).toFixed(2) : 0} MB
-                    </p>
                   </div>
-                ) : (
-                  // Drop Zone
-                  <div className="text-center">
-                    <Palette className="h-12 w-12 text-slate-400 mx-auto mb-4" />
-                    <p className="text-lg font-semibold text-slate-700 mb-2">
-                      Drag and drop your artwork here
-                    </p>
-                    <p className="text-slate-500 mb-4">or</p>
-                    <input
-                      type="file"
-                      accept="image/jpeg,image/png,image/gif,image/webp"
-                      onChange={(e) => {
-                        const file = e.target.files?.[0]
-                        if (file) handleFileSelect(file)
-                      }}
-                      className="hidden"
-                      id="file-input"
-                    />
-                    <label htmlFor="file-input" className="btn btn-primary cursor-pointer">
-                      Choose File
-                    </label>
-                    <p className="text-sm text-slate-500 mt-4">
-                      Supports: JPG, PNG, GIF, WebP (max 10MB)
-                    </p>
-                  </div>
-                )}
-              </div>
+                </div>
+              )}
               
               {/* Alt Text Input */}
               {selectedFile && (
@@ -601,6 +682,24 @@ export default function CreatePage() {
             </p>
           </Link>
         </div>
+
+        {/* Photo Capture Modal */}
+        <PhotoCapture
+          isOpen={showPhotoCapture}
+          onClose={() => setShowPhotoCapture(false)}
+          onPhotoSelected={handlePhotoSelected}
+        />
+
+        {/* Frame Selector Modal */}
+        {previewUrl && (
+          <FrameSelector
+            isOpen={showFrameSelector}
+            imageUrl={previewUrl}
+            currentFrameId={selectedFrameId}
+            onClose={() => setShowFrameSelector(false)}
+            onFrameSelect={handleFrameSelect}
+          />
+        )}
       </div>
     </ChildLayout>
   )
