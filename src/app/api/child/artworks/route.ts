@@ -136,10 +136,10 @@ export async function DELETE(request: NextRequest) {
       )
     }
 
-    // Verify the post belongs to this child
+    // Verify the post belongs to this child and get additional info
     const { data: post, error: fetchError } = await supabaseAdmin
       .from('posts')
-      .select('id, child_id, image_url, thumbnail_url')
+      .select('id, child_id, image_url, thumbnail_url, time_slot, created_at')
       .eq('id', postId)
       .eq('child_id', childId)
       .single()
@@ -183,6 +183,25 @@ export async function DELETE(request: NextRequest) {
     } catch (storageError) {
       console.error('Failed to delete images from storage:', storageError)
       // Continue anyway - the database record is deleted
+    }
+
+    // Clear the upload limit for this time slot so the user can upload again
+    const postDate = new Date(post.created_at).toISOString().split('T')[0]
+    const today = new Date().toISOString().split('T')[0]
+    
+    // Only clear the limit if the post was from today
+    if (postDate === today && post.time_slot) {
+      const { error: limitError } = await supabaseAdmin
+        .from('daily_upload_limits')
+        .delete()
+        .eq('child_id', childId)
+        .eq('date', today)
+        .eq('time_slot', post.time_slot)
+      
+      if (limitError) {
+        console.error('Failed to clear upload limit:', limitError)
+        // Don't fail the request, the post is already deleted
+      }
     }
 
     // Update user stats

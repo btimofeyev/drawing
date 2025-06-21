@@ -355,6 +355,7 @@ node scripts/moderate-pending-posts.js
 - **File constraints**: 5MB maximum, image formats only
 - **Alt text requirement**: Accessibility and content description
 - **Duplicate prevention**: Database constraints prevent multiple uploads per slot
+- **Re-upload after deletion**: When artwork is deleted, the upload limit is cleared allowing re-upload to the same slot on the same day
 
 ## Security Considerations
 

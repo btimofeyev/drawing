@@ -12,10 +12,12 @@ import {
   Users,
   Sparkles,
   Clock,
-  TrendingUp
+  TrendingUp,
+  Eye
 } from 'lucide-react'
 import Link from 'next/link'
 import ChildLayout from '@/components/ChildLayout'
+import ImageViewer from '@/components/ImageViewer'
 
 interface Artwork {
   id: string

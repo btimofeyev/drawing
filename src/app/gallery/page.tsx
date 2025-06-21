@@ -14,6 +14,7 @@ import {
   Filter
 } from 'lucide-react'
 import ChildLayout from '@/components/ChildLayout'
+import ImageViewer from '@/components/ImageViewer'
 import { useSearchParams } from 'next/navigation'
 import { Suspense } from 'react'
 
@@ -48,6 +49,7 @@ function GalleryContent() {
   const [isLoadingMore, setIsLoadingMore] = useState(false)
   const [hasMore, setHasMore] = useState(true)
   const [totalCount, setTotalCount] = useState(0)
+  const [selectedArtwork, setSelectedArtwork] = useState<Artwork | null>(null)
   
   // Filters from URL params or defaults
   const [timeSlot, setTimeSlot] = useState<'daily_1' | 'daily_2' | 'free_draw' | 'all'>(
@@ -176,29 +178,43 @@ function GalleryContent() {
     }
   }
 
-  const handleView = async (artworkId: string) => {
+  const handleView = async (artwork: Artwork) => {
+    // Open the image viewer
+    setSelectedArtwork(artwork)
+    
+    // Track the view
     try {
       const response = await fetch('/api/posts/view', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ postId: artworkId })
+        body: JSON.stringify({ postId: artwork.id })
       })
 
       if (response.ok) {
         const data = await response.json()
         
         // Update view count in local state
-        setArtworks(prev => prev.map(artwork => 
-          artwork.id === artworkId 
-            ? { ...artwork, views: data.viewsCount }
-            : artwork
+        setArtworks(prev => prev.map(a => 
+          a.id === artwork.id 
+            ? { ...a, views: data.viewsCount }
+            : a
         ))
+        
+        // Update selected artwork if it's still open
+        if (selectedArtwork?.id === artwork.id) {
+          setSelectedArtwork(prev => prev ? { ...prev, views: data.viewsCount } : null)
+        }
       }
     } catch (error) {
       console.error('View tracking failed:', error)
     }
+  }
+
+  const handleCardClick = (artwork: Artwork) => {
+    // Open image viewer when card is clicked (for mobile)
+    handleView(artwork)
   }
 
   const getSlotColor = (slot: 'daily_1' | 'daily_2' | 'free_draw') => {
@@ -374,10 +390,15 @@ function GalleryContent() {
                 {artworks.map((artwork, index) => (
                   <div
                     key={artwork.id}
-                    className={`group bg-white rounded-3xl shadow-lg border border-slate-200 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden ${
+                    className={`group bg-white rounded-3xl shadow-lg border border-slate-200 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden cursor-pointer ${
                       viewMode === 'list' ? 'flex' : ''
                     }`}
                     style={{animationDelay: `${index * 0.05}s`}}
+                    onClick={(e) => {
+                      // Only handle click if not clicking on a button
+                      if ((e.target as HTMLElement).closest('button')) return
+                      handleCardClick(artwork)
+                    }}
                   >
                     {/* Image */}
                     <div className={`relative overflow-hidden ${
@@ -399,7 +420,10 @@ function GalleryContent() {
                       <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-300 flex items-center justify-center opacity-0 group-hover:opacity-100">
                         <div className="flex gap-3">
                           <button
-                            onClick={() => handleLike(artwork.id)}
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleLike(artwork.id)
+                            }}
                             disabled={artwork.isOwnPost}
                             className={`p-3 rounded-full transition-all duration-200 ${
                               artwork.isOwnPost
@@ -413,7 +437,10 @@ function GalleryContent() {
                             <Heart className={`h-5 w-5 ${artwork.isLiked ? 'fill-current' : ''}`} />
                           </button>
                           <button 
-                            onClick={() => handleView(artwork.id)}
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleView(artwork)
+                            }}
                             className="p-3 bg-white/90 text-gray-700 rounded-full hover:bg-blue-500 hover:text-white transition-all duration-200"
                           >
                             <Eye className="h-5 w-5" />
@@ -473,10 +500,24 @@ function GalleryContent() {
                       {/* Stats */}
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-4">
-                          <div className="flex items-center gap-1 text-red-500">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleLike(artwork.id)
+                            }}
+                            disabled={artwork.isOwnPost}
+                            className={`flex items-center gap-1 px-3 py-1 rounded-full transition-all duration-200 lg:pointer-events-none lg:px-0 lg:py-0 lg:bg-transparent ${
+                              artwork.isOwnPost
+                                ? 'bg-gray-100 text-gray-400 cursor-not-allowed lg:bg-transparent'
+                                : artwork.isLiked
+                                ? 'bg-red-100 text-red-600 lg:bg-transparent lg:text-red-500'
+                                : 'bg-gray-100 text-gray-600 hover:bg-red-100 hover:text-red-600 lg:bg-transparent lg:text-red-500 lg:hover:bg-transparent'
+                            }`}
+                            title={artwork.isOwnPost ? 'You cannot like your own artwork' : ''}
+                          >
                             <Heart className={`h-4 w-4 ${artwork.isLiked ? 'fill-current' : ''}`} />
                             <span className="font-semibold">{artwork.likes}</span>
-                          </div>
+                          </button>
                           <div className="flex items-center gap-1 text-blue-500">
                             <Eye className="h-4 w-4" />
                             <span className="font-semibold">{artwork.views || 0}</span>
@@ -514,6 +555,38 @@ function GalleryContent() {
           )}
         </div>
       </div>
+      
+      {/* Image Viewer Modal */}
+      {selectedArtwork && (
+        <ImageViewer
+          isOpen={!!selectedArtwork}
+          onClose={() => setSelectedArtwork(null)}
+          imageUrl={selectedArtwork.imageUrl}
+          thumbnailUrl={selectedArtwork.thumbnailUrl}
+          altText={selectedArtwork.altText}
+          artistName={selectedArtwork.artistName}
+          artistUsername={selectedArtwork.artistUsername}
+          likes={selectedArtwork.likes}
+          views={selectedArtwork.views}
+          createdAt={selectedArtwork.createdAt}
+          promptTitle={selectedArtwork.promptTitle}
+          promptDescription={selectedArtwork.promptDescription}
+          timeSlot={selectedArtwork.timeSlot}
+          difficulty={selectedArtwork.difficulty}
+          ageGroup={selectedArtwork.ageGroup}
+          isLiked={selectedArtwork.isLiked}
+          isOwnPost={selectedArtwork.isOwnPost}
+          onLike={() => {
+            handleLike(selectedArtwork.id)
+            // Update selected artwork state
+            setSelectedArtwork(prev => prev ? {
+              ...prev,
+              isLiked: !prev.isLiked,
+              likes: prev.isLiked ? prev.likes - 1 : prev.likes + 1
+            } : null)
+          }}
+        />
+      )}
     </ChildLayout>
   )
 }

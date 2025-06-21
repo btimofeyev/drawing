@@ -22,6 +22,8 @@ export async function DELETE(
         id,
         child_id,
         image_url,
+        time_slot,
+        created_at,
         child_profiles!inner (
           parent_id
         )
@@ -68,6 +70,35 @@ export async function DELETE(
     if (deleteError) {
       console.error('Error deleting artwork:', deleteError)
       return NextResponse.json({ error: 'Failed to delete artwork' }, { status: 500 })
+    }
+
+    // Clear the upload limit for this time slot so the child can upload again
+    const postDate = new Date(artwork.created_at).toISOString().split('T')[0]
+    const today = new Date().toISOString().split('T')[0]
+    
+    // Only clear the limit if the post was from today
+    if (postDate === today && artwork.time_slot) {
+      const { error: limitError } = await supabaseAdmin
+        .from('daily_upload_limits')
+        .delete()
+        .eq('child_id', artwork.child_id)
+        .eq('date', today)
+        .eq('time_slot', artwork.time_slot)
+      
+      if (limitError) {
+        console.error('Failed to clear upload limit:', limitError)
+        // Don't fail the request, the post is already deleted
+      }
+    }
+
+    // Update user stats for the child
+    const { error: statsError } = await supabaseAdmin
+      .rpc('update_user_stats_on_post', {
+        p_child_id: artwork.child_id
+      })
+
+    if (statsError) {
+      console.error('Failed to update user stats:', statsError)
     }
 
     return NextResponse.json({ success: true })
