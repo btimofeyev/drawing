@@ -476,11 +476,11 @@ export default function ProfilePage() {
                 <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {artworks.map((artwork) => (
                     <div key={artwork.id} className="bg-white rounded-3xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300">
-                      <div className="relative">
+                      <div className="relative bg-gradient-to-br from-pink-50 to-purple-50">
                         <img 
                           src={artwork.imageUrl}
                           alt={artwork.altText}
-                          className="w-full h-48 object-cover"
+                          className="w-full h-64 object-contain p-4"
                         />
                         <button
                           onClick={() => {
@@ -554,11 +554,11 @@ export default function ProfilePage() {
                   Are you sure you want to delete "{artworkToDelete.altText}"? This action cannot be undone.
                 </p>
                 
-                <div className="w-24 h-24 rounded-2xl overflow-hidden mx-auto mb-6 border-2 border-slate-200">
+                <div className="w-24 h-24 rounded-2xl overflow-hidden mx-auto mb-6 border-2 border-slate-200 bg-gradient-to-br from-pink-50 to-purple-50">
                   <img 
                     src={artworkToDelete.thumbnailUrl || artworkToDelete.imageUrl}
                     alt={artworkToDelete.altText}
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-contain p-2"
                   />
                 </div>
                 

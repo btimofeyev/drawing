@@ -288,11 +288,11 @@ export default function ChildHomePage() {
                             </div>
                             {slotStatus?.post && (
                               <div className="flex items-center justify-center gap-3">
-                                <div className="w-12 h-12 rounded-lg overflow-hidden bg-slate-100">
+                                <div className="w-12 h-12 rounded-lg overflow-hidden bg-gradient-to-br from-pink-50 to-purple-50">
                                   <img 
                                     src={slotStatus.post.thumbnailUrl || slotStatus.post.imageUrl}
                                     alt={slotStatus.post.altText}
-                                    className="w-full h-full object-cover"
+                                    className="w-full h-full object-contain p-1"
                                   />
                                 </div>
                                 <div className="flex-1 text-center">

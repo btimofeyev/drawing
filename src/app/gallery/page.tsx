@@ -382,9 +382,9 @@ function GalleryContent() {
             </div>
           ) : (
             <>
-              <div className={`grid gap-6 ${
+              <div className={`grid gap-8 ${
                 viewMode === 'grid' 
-                  ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3' 
+                  ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4' 
                   : 'grid-cols-1'
               }`}>
                 {artworks.map((artwork, index) => (
@@ -401,14 +401,14 @@ function GalleryContent() {
                     }}
                   >
                     {/* Image */}
-                    <div className={`relative overflow-hidden ${
-                      viewMode === 'list' ? 'w-64 flex-shrink-0' : 'aspect-[4/3]'
+                    <div className={`relative overflow-hidden bg-gradient-to-br from-pink-50 to-purple-50 border border-pink-100 ${
+                      viewMode === 'list' ? 'w-64 flex-shrink-0' : 'aspect-square'
                     }`}>
                       {artwork.thumbnailUrl || artwork.imageUrl ? (
                         <img
                           src={artwork.thumbnailUrl || artwork.imageUrl}
                           alt={artwork.altText}
-                          className="w-full h-full object-cover"
+                          className="w-full h-full object-contain p-3"
                         />
                       ) : (
                         <div className="w-full h-full bg-gradient-to-br from-pink-100 to-purple-100 flex items-center justify-center">
@@ -450,16 +450,15 @@ function GalleryContent() {
                     </div>
 
                     {/* Content */}
-                    <div className="p-6 flex-1">
-                      <div className="mb-4">
-                        <h3 className="text-lg font-bold text-slate-800 mb-2 group-hover:text-pink-600 transition-colors">
+                    <div className="p-4 flex-1">
+                      <div className="mb-3">
+                        <h3 className="text-base font-bold text-slate-800 mb-2 group-hover:text-pink-600 transition-colors line-clamp-2">
                           {artwork.altText}
                         </h3>
-                        <div className="flex items-center gap-2 text-slate-600 mb-3">
-                          <User className="h-4 w-4" />
-                          <span className="font-medium">{artwork.artistName}</span>
-                          <span className="text-slate-400">@{artwork.artistUsername}</span>
-                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        <div className="flex items-center gap-2 text-slate-600 mb-2 text-sm">
+                          <User className="h-3 w-3" />
+                          <span className="font-medium truncate">{artwork.artistName}</span>
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium shrink-0 ${
                             artwork.ageGroup === 'kids' ? 'bg-blue-100 text-blue-700' : artwork.ageGroup === 'tweens' ? 'bg-purple-100 text-purple-700' : 'bg-green-100 text-green-700'
                           }`}>
                             {artwork.ageGroup}
@@ -467,11 +466,11 @@ function GalleryContent() {
                         </div>
 
                         {/* Challenge and Difficulty Tags */}
-                        <div className="flex items-center gap-2 mb-3">
-                          <span className={`px-3 py-1 rounded-full text-sm font-bold text-white bg-gradient-to-r ${getSlotColor(artwork.timeSlot)}`}>
+                        <div className="flex items-center gap-1 mb-3 flex-wrap">
+                          <span className={`px-2 py-1 rounded-full text-xs font-bold text-white bg-gradient-to-r ${getSlotColor(artwork.timeSlot)}`}>
                             {getSlotEmoji(artwork.timeSlot)} {artwork.timeSlot === 'daily_1' ? 'Challenge 1' : artwork.timeSlot === 'daily_2' ? 'Challenge 2' : 'Free Draw'}
                           </span>
-                          <span className={`px-3 py-1 rounded-full text-sm font-bold ${
+                          <span className={`px-2 py-1 rounded-full text-xs font-bold ${
                             artwork.difficulty === 'easy' 
                               ? 'bg-green-100 text-green-700'
                               : artwork.difficulty === 'medium'

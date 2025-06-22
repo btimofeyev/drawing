@@ -301,11 +301,11 @@ export default function CommunityPromptPage() {
                     }`}
                   >
                     {/* Artwork Image */}
-                    <div className={viewMode === 'list' ? 'w-32 h-32 flex-shrink-0' : 'aspect-square'}>
+                    <div className={`bg-gradient-to-br from-pink-50 to-purple-50 ${viewMode === 'list' ? 'w-32 h-32 flex-shrink-0' : 'aspect-square'}`}>
                       <img
                         src={artwork.thumbnailUrl || artwork.imageUrl}
                         alt={artwork.altText}
-                        className="w-full h-full object-cover"
+                        className="w-full h-full object-contain p-2"
                       />
                     </div>
 
