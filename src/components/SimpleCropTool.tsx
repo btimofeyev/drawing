@@ -71,6 +71,7 @@ export default function SimpleCropTool({ isOpen, imageUrl, onClose, onCropComple
   const handleMouseMove = useCallback((e: MouseEvent) => {
     if (!isDragging || !dragHandle || imageSize.width === 0) return
 
+    // Calculate movement relative to image size
     const deltaX = (e.clientX - dragStart.x) / imageSize.width
     const deltaY = (e.clientY - dragStart.y) / imageSize.height
 
@@ -79,49 +80,73 @@ export default function SimpleCropTool({ isOpen, imageUrl, onClose, onCropComple
 
       switch (dragHandle) {
         case 'move':
+          // Move the entire crop area
           newArea.x = Math.max(0, Math.min(1 - prev.width, prev.x + deltaX))
           newArea.y = Math.max(0, Math.min(1 - prev.height, prev.y + deltaY))
           break
+          
         case 'tl':
-          newArea.x = Math.max(0, Math.min(prev.x + prev.width - 0.1, prev.x + deltaX))
-          newArea.y = Math.max(0, Math.min(prev.y + prev.height - 0.1, prev.y + deltaY))
-          newArea.width = Math.max(0.1, prev.width - deltaX)
-          newArea.height = Math.max(0.1, prev.height - deltaY)
+          // Top-left corner: adjust x, y, width, height
+          const newX = Math.max(0, Math.min(prev.x + prev.width - 0.05, prev.x + deltaX))
+          const newY = Math.max(0, Math.min(prev.y + prev.height - 0.05, prev.y + deltaY))
+          newArea.x = newX
+          newArea.y = newY
+          newArea.width = prev.x + prev.width - newX
+          newArea.height = prev.y + prev.height - newY
           break
+          
         case 'tr':
-          newArea.y = Math.max(0, Math.min(prev.y + prev.height - 0.1, prev.y + deltaY))
-          newArea.width = Math.max(0.1, Math.min(1 - prev.x, prev.width + deltaX))
-          newArea.height = Math.max(0.1, prev.height - deltaY)
+          // Top-right corner: adjust y, width, height
+          const newY2 = Math.max(0, Math.min(prev.y + prev.height - 0.05, prev.y + deltaY))
+          newArea.y = newY2
+          newArea.width = Math.max(0.05, Math.min(1 - prev.x, prev.width + deltaX))
+          newArea.height = prev.y + prev.height - newY2
           break
+          
         case 'bl':
-          newArea.x = Math.max(0, Math.min(prev.x + prev.width - 0.1, prev.x + deltaX))
-          newArea.width = Math.max(0.1, prev.width - deltaX)
-          newArea.height = Math.max(0.1, Math.min(1 - prev.y, prev.height + deltaY))
+          // Bottom-left corner: adjust x, width, height
+          const newX2 = Math.max(0, Math.min(prev.x + prev.width - 0.05, prev.x + deltaX))
+          newArea.x = newX2
+          newArea.width = prev.x + prev.width - newX2
+          newArea.height = Math.max(0.05, Math.min(1 - prev.y, prev.height + deltaY))
           break
+          
         case 'br':
-          newArea.width = Math.max(0.1, Math.min(1 - prev.x, prev.width + deltaX))
-          newArea.height = Math.max(0.1, Math.min(1 - prev.y, prev.height + deltaY))
+          // Bottom-right corner: adjust width, height
+          newArea.width = Math.max(0.05, Math.min(1 - prev.x, prev.width + deltaX))
+          newArea.height = Math.max(0.05, Math.min(1 - prev.y, prev.height + deltaY))
           break
+          
         // Edge handles for dragging lines
         case 'top':
-          newArea.y = Math.max(0, Math.min(prev.y + prev.height - 0.1, prev.y + deltaY))
-          newArea.height = Math.max(0.1, prev.height - deltaY)
+          // Top edge: adjust y and height
+          const newYTop = Math.max(0, Math.min(prev.y + prev.height - 0.05, prev.y + deltaY))
+          newArea.y = newYTop
+          newArea.height = prev.y + prev.height - newYTop
           break
+          
         case 'bottom':
-          newArea.height = Math.max(0.1, Math.min(1 - prev.y, prev.height + deltaY))
+          // Bottom edge: adjust height only
+          newArea.height = Math.max(0.05, Math.min(1 - prev.y, prev.height + deltaY))
           break
+          
         case 'left':
-          newArea.x = Math.max(0, Math.min(prev.x + prev.width - 0.1, prev.x + deltaX))
-          newArea.width = Math.max(0.1, prev.width - deltaX)
+          // Left edge: adjust x and width
+          const newXLeft = Math.max(0, Math.min(prev.x + prev.width - 0.05, prev.x + deltaX))
+          newArea.x = newXLeft
+          newArea.width = prev.x + prev.width - newXLeft
           break
+          
         case 'right':
-          newArea.width = Math.max(0.1, Math.min(1 - prev.x, prev.width + deltaX))
+          // Right edge: adjust width only
+          newArea.width = Math.max(0.05, Math.min(1 - prev.x, prev.width + deltaX))
           break
       }
 
       return newArea
     })
 
+    // Update drag start position for next move
     setDragStart({ x: e.clientX, y: e.clientY })
   }, [isDragging, dragHandle, dragStart, imageSize])
 
@@ -257,40 +282,40 @@ export default function SimpleCropTool({ isOpen, imageUrl, onClose, onCropComple
                 }}
                 onMouseDown={(e) => handleMouseDown(e, 'move')}
               >
-                {/* Corner handles */}
+                {/* Corner handles - larger and more visible */}
                 <div
-                  className="absolute -top-2 -left-2 w-4 h-4 bg-white border-2 border-blue-500 cursor-nw-resize"
+                  className="absolute -top-3 -left-3 w-6 h-6 bg-white border-2 border-blue-500 rounded-full cursor-nw-resize shadow-lg hover:scale-110 transition-transform"
                   onMouseDown={(e) => {
                     e.stopPropagation()
                     handleMouseDown(e, 'tl')
                   }}
                 />
                 <div
-                  className="absolute -top-2 -right-2 w-4 h-4 bg-white border-2 border-blue-500 cursor-ne-resize"
+                  className="absolute -top-3 -right-3 w-6 h-6 bg-white border-2 border-blue-500 rounded-full cursor-ne-resize shadow-lg hover:scale-110 transition-transform"
                   onMouseDown={(e) => {
                     e.stopPropagation()
                     handleMouseDown(e, 'tr')
                   }}
                 />
                 <div
-                  className="absolute -bottom-2 -left-2 w-4 h-4 bg-white border-2 border-blue-500 cursor-sw-resize"
+                  className="absolute -bottom-3 -left-3 w-6 h-6 bg-white border-2 border-blue-500 rounded-full cursor-sw-resize shadow-lg hover:scale-110 transition-transform"
                   onMouseDown={(e) => {
                     e.stopPropagation()
                     handleMouseDown(e, 'bl')
                   }}
                 />
                 <div
-                  className="absolute -bottom-2 -right-2 w-4 h-4 bg-white border-2 border-blue-500 cursor-se-resize"
+                  className="absolute -bottom-3 -right-3 w-6 h-6 bg-white border-2 border-blue-500 rounded-full cursor-se-resize shadow-lg hover:scale-110 transition-transform"
                   onMouseDown={(e) => {
                     e.stopPropagation()
                     handleMouseDown(e, 'br')
                   }}
                 />
                 
-                {/* Edge handles for dragging lines */}
+                {/* Edge handles for dragging lines - more prominent */}
                 {/* Top edge */}
                 <div
-                  className="absolute -top-2 left-1/2 transform -translate-x-1/2 w-8 h-4 bg-white border-2 border-blue-500 cursor-n-resize"
+                  className="absolute -top-3 left-1/2 transform -translate-x-1/2 w-12 h-6 bg-white border-2 border-blue-500 rounded-full cursor-n-resize shadow-lg hover:scale-110 transition-transform"
                   onMouseDown={(e) => {
                     e.stopPropagation()
                     handleMouseDown(e, 'top')
@@ -298,7 +323,7 @@ export default function SimpleCropTool({ isOpen, imageUrl, onClose, onCropComple
                 />
                 {/* Bottom edge */}
                 <div
-                  className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-8 h-4 bg-white border-2 border-blue-500 cursor-s-resize"
+                  className="absolute -bottom-3 left-1/2 transform -translate-x-1/2 w-12 h-6 bg-white border-2 border-blue-500 rounded-full cursor-s-resize shadow-lg hover:scale-110 transition-transform"
                   onMouseDown={(e) => {
                     e.stopPropagation()
                     handleMouseDown(e, 'bottom')
@@ -306,7 +331,7 @@ export default function SimpleCropTool({ isOpen, imageUrl, onClose, onCropComple
                 />
                 {/* Left edge */}
                 <div
-                  className="absolute -left-2 top-1/2 transform -translate-y-1/2 w-4 h-8 bg-white border-2 border-blue-500 cursor-w-resize"
+                  className="absolute -left-3 top-1/2 transform -translate-y-1/2 w-6 h-12 bg-white border-2 border-blue-500 rounded-full cursor-w-resize shadow-lg hover:scale-110 transition-transform"
                   onMouseDown={(e) => {
                     e.stopPropagation()
                     handleMouseDown(e, 'left')
@@ -314,7 +339,7 @@ export default function SimpleCropTool({ isOpen, imageUrl, onClose, onCropComple
                 />
                 {/* Right edge */}
                 <div
-                  className="absolute -right-2 top-1/2 transform -translate-y-1/2 w-4 h-8 bg-white border-2 border-blue-500 cursor-e-resize"
+                  className="absolute -right-3 top-1/2 transform -translate-y-1/2 w-6 h-12 bg-white border-2 border-blue-500 rounded-full cursor-e-resize shadow-lg hover:scale-110 transition-transform"
                   onMouseDown={(e) => {
                     e.stopPropagation()
                     handleMouseDown(e, 'right')
