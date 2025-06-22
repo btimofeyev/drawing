@@ -19,22 +19,31 @@ export default function SimpleCropTool({ isOpen, imageUrl, onClose, onCropComple
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const imageRef = useRef<HTMLImageElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
-  const [imageSize, setImageSize] = useState({ width: 0, height: 0 })
+  const [imageSize, setImageSize] = useState({ width: 0, height: 0, offsetX: 0, offsetY: 0 })
 
   const handleRotate = () => {
     setRotation(prev => (prev + 90) % 360)
   }
 
   useEffect(() => {
-    const image = imageRef.current
-    if (image && image.complete) {
+    const updateImageSize = () => {
+      const image = imageRef.current
       const container = containerRef.current
-      if (container) {
+      if (image && container && image.complete) {
         const containerRect = container.getBoundingClientRect()
         const imageRect = image.getBoundingClientRect()
-        setImageSize({ width: imageRect.width, height: imageRect.height })
+        setImageSize({ 
+          width: imageRect.width, 
+          height: imageRect.height,
+          offsetX: imageRect.left - containerRect.left,
+          offsetY: imageRect.top - containerRect.top
+        })
       }
     }
+    
+    updateImageSize()
+    window.addEventListener('resize', updateImageSize)
+    return () => window.removeEventListener('resize', updateImageSize)
   }, [imageUrl, rotation])
 
   const handleImageLoad = () => {
@@ -43,7 +52,12 @@ export default function SimpleCropTool({ isOpen, imageUrl, onClose, onCropComple
     if (image && container) {
       const containerRect = container.getBoundingClientRect()
       const imageRect = image.getBoundingClientRect()
-      setImageSize({ width: imageRect.width, height: imageRect.height })
+      setImageSize({ 
+        width: imageRect.width, 
+        height: imageRect.height,
+        offsetX: imageRect.left - containerRect.left,
+        offsetY: imageRect.top - containerRect.top
+      })
     }
   }
 
@@ -203,18 +217,19 @@ export default function SimpleCropTool({ isOpen, imageUrl, onClose, onCropComple
             draggable={false}
           />
           
-          {/* Crop Overlay */}
+          {/* Crop Overlay - Fixed positioning */}
           {imageSize.width > 0 && (
             <div 
-              className="absolute inset-0 pointer-events-none"
+              className="absolute pointer-events-none"
               style={{
+                left: 0,
+                top: 0,
+                width: '100%',
+                height: '100%',
                 transform: `rotate(${rotation}deg)`,
                 transition: 'transform 0.3s ease'
               }}
-            >
-              {/* Dark overlay */}
-              <div className="absolute inset-0 bg-black bg-opacity-50" />
-              
+            >              
               {/* Crop area */}
               <div
                 className="absolute border-2 border-white bg-transparent pointer-events-auto cursor-move"
