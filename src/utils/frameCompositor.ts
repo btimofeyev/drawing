@@ -439,25 +439,6 @@ function createFrameBackground(ctx: CanvasRenderingContext2D, width: number, hei
       ctx.restore()
       break
 
-    case 'jungle-adventure':
-      // Jungle green gradient
-      const jungleGradient = ctx.createLinearGradient(0, 0, width, height)
-      jungleGradient.addColorStop(0, '#228b22')
-      jungleGradient.addColorStop(0.5, '#32cd32')
-      jungleGradient.addColorStop(1, '#006400')
-      ctx.fillStyle = jungleGradient
-      ctx.fillRect(0, 0, width, height)
-      break
-
-    case 'medieval-castle':
-      // Stone gray gradient
-      const stoneGradient = ctx.createLinearGradient(0, 0, width, height)
-      stoneGradient.addColorStop(0, '#708090')
-      stoneGradient.addColorStop(0.5, '#556b2f')
-      stoneGradient.addColorStop(1, '#2f4f4f')
-      ctx.fillStyle = stoneGradient
-      ctx.fillRect(0, 0, width, height)
-      break
 
     case 'halloween-spooky':
       // Halloween orange and black - matching CSS frame-halloween-spooky
@@ -520,15 +501,15 @@ function createFrameBackground(ctx: CanvasRenderingContext2D, width: number, hei
       
       // Add diagonal candy stripes
       const stripeColors = ['#ff6b9d', '#ffffff', '#4ecdc4', '#ffffff']
-      const stripeWidth = 24
+      const candyStripeWidth = 24
       ctx.save()
-      for (let i = -height; i < width + height; i += stripeWidth) {
-        const colorIndex = Math.floor((i + height) / stripeWidth) % stripeColors.length
+      for (let i = -height; i < width + height; i += candyStripeWidth) {
+        const colorIndex = Math.floor((i + height) / candyStripeWidth) % stripeColors.length
         ctx.fillStyle = stripeColors[colorIndex]
         ctx.save()
         ctx.translate(i, 0)
         ctx.rotate(Math.PI / 4)
-        ctx.fillRect(0, -height, stripeWidth, width + height * 2)
+        ctx.fillRect(0, -height, candyStripeWidth, width + height * 2)
         ctx.restore()
       }
       ctx.restore()
