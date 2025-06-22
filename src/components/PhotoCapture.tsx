@@ -1,10 +1,11 @@
 'use client'
 
 import { useState, useRef, useCallback } from 'react'
-import { Camera, RotateCcw, Check, X, RefreshCw, Zap, Crop, Frame } from 'lucide-react'
+import { Camera, RotateCcw, Check, X, RefreshCw, Crop, Frame } from 'lucide-react'
 import SimpleCropTool from './SimpleCropTool'
 import FrameSelector from './FrameSelector'
 import { applyFrameToImage } from '@/utils/frameCompositor'
+import { compressImage } from '@/utils/imageCompression'
 
 interface PhotoCaptureProps {
   isOpen: boolean
@@ -24,27 +25,11 @@ export default function PhotoCapture({ isOpen, onClose, onPhotoSelected }: Photo
   const unframedFileRef = useRef<File | null>(null)
 
   const handleFileSelect = useCallback(async (file: File) => {
-    // Auto-compress in background for performance
-    try {
-      const imageCompression = (await import('browser-image-compression')).default
-      const options = {
-        maxSizeMB: 5,
-        maxWidthOrHeight: 2048,
-        useWebWorker: true,
-        initialQuality: 0.9,
-        preserveExif: false
-      }
-      const optimizedFile = await imageCompression(file, options)
-      originalFileRef.current = optimizedFile
-      unframedFileRef.current = optimizedFile
-    } catch (error) {
-      console.error('Auto-compression failed, using original:', error)
-      originalFileRef.current = file
-      unframedFileRef.current = file
-    }
+    const optimizedFile = await compressImage(file)
+    originalFileRef.current = optimizedFile
+    unframedFileRef.current = optimizedFile
     
-    // Create preview URL
-    const url = URL.createObjectURL(originalFileRef.current || file)
+    const url = URL.createObjectURL(optimizedFile)
     setCapturedPhoto(url)
     setHasFrame(false)
   }, [])
@@ -74,26 +59,11 @@ export default function PhotoCapture({ isOpen, onClose, onPhotoSelected }: Photo
   }
 
   const handleCropComplete = async (croppedFile: File) => {
-    // Auto-compress the cropped image
-    try {
-      const imageCompression = (await import('browser-image-compression')).default
-      const options = {
-        maxSizeMB: 5,
-        maxWidthOrHeight: 2048,
-        useWebWorker: true,
-        initialQuality: 0.9,
-        preserveExif: false
-      }
-      const optimizedFile = await imageCompression(croppedFile, options)
-      originalFileRef.current = optimizedFile
-      unframedFileRef.current = optimizedFile
-    } catch (error) {
-      console.error('Auto-compression failed, using cropped original:', error)
-      originalFileRef.current = croppedFile
-      unframedFileRef.current = croppedFile
-    }
+    const optimizedFile = await compressImage(croppedFile)
+    originalFileRef.current = optimizedFile
+    unframedFileRef.current = optimizedFile
     
-    const url = URL.createObjectURL(originalFileRef.current || croppedFile)
+    const url = URL.createObjectURL(optimizedFile)
     setCapturedPhoto(url)
     setShowCropTool(false)
     setHasFrame(false)
@@ -166,7 +136,6 @@ export default function PhotoCapture({ isOpen, onClose, onPhotoSelected }: Photo
               Take a photo of your drawing, painting, or any artwork you've created!
             </p>
 
-            {/* Photo Tips */}
             <div className="bg-white/10 rounded-2xl p-6 mb-8 max-w-md">
               <h4 className="text-white font-bold mb-3">📸 Photo Tips</h4>
               <ul className="text-white/90 text-sm space-y-2 text-left">
@@ -214,7 +183,6 @@ export default function PhotoCapture({ isOpen, onClose, onPhotoSelected }: Photo
               </div>
             </div>
 
-            {/* Photo Tips */}
             <div className="text-center mb-6">
               <div className="bg-white/10 rounded-xl p-4 max-w-md mx-auto">
                 <p className="text-white/90 text-sm">

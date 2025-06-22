@@ -44,41 +44,33 @@ export async function moderateImage(imageUrl: string): Promise<ModerationResult>
     return response.results[0]
   } catch (error) {
     console.error('OpenAI moderation error:', error)
-    // If moderation fails, default to flagging for manual review
-    return {
-      flagged: true,
-      categories: {
-        sexual: false,
-        hate: false,
-        harassment: false,
-        'self-harm': false,
-        'sexual/minors': false,
-        'hate/threatening': false,
-        'violence/graphic': false,
-        'self-harm/intent': false,
-        'self-harm/instructions': false,
-        'harassment/threatening': false,
-        violence: false
-      },
-      category_scores: {
-        sexual: 0,
-        hate: 0,
-        harassment: 0,
-        'self-harm': 0,
-        'sexual/minors': 0,
-        'hate/threatening': 0,
-        'violence/graphic': 0,
-        'self-harm/intent': 0,
-        'self-harm/instructions': 0,
-        'harassment/threatening': 0,
-        violence: 0
-      }
-    }
+    return createFailsafeModerationResult()
+  }
+}
+
+function createFailsafeModerationResult(): ModerationResult {
+  const categories = Object.keys({
+    sexual: false,
+    hate: false,
+    harassment: false,
+    'self-harm': false,
+    'sexual/minors': false,
+    'hate/threatening': false,
+    'violence/graphic': false,
+    'self-harm/intent': false,
+    'self-harm/instructions': false,
+    'harassment/threatening': false,
+    violence: false
+  })
+  
+  return {
+    flagged: true,
+    categories: categories.reduce((acc, key) => ({ ...acc, [key]: false }), {} as any),
+    category_scores: categories.reduce((acc, key) => ({ ...acc, [key]: 0 }), {} as any)
   }
 }
 
 export function shouldApproveForChildren(moderation: ModerationResult): boolean {
-  // For children's content, be more strict
   const strictCategories = [
     'sexual',
     'sexual/minors',
@@ -89,14 +81,12 @@ export function shouldApproveForChildren(moderation: ModerationResult): boolean 
     'self-harm/instructions'
   ]
 
-  // Check if any strict category is flagged
   for (const category of strictCategories) {
     if (moderation.categories[category as keyof typeof moderation.categories]) {
       return false
     }
   }
 
-  // Also check score thresholds for children's content (lower thresholds)
   const scoreThresholds = {
     sexual: 0.3,
     'sexual/minors': 0.1,

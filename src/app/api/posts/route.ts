@@ -1,65 +1,27 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { ChildAuth } from '@/lib/auth'
 import { supabaseAdmin } from '@/lib/supabase'
-import { cookies } from 'next/headers'
+import { getAuthenticatedChild, createErrorResponse } from '@/utils/apiAuth'
 
 export async function POST(request: NextRequest) {
   try {
-    // Get child auth cookie
-    const cookieStore = await cookies()
-    const authCookie = cookieStore.get('child_auth')
-    
-    if (!authCookie?.value) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      )
-    }
+    const { childId, error } = await getAuthenticatedChild(request)
+    if (error) return error
 
-    let childId: string
-    try {
-      const authData = JSON.parse(authCookie.value)
-      childId = authData.childId
-    } catch (error) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      )
-    }
-
-    // Get child profile
-    const child = await ChildAuth.getChildProfile(childId)
+    const child = await ChildAuth.getChildProfile(childId!)
     if (!child) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      )
+      return createErrorResponse('Unauthorized', 401)
     }
 
-    // Parse request body
     const body = await request.json()
-    const { 
-      imageUrl, 
-      thumbnailUrl, 
-      altText, 
-      promptId, 
-      timeSlot 
-    } = body
+    const { imageUrl, thumbnailUrl, altText, promptId, timeSlot } = body
 
-    // Validate required fields
     if (!imageUrl || !altText) {
-      return NextResponse.json(
-        { error: 'Image URL and alt text are required' },
-        { status: 400 }
-      )
+      return createErrorResponse('Image URL and alt text are required', 400)
     }
 
-    // Require time slot to be explicitly provided
     if (!timeSlot || !['daily_1', 'daily_2', 'free_draw'].includes(timeSlot)) {
-      return NextResponse.json(
-        { error: 'Time slot is required. Must be daily_1, daily_2, or free_draw' },
-        { status: 400 }
-      )
+      return createErrorResponse('Time slot is required. Must be daily_1, daily_2, or free_draw', 400)
     }
 
     const today = new Date().toISOString().split('T')[0]
@@ -75,10 +37,7 @@ export async function POST(request: NextRequest) {
 
     if (canUploadError) {
       console.error('Error checking upload permissions:', canUploadError)
-      return NextResponse.json(
-        { error: 'Failed to validate upload permissions' },
-        { status: 500 }
-      )
+      return createErrorResponse('Failed to validate upload permissions')
     }
 
     if (!canUpload) {
@@ -104,20 +63,11 @@ export async function POST(request: NextRequest) {
         console.warn('Invalid prompt ID provided:', promptId)
         validPromptId = null
       } else if (prompt.age_group !== child.age_group) {
-        return NextResponse.json(
-          { error: 'This prompt is not for your age group' },
-          { status: 400 }
-        )
+        return createErrorResponse('This prompt is not for your age group', 400)
       } else if (prompt.date !== today) {
-        return NextResponse.json(
-          { error: 'This prompt is not for today' },
-          { status: 400 }
-        )
+        return createErrorResponse('This prompt is not for today', 400)
       } else if (prompt.time_slot !== targetTimeSlot) {
-        return NextResponse.json(
-          { error: `This prompt is for ${prompt.time_slot}, not ${targetTimeSlot}` },
-          { status: 400 }
-        )
+        return createErrorResponse(`This prompt is for ${prompt.time_slot}, not ${targetTimeSlot}`, 400)
       }
     }
 
@@ -138,10 +88,7 @@ export async function POST(request: NextRequest) {
 
     if (postError) {
       console.error('Failed to create post:', postError)
-      return NextResponse.json(
-        { error: 'Failed to create post' },
-        { status: 500 }
-      )
+      return createErrorResponse('Failed to create post')
     }
 
     // Increment upload count for this slot
@@ -154,7 +101,6 @@ export async function POST(request: NextRequest) {
 
     if (incrementError) {
       console.error('Failed to increment upload count:', incrementError)
-      // Don't fail the request, just log the error
     }
 
     // Update user stats
@@ -165,7 +111,6 @@ export async function POST(request: NextRequest) {
 
     if (statsError) {
       console.error('Failed to update user stats:', statsError)
-      // Don't fail the request, just log the error
     }
 
     return NextResponse.json({
@@ -183,44 +128,20 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     console.error('Post creation error:', error)
-    return NextResponse.json(
-      { error: 'Failed to create post' },
-      { status: 500 }
-    )
+    return createErrorResponse('Failed to create post')
   }
 }
 
 export async function GET(request: NextRequest) {
   try {
-    // Get child auth cookie
-    const cookieStore = await cookies()
-    const authCookie = cookieStore.get('child_auth')
-    
-    if (!authCookie?.value) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      )
-    }
+    const { childId, error: authError } = await getAuthenticatedChild(request)
+    if (authError) return authError
 
-    let childId: string
-    try {
-      const authData = JSON.parse(authCookie.value)
-      childId = authData.childId
-    } catch (error) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      )
-    }
-
-    // Get query parameters
     const { searchParams } = new URL(request.url)
     const timeSlot = searchParams.get('timeSlot') as 'daily_1' | 'daily_2' | 'free_draw' | null
     const date = searchParams.get('date')
     const limit = parseInt(searchParams.get('limit') || '10')
 
-    // Build query
     let query = supabaseAdmin
       .from('posts')
       .select(`
@@ -234,7 +155,7 @@ export async function GET(request: NextRequest) {
         moderation_status,
         prompts(id, prompt_text, difficulty)
       `)
-      .eq('child_id', childId)
+      .eq('child_id', childId!)
       .order('created_at', { ascending: false })
       .limit(limit)
 
@@ -243,7 +164,6 @@ export async function GET(request: NextRequest) {
     }
 
     if (date) {
-      // Filter by date (posts created on specific date)
       const startOfDay = new Date(date)
       const endOfDay = new Date(date)
       endOfDay.setDate(endOfDay.getDate() + 1)
@@ -257,10 +177,7 @@ export async function GET(request: NextRequest) {
 
     if (error) {
       console.error('Failed to fetch posts:', error)
-      return NextResponse.json(
-        { error: 'Failed to fetch posts' },
-        { status: 500 }
-      )
+      return createErrorResponse('Failed to fetch posts')
     }
 
     return NextResponse.json({
@@ -287,10 +204,7 @@ export async function GET(request: NextRequest) {
 
   } catch (error) {
     console.error('Posts fetch error:', error)
-    return NextResponse.json(
-      { error: 'Failed to fetch posts' },
-      { status: 500 }
-    )
+    return createErrorResponse('Failed to fetch posts')
   }
 }
 

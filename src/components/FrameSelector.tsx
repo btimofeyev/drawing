@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Check, X, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Check, X } from 'lucide-react'
 import { frameTemplates, getFramesByCategory, type FrameTemplate } from '@/types/frames'
 
 interface FrameSelectorProps {

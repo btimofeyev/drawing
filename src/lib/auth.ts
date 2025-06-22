@@ -5,13 +5,12 @@ import { Database } from '@/types/database'
 type ChildProfile = Database['public']['Tables']['child_profiles']['Row']
 type ParentAccount = Database['public']['Tables']['parent_accounts']['Row']
 
-// Parent Authentication
 export class ParentAuth {
   static async sendOtpCode(email: string) {
     const { error } = await supabase.auth.signInWithOtp({
       email,
       options: {
-        shouldCreateUser: true // This allows sign-up and sign-in with the same flow
+        shouldCreateUser: true
       }
     })
     
@@ -67,7 +66,6 @@ export class ParentAuth {
   }
 }
 
-// Child Authentication
 export class ChildAuth {
   static async hashPin(pin: string): Promise<string> {
     return await bcrypt.hash(pin, 12)
@@ -96,14 +94,13 @@ export class ChildAuth {
         age_group: data.ageGroup,
         pin_hash: pinHash,
         avatar_url: data.avatarUrl || null,
-        parental_consent: true // Auto-approve since parent is creating
+        parental_consent: true
       })
       .select()
       .single()
 
     if (error) throw error
 
-    // Create initial user stats
     await supabaseAdmin
       .from('user_stats')
       .insert({
@@ -176,12 +173,11 @@ export class ChildAuth {
   }
 }
 
-// Child Session Utilities
 
 export class ChildSession {
   static getCurrentChildFromRequest(request: Request): { childId: string } | null {
     try {
-      // Import cookies function dynamically to avoid SSR issues
+      // Use synchronous require for server-side compatibility
       // eslint-disable-next-line @typescript-eslint/no-require-imports
       const { cookies } = require('next/headers')
       const cookieStore = cookies()
@@ -207,7 +203,6 @@ export class ChildSession {
   }
 }
 
-// Helper function to verify parent authentication from request
 export async function verifyParentAuth(request: Request) {
   try {
     const user = await ParentAuth.getCurrentUser()
@@ -226,7 +221,6 @@ export async function verifyParentAuth(request: Request) {
   }
 }
 
-// Session Management
 export class SessionManager {
   static CHILD_SESSION_COOKIE = 'child_session'
   static PARENT_SESSION_COOKIE = 'parent_session'
@@ -265,7 +259,6 @@ export class SessionManager {
         sessionCookie.split('=')[1]
       )
       
-      // Check if session is expired (24 hours)
       if (Date.now() - sessionData.timestamp > 86400000) {
         return null
       }
