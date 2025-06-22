@@ -193,11 +193,11 @@ export default function TrendingPromptsPage() {
                     <div className="p-4 border-b border-slate-100">
                       <div className="flex gap-2 mb-2">
                         {prompt.sampleArtwork.slice(0, 3).map((artwork) => (
-                          <div key={artwork.id} className="flex-1 aspect-square rounded-lg overflow-hidden bg-slate-100">
+                          <div key={artwork.id} className="flex-1 aspect-square rounded-lg overflow-hidden bg-gradient-to-br from-pink-50 to-purple-50">
                             <img
                               src={artwork.thumbnailUrl || artwork.imageUrl}
                               alt="Sample artwork"
-                              className="w-full h-full object-cover"
+                              className="w-full h-full object-contain p-1"
                             />
                           </div>
                         ))}

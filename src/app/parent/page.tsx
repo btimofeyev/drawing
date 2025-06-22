@@ -307,11 +307,11 @@ export default function ParentDashboard() {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {childArtwork.map((artwork) => (
                     <div key={artwork.id} className="card">
-                      <div className="relative group">
+                      <div className="relative group bg-gradient-to-br from-pink-50 to-purple-50 rounded-xl">
                         <img
                           src={artwork.imageUrl}
                           alt="Child's drawing"
-                          className="w-full h-64 object-cover rounded-xl"
+                          className="w-full h-64 object-contain p-4 rounded-xl"
                         />
                         <button
                           onClick={() => handleDeleteArtwork(artwork.id)}
