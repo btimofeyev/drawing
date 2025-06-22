@@ -68,6 +68,14 @@ export default function SimpleCropTool({ isOpen, imageUrl, onClose, onCropComple
     setDragStart({ x: e.clientX, y: e.clientY })
   }
 
+  const handleTouchStart = (e: React.TouchEvent, handle: string) => {
+    e.preventDefault()
+    const touch = e.touches[0]
+    setIsDragging(true)
+    setDragHandle(handle)
+    setDragStart({ x: touch.clientX, y: touch.clientY })
+  }
+
   const handleMouseMove = useCallback((e: MouseEvent) => {
     if (!isDragging || !dragHandle || imageSize.width === 0) return
 
@@ -150,7 +158,95 @@ export default function SimpleCropTool({ isOpen, imageUrl, onClose, onCropComple
     setDragStart({ x: e.clientX, y: e.clientY })
   }, [isDragging, dragHandle, dragStart, imageSize])
 
+  const handleTouchMove = useCallback((e: TouchEvent) => {
+    if (!isDragging || !dragHandle || imageSize.width === 0) return
+
+    const touch = e.touches[0]
+    // Calculate movement relative to image size
+    const deltaX = (touch.clientX - dragStart.x) / imageSize.width
+    const deltaY = (touch.clientY - dragStart.y) / imageSize.height
+
+    setCropArea(prev => {
+      let newArea = { ...prev }
+
+      switch (dragHandle) {
+        case 'move':
+          // Move the entire crop area
+          newArea.x = Math.max(0, Math.min(1 - prev.width, prev.x + deltaX))
+          newArea.y = Math.max(0, Math.min(1 - prev.height, prev.y + deltaY))
+          break
+          
+        case 'tl':
+          // Top-left corner: adjust x, y, width, height
+          const newX = Math.max(0, Math.min(prev.x + prev.width - 0.05, prev.x + deltaX))
+          const newY = Math.max(0, Math.min(prev.y + prev.height - 0.05, prev.y + deltaY))
+          newArea.x = newX
+          newArea.y = newY
+          newArea.width = prev.x + prev.width - newX
+          newArea.height = prev.y + prev.height - newY
+          break
+          
+        case 'tr':
+          // Top-right corner: adjust y, width, height
+          const newY2 = Math.max(0, Math.min(prev.y + prev.height - 0.05, prev.y + deltaY))
+          newArea.y = newY2
+          newArea.width = Math.max(0.05, Math.min(1 - prev.x, prev.width + deltaX))
+          newArea.height = prev.y + prev.height - newY2
+          break
+          
+        case 'bl':
+          // Bottom-left corner: adjust x, width, height
+          const newX2 = Math.max(0, Math.min(prev.x + prev.width - 0.05, prev.x + deltaX))
+          newArea.x = newX2
+          newArea.width = prev.x + prev.width - newX2
+          newArea.height = Math.max(0.05, Math.min(1 - prev.y, prev.height + deltaY))
+          break
+          
+        case 'br':
+          // Bottom-right corner: adjust width, height
+          newArea.width = Math.max(0.05, Math.min(1 - prev.x, prev.width + deltaX))
+          newArea.height = Math.max(0.05, Math.min(1 - prev.y, prev.height + deltaY))
+          break
+          
+        // Edge handles for dragging lines
+        case 'top':
+          // Top edge: adjust y and height
+          const newYTop = Math.max(0, Math.min(prev.y + prev.height - 0.05, prev.y + deltaY))
+          newArea.y = newYTop
+          newArea.height = prev.y + prev.height - newYTop
+          break
+          
+        case 'bottom':
+          // Bottom edge: adjust height only
+          newArea.height = Math.max(0.05, Math.min(1 - prev.y, prev.height + deltaY))
+          break
+          
+        case 'left':
+          // Left edge: adjust x and width
+          const newXLeft = Math.max(0, Math.min(prev.x + prev.width - 0.05, prev.x + deltaX))
+          newArea.x = newXLeft
+          newArea.width = prev.x + prev.width - newXLeft
+          break
+          
+        case 'right':
+          // Right edge: adjust width only
+          newArea.width = Math.max(0.05, Math.min(1 - prev.x, prev.width + deltaX))
+          break
+      }
+
+      return newArea
+    })
+
+    // Update drag start position for next move
+    setDragStart({ x: touch.clientX, y: touch.clientY })
+  }, [isDragging, dragHandle, dragStart, imageSize])
+
   const handleMouseUp = useCallback(() => {
+    setIsDragging(false)
+    setDragHandle(null)
+  }, [])
+
+  const handleTouchEnd = useCallback(() => {
     setIsDragging(false)
     setDragHandle(null)
   }, [])
@@ -159,12 +255,16 @@ export default function SimpleCropTool({ isOpen, imageUrl, onClose, onCropComple
     if (isDragging) {
       document.addEventListener('mousemove', handleMouseMove)
       document.addEventListener('mouseup', handleMouseUp)
+      document.addEventListener('touchmove', handleTouchMove, { passive: false })
+      document.addEventListener('touchend', handleTouchEnd)
       return () => {
         document.removeEventListener('mousemove', handleMouseMove)
         document.removeEventListener('mouseup', handleMouseUp)
+        document.removeEventListener('touchmove', handleTouchMove)
+        document.removeEventListener('touchend', handleTouchEnd)
       }
     }
-  }, [isDragging, handleMouseMove, handleMouseUp])
+  }, [isDragging, handleMouseMove, handleMouseUp, handleTouchMove, handleTouchEnd])
 
   const handleCrop = useCallback(async () => {
     const canvas = canvasRef.current
@@ -281,6 +381,7 @@ export default function SimpleCropTool({ isOpen, imageUrl, onClose, onCropComple
                   boxShadow: '0 0 0 9999px rgba(0, 0, 0, 0.5)'
                 }}
                 onMouseDown={(e) => handleMouseDown(e, 'move')}
+                onTouchStart={(e) => handleTouchStart(e, 'move')}
               >
                 {/* Corner handles - larger and more visible */}
                 <div
@@ -289,12 +390,20 @@ export default function SimpleCropTool({ isOpen, imageUrl, onClose, onCropComple
                     e.stopPropagation()
                     handleMouseDown(e, 'tl')
                   }}
+                  onTouchStart={(e) => {
+                    e.stopPropagation()
+                    handleTouchStart(e, 'tl')
+                  }}
                 />
                 <div
                   className="absolute -top-3 -right-3 w-6 h-6 bg-white border-2 border-blue-500 rounded-full cursor-ne-resize shadow-lg hover:scale-110 transition-transform"
                   onMouseDown={(e) => {
                     e.stopPropagation()
                     handleMouseDown(e, 'tr')
+                  }}
+                  onTouchStart={(e) => {
+                    e.stopPropagation()
+                    handleTouchStart(e, 'tr')
                   }}
                 />
                 <div
@@ -303,12 +412,20 @@ export default function SimpleCropTool({ isOpen, imageUrl, onClose, onCropComple
                     e.stopPropagation()
                     handleMouseDown(e, 'bl')
                   }}
+                  onTouchStart={(e) => {
+                    e.stopPropagation()
+                    handleTouchStart(e, 'bl')
+                  }}
                 />
                 <div
                   className="absolute -bottom-3 -right-3 w-6 h-6 bg-white border-2 border-blue-500 rounded-full cursor-se-resize shadow-lg hover:scale-110 transition-transform"
                   onMouseDown={(e) => {
                     e.stopPropagation()
                     handleMouseDown(e, 'br')
+                  }}
+                  onTouchStart={(e) => {
+                    e.stopPropagation()
+                    handleTouchStart(e, 'br')
                   }}
                 />
                 
@@ -320,6 +437,10 @@ export default function SimpleCropTool({ isOpen, imageUrl, onClose, onCropComple
                     e.stopPropagation()
                     handleMouseDown(e, 'top')
                   }}
+                  onTouchStart={(e) => {
+                    e.stopPropagation()
+                    handleTouchStart(e, 'top')
+                  }}
                 />
                 {/* Bottom edge */}
                 <div
@@ -327,6 +448,10 @@ export default function SimpleCropTool({ isOpen, imageUrl, onClose, onCropComple
                   onMouseDown={(e) => {
                     e.stopPropagation()
                     handleMouseDown(e, 'bottom')
+                  }}
+                  onTouchStart={(e) => {
+                    e.stopPropagation()
+                    handleTouchStart(e, 'bottom')
                   }}
                 />
                 {/* Left edge */}
@@ -336,6 +461,10 @@ export default function SimpleCropTool({ isOpen, imageUrl, onClose, onCropComple
                     e.stopPropagation()
                     handleMouseDown(e, 'left')
                   }}
+                  onTouchStart={(e) => {
+                    e.stopPropagation()
+                    handleTouchStart(e, 'left')
+                  }}
                 />
                 {/* Right edge */}
                 <div
@@ -343,6 +472,10 @@ export default function SimpleCropTool({ isOpen, imageUrl, onClose, onCropComple
                   onMouseDown={(e) => {
                     e.stopPropagation()
                     handleMouseDown(e, 'right')
+                  }}
+                  onTouchStart={(e) => {
+                    e.stopPropagation()
+                    handleTouchStart(e, 'right')
                   }}
                 />
                 
