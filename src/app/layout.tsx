@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter, Poppins } from "next/font/google";
 import "./globals.css";
 
@@ -13,12 +13,18 @@ const poppins = Poppins({
   variable: "--font-poppins",
 });
 
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+};
+
 export const metadata: Metadata = {
   title: "Daily Scribble - Draw Every Day, Share Your Art",
   description: "Join a magical community of young artists in a safe, inspiring space to practice drawing with daily creative challenges and share your masterpieces.",
   keywords: ["drawing", "kids", "art", "children", "creative", "safe", "daily", "challenges"],
   authors: [{ name: "Daily Scribble Team" }],
-  viewport: "width=device-width, initial-scale=1, maximum-scale=1",
+  metadataBase: new URL("https://dailyscribble.com"),
   openGraph: {
     title: "Daily Scribble - Draw Every Day, Share Your Art",
     description: "Join a magical community of young artists in a safe, inspiring space to practice drawing with daily creative challenges and share your masterpieces.",
