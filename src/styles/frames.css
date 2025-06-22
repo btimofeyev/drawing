@@ -54,6 +54,34 @@
     0 4px 20px rgba(0, 0, 0, 0.15);
 }
 
+.frame-bronze-vintage {
+  background: 
+    linear-gradient(45deg, #cd7f32, #b8860b, #8b6914, #daa520),
+    repeating-radial-gradient(circle at 30% 40%, 
+      rgba(205, 127, 50, 0.8) 0px, rgba(205, 127, 50, 0.8) 2px,
+      rgba(184, 134, 11, 0.8) 2px, rgba(184, 134, 11, 0.8) 4px
+    );
+  border: 8px solid #8b6914;
+  box-shadow: 
+    inset 0 0 25px rgba(205, 127, 50, 0.6),
+    0 8px 32px rgba(0, 0, 0, 0.4),
+    inset 0 2px 4px rgba(218, 165, 32, 0.3);
+}
+
+.frame-black-elegant {
+  background: 
+    linear-gradient(135deg, #1a1a1a, #2d2d2d, #1a1a1a),
+    repeating-linear-gradient(45deg, 
+      transparent 0px, transparent 2px,
+      rgba(255, 255, 255, 0.05) 2px, rgba(255, 255, 255, 0.05) 4px
+    );
+  border: 6px solid #000000;
+  box-shadow: 
+    inset 0 2px 8px rgba(255, 255, 255, 0.1),
+    inset 0 -2px 8px rgba(0, 0, 0, 0.8),
+    0 8px 32px rgba(0, 0, 0, 0.6);
+}
+
 /* Fun Frames */
 .frame-rainbow-gradient {
   background: linear-gradient(45deg, 
@@ -132,6 +160,57 @@
   }
 }
 
+.frame-neon-glow {
+  background: 
+    linear-gradient(45deg, #00ffff, #ff00ff, #ffff00, #00ff00),
+    radial-gradient(circle at center, rgba(255, 255, 255, 0.1), transparent);
+  background-size: 300% 300%, 100% 100%;
+  animation: neon-pulse 2s ease-in-out infinite;
+  border: 4px solid #00ffff;
+  box-shadow: 
+    0 0 20px rgba(0, 255, 255, 0.8),
+    0 0 40px rgba(255, 0, 255, 0.6),
+    inset 0 0 20px rgba(255, 255, 255, 0.2);
+}
+
+@keyframes neon-pulse {
+  0%, 100% { 
+    background-position: 0% 50%, center;
+    box-shadow: 
+      0 0 20px rgba(0, 255, 255, 0.8),
+      0 0 40px rgba(255, 0, 255, 0.6),
+      inset 0 0 20px rgba(255, 255, 255, 0.2);
+  }
+  50% { 
+    background-position: 100% 50%, center;
+    box-shadow: 
+      0 0 30px rgba(0, 255, 255, 1),
+      0 0 60px rgba(255, 0, 255, 0.8),
+      inset 0 0 30px rgba(255, 255, 255, 0.4);
+  }
+}
+
+.frame-candy-stripes {
+  background: 
+    repeating-linear-gradient(45deg,
+      #ff6b9d 0px, #ff6b9d 12px,
+      #ffffff 12px, #ffffff 24px,
+      #4ecdc4 24px, #4ecdc4 36px,
+      #ffffff 36px, #ffffff 48px
+    ),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.7));
+  border: 6px solid #ff1493;
+  animation: candy-rotate 10s linear infinite;
+  box-shadow: 
+    0 0 25px rgba(255, 20, 147, 0.5),
+    inset 0 0 20px rgba(255, 255, 255, 0.3);
+}
+
+@keyframes candy-rotate {
+  0% { background-position: 0px 0px; }
+  100% { background-position: 48px 48px; }
+}
+
 /* Themed Frames */
 .frame-space-stars {
   background: 
@@ -184,6 +263,37 @@
   box-shadow: 
     0 8px 32px rgba(102, 126, 234, 0.4),
     inset 0 0 20px rgba(255, 255, 255, 0.1);
+}
+
+.frame-jungle-adventure {
+  background: 
+    linear-gradient(45deg, #2d5016, #3e6b1c, #4f7c23, #6b8e2a),
+    url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23228b22' fill-opacity='0.4'%3E%3Cpath d='M30 10c-5 0-10 5-10 10s5 10 10 10 10-5 10-10-5-10-10-10zm0 15c-2.5 0-5-2.5-5-5s2.5-5 5-5 5 2.5 5 5-2.5 5-5 5z'/%3E%3Cpath d='M15 35c0 8 7 15 15 15s15-7 15-15c0-3-1-6-3-8l-12 8-12-8c-2 2-3 5-3 8z'/%3E%3C/g%3E%3C/svg%3E");
+  border: 8px solid #2d5016;
+  box-shadow: 
+    0 0 30px rgba(45, 80, 22, 0.6),
+    inset 0 0 25px rgba(107, 142, 42, 0.3);
+}
+
+.frame-medieval-castle {
+  background: 
+    linear-gradient(45deg, #8b4513, #a0522d, #cd853f, #daa520),
+    repeating-linear-gradient(0deg, 
+      transparent 0px, transparent 8px,
+      rgba(139, 69, 19, 0.3) 8px, rgba(139, 69, 19, 0.3) 12px,
+      transparent 12px, transparent 16px,
+      rgba(218, 165, 32, 0.2) 16px, rgba(218, 165, 32, 0.2) 20px
+    );
+  border: 10px solid #8b4513;
+  border-image: 
+    repeating-linear-gradient(45deg, 
+      #8b4513 0px, #8b4513 8px,
+      #daa520 8px, #daa520 12px
+    ) 10;
+  box-shadow: 
+    0 0 25px rgba(139, 69, 19, 0.6),
+    inset 0 0 30px rgba(218, 165, 32, 0.3),
+    inset 0 4px 8px rgba(255, 255, 255, 0.1);
 }
 
 /* Seasonal Frames */
@@ -250,6 +360,36 @@
   }
 }
 
+.frame-halloween-spooky {
+  background: 
+    linear-gradient(45deg, #2d1b19, #4a2c2a, #8b4513, #cd853f),
+    radial-gradient(circle at 20% 20%, rgba(255, 140, 0, 0.6) 2px, transparent 2px),
+    radial-gradient(circle at 80% 30%, rgba(255, 69, 0, 0.5) 3px, transparent 3px),
+    radial-gradient(circle at 60% 80%, rgba(255, 140, 0, 0.4) 2px, transparent 2px),
+    radial-gradient(circle at 30% 70%, rgba(139, 69, 19, 0.7) 4px, transparent 4px);
+  background-size: 100% 100%, 80px 80px, 120px 120px, 90px 90px, 60px 60px;
+  animation: spooky-flicker 3s ease-in-out infinite;
+  border: 8px solid #2d1b19;
+  box-shadow: 
+    0 0 30px rgba(255, 140, 0, 0.6),
+    inset 0 0 25px rgba(255, 69, 0, 0.3);
+}
+
+@keyframes spooky-flicker {
+  0%, 100% { 
+    background-position: 0% 0%, 0% 0%, 0% 0%, 0% 0%, 0% 0%;
+    box-shadow: 
+      0 0 30px rgba(255, 140, 0, 0.6),
+      inset 0 0 25px rgba(255, 69, 0, 0.3);
+  }
+  50% { 
+    background-position: 0% 0%, 10px 10px, -15px 15px, 5px -5px, -10px 20px;
+    box-shadow: 
+      0 0 40px rgba(255, 140, 0, 0.8),
+      inset 0 0 35px rgba(255, 69, 0, 0.5);
+  }
+}
+
 /* Responsive adjustments */
 @media (max-width: 768px) {
   .artwork-frame {
@@ -257,7 +397,8 @@
   }
   
   .frame-gold-ornate,
-  .frame-museum-white {
+  .frame-museum-white,
+  .frame-bronze-vintage {
     border-width: 6px;
   }
   
@@ -267,7 +408,16 @@
   .frame-autumn-leaves,
   .frame-winter-snowflakes,
   .frame-spring-flowers,
-  .frame-summer-sun {
+  .frame-summer-sun,
+  .frame-black-elegant,
+  .frame-neon-glow,
+  .frame-candy-stripes,
+  .frame-jungle-adventure,
+  .frame-halloween-spooky {
     border-width: 4px;
+  }
+  
+  .frame-medieval-castle {
+    border-width: 6px;
   }
 }

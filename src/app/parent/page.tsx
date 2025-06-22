@@ -8,7 +8,7 @@ interface Child {
   id: string
   username: string
   name: string
-  ageGroup: 'kids' | 'tweens'
+  ageGroup: 'preschoolers' | 'kids' | 'tweens'
   avatarUrl?: string
   parentalConsent: boolean
   createdAt: string
@@ -402,7 +402,7 @@ export default function ParentDashboard() {
 function CreateChildModal({ onClose, onSuccess }: { onClose: () => void; onSuccess: () => void }) {
   const [username, setUsername] = useState('')
   const [name, setName] = useState('')
-  const [ageGroup, setAgeGroup] = useState<'kids' | 'tweens'>('kids')
+  const [ageGroup, setAgeGroup] = useState('kids')
   const [pin, setPin] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
@@ -490,10 +490,11 @@ function CreateChildModal({ onClose, onSuccess }: { onClose: () => void; onSucce
             </label>
             <select
               value={ageGroup}
-              onChange={(e) => setAgeGroup(e.target.value as 'kids' | 'tweens')}
+              onChange={(e) => setAgeGroup(e.target.value)}
               className="w-full px-6 py-4 border-2 border-slate-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-pink-200 focus:border-pink-500 text-lg font-medium transition-all duration-200 hover:border-pink-300"
             >
-              <option value="kids">Kids (6-10 years)</option>
+              <option value="preschoolers">Preschoolers (4-6 years)</option>
+              <option value="kids">Kids (7-10 years)</option>
               <option value="tweens">Tweens (11-16 years)</option>
             </select>
           </div>

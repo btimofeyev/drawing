@@ -47,7 +47,7 @@ export default function FrameSelector({
   return (
     <div className="fixed inset-0 bg-black bg-opacity-90 z-50 flex flex-col">
       {/* Header */}
-      <div className="flex items-center justify-between p-4 bg-black/50">
+      <div className="flex items-center justify-between p-4 bg-black/50 flex-shrink-0">
         <h2 className="text-white text-xl font-bold">Choose Your Frame</h2>
         <button
           onClick={onClose}
@@ -57,9 +57,9 @@ export default function FrameSelector({
         </button>
       </div>
 
-      <div className="flex-1 flex flex-col lg:flex-row">
+      <div className="flex-1 flex flex-col lg:flex-row min-h-0">
         {/* Preview Section */}
-        <div className="flex-1 flex items-center justify-center p-6 bg-gradient-to-br from-gray-900 to-gray-800">
+        <div className="flex-1 flex items-center justify-center p-6 bg-gradient-to-br from-gray-900 to-gray-800 lg:min-h-0">
           <div className="relative max-w-md max-h-96">
             <div className={`artwork-frame ${frameTemplates.find(f => f.id === previewFrameId)?.cssClass || 'frame-museum-white'}`}>
               <img 
@@ -77,55 +77,55 @@ export default function FrameSelector({
         </div>
 
         {/* Frame Selection Panel */}
-        <div className="w-full lg:w-96 bg-white flex flex-col">
+        <div className="w-full lg:w-96 bg-white flex flex-col h-full lg:h-auto max-h-full">
           {/* Category Tabs */}
-          <div className="flex border-b border-gray-200">
+          <div className="flex border-b border-gray-200 flex-shrink-0">
             {categories.map((category) => (
               <button
                 key={category.id}
                 onClick={() => setSelectedCategory(category.id)}
-                className={`flex-1 p-4 text-center font-medium transition-colors ${
+                className={`flex-1 p-3 lg:p-4 text-center font-medium transition-colors ${
                   selectedCategory === category.id
                     ? 'bg-pink-500 text-white'
                     : 'text-gray-600 hover:bg-gray-50'
                 }`}
               >
                 <div className="text-lg mb-1">{category.icon}</div>
-                <div className="text-sm">{category.name}</div>
+                <div className="text-xs lg:text-sm">{category.name}</div>
               </button>
             ))}
           </div>
 
           {/* Frame Grid */}
-          <div className="flex-1 p-4 overflow-y-auto">
-            <div className="grid grid-cols-2 gap-4">
+          <div className="flex-1 p-4 overflow-y-auto min-h-0" style={{ height: 'calc(100vh - 280px)' }}>
+            <div className="grid grid-cols-2 gap-3 lg:gap-4">
               {categoryFrames.map((frame) => (
                 <button
                   key={frame.id}
                   onClick={() => handleFrameClick(frame.id)}
-                  className={`group relative bg-gray-100 rounded-xl p-3 transition-all duration-200 ${
+                  className={`group relative bg-gray-100 rounded-xl p-2 lg:p-3 transition-all duration-200 ${
                     selectedFrameId === frame.id
                       ? 'ring-4 ring-pink-500 bg-pink-50'
                       : 'hover:bg-gray-200'
                   }`}
                 >
                   {/* Frame Preview */}
-                  <div className={`artwork-frame ${frame.cssClass} mb-3`} style={{ padding: '8px' }}>
-                    <div className="w-full h-16 bg-gradient-to-br from-gray-300 to-gray-400 rounded flex items-center justify-center">
-                      <span className="text-2xl">{frame.preview}</span>
+                  <div className={`artwork-frame ${frame.cssClass} mb-2 lg:mb-3`} style={{ padding: '6px' }}>
+                    <div className="w-full h-12 lg:h-16 bg-gradient-to-br from-gray-300 to-gray-400 rounded flex items-center justify-center">
+                      <span className="text-lg lg:text-2xl">{frame.preview}</span>
                     </div>
                   </div>
                   
                   {/* Frame Info */}
                   <div className="text-center">
-                    <h3 className="font-bold text-sm text-gray-800 mb-1">{frame.name}</h3>
-                    <p className="text-xs text-gray-600 line-clamp-2">{frame.description}</p>
+                    <h3 className="font-bold text-xs lg:text-sm text-gray-800 mb-1 leading-tight">{frame.name}</h3>
+                    <p className="text-xs text-gray-600 line-clamp-2 leading-tight">{frame.description}</p>
                   </div>
 
                   {/* Selection Indicator */}
                   {selectedFrameId === frame.id && (
-                    <div className="absolute top-2 right-2 w-6 h-6 bg-pink-500 rounded-full flex items-center justify-center">
-                      <Check className="h-4 w-4 text-white" />
+                    <div className="absolute top-1 lg:top-2 right-1 lg:right-2 w-5 h-5 lg:w-6 lg:h-6 bg-pink-500 rounded-full flex items-center justify-center">
+                      <Check className="h-3 w-3 lg:h-4 lg:w-4 text-white" />
                     </div>
                   )}
                 </button>
@@ -134,7 +134,7 @@ export default function FrameSelector({
           </div>
 
           {/* Action Buttons */}
-          <div className="p-4 border-t border-gray-200">
+          <div className="p-4 border-t border-gray-200 flex-shrink-0">
             <div className="flex gap-3">
               <button
                 onClick={onClose}

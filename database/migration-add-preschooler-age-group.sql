@@ -29,7 +29,15 @@ ALTER TABLE prompts DROP CONSTRAINT IF EXISTS prompts_age_group_check;
 ALTER TABLE prompts ADD CONSTRAINT prompts_age_group_check 
 CHECK (age_group IN ('preschoolers', 'kids', 'tweens'));
 
--- Step 3: Add preschooler-specific sample prompts for immediate functionality
+-- Step 3: Update free_draw_inspirations table to support three age groups
+-- First, drop the existing CHECK constraint
+ALTER TABLE free_draw_inspirations DROP CONSTRAINT IF EXISTS free_draw_inspirations_age_group_check;
+
+-- Add new CHECK constraint with three age groups
+ALTER TABLE free_draw_inspirations ADD CONSTRAINT free_draw_inspirations_age_group_check 
+CHECK (age_group IN ('preschoolers', 'kids', 'tweens'));
+
+-- Step 4: Add preschooler-specific sample prompts for immediate functionality
 -- These are very simple, age-appropriate prompts for 4-6 year olds
 INSERT INTO prompts (date, age_group, difficulty, prompt_text, time_slot) VALUES
 -- Daily Challenge 1 prompts for preschoolers
@@ -48,53 +56,58 @@ INSERT INTO prompts (date, age_group, difficulty, prompt_text, time_slot) VALUES
 
 ON CONFLICT (date, age_group, difficulty) DO NOTHING;
 
--- Step 4: Add preschooler-specific free draw inspirations
-INSERT INTO free_draw_inspirations (category, suggestion, age_group) VALUES
+-- Step 5: Add preschooler-specific free draw inspirations
+-- Only insert if no preschooler inspirations exist yet
+INSERT INTO free_draw_inspirations (category, suggestion, age_group, emoji)
+SELECT * FROM (VALUES
 -- Animals category for preschoolers
-('animals', 'A cat taking a nap', 'preschoolers'),
-('animals', 'A dog wagging its tail', 'preschoolers'),
-('animals', 'A fish swimming in a bowl', 'preschoolers'),
-('animals', 'A bird singing in a tree', 'preschoolers'),
-('animals', 'A bunny hopping in grass', 'preschoolers'),
+('animals', 'A cat taking a nap', 'preschoolers', '🐱'),
+('animals', 'A dog wagging its tail', 'preschoolers', '🐕'),
+('animals', 'A fish swimming in a bowl', 'preschoolers', '🐠'),
+('animals', 'A bird singing in a tree', 'preschoolers', '🐦'),
+('animals', 'A bunny hopping in grass', 'preschoolers', '🐰'),
 
 -- Nature category for preschoolers
-('nature', 'A big yellow sun', 'preschoolers'),
-('nature', 'Fluffy white clouds', 'preschoolers'),
-('nature', 'A flower in a garden', 'preschoolers'),
-('nature', 'A tall green tree', 'preschoolers'),
-('nature', 'Rain falling from clouds', 'preschoolers'),
+('nature', 'A big yellow sun', 'preschoolers', '☀️'),
+('nature', 'Fluffy white clouds', 'preschoolers', '☁️'),
+('nature', 'A flower in a garden', 'preschoolers', '🌸'),
+('nature', 'A tall green tree', 'preschoolers', '🌳'),
+('nature', 'Rain falling from clouds', 'preschoolers', '🌧️'),
 
 -- Objects category for preschoolers
-('objects', 'A red ball', 'preschoolers'),
-('objects', 'A colorful balloon', 'preschoolers'),
-('objects', 'A toy car', 'preschoolers'),
-('objects', 'A teddy bear', 'preschoolers'),
-('objects', 'A birthday cake', 'preschoolers'),
+('objects', 'A red ball', 'preschoolers', '⚽'),
+('objects', 'A colorful balloon', 'preschoolers', '🎈'),
+('objects', 'A toy car', 'preschoolers', '🚗'),
+('objects', 'A teddy bear', 'preschoolers', '🧸'),
+('objects', 'A birthday cake', 'preschoolers', '🎂'),
 
 -- Fantasy category for preschoolers
-('fantasy', 'A friendly monster with big eyes', 'preschoolers'),
-('fantasy', 'A magic wand with stars', 'preschoolers'),
-('fantasy', 'A flying superhero', 'preschoolers'),
-('fantasy', 'A castle in the clouds', 'preschoolers'),
-('fantasy', 'A dragon that breathes rainbows', 'preschoolers'),
+('fantasy', 'A friendly monster with big eyes', 'preschoolers', '👹'),
+('fantasy', 'A magic wand with stars', 'preschoolers', '🪄'),
+('fantasy', 'A flying superhero', 'preschoolers', '🦸'),
+('fantasy', 'A castle in the clouds', 'preschoolers', '🏰'),
+('fantasy', 'A dragon that breathes rainbows', 'preschoolers', '🐲'),
 
 -- Emotions category for preschoolers  
-('emotions', 'A happy face with a big smile', 'preschoolers'),
-('emotions', 'Someone giving a hug', 'preschoolers'),
-('emotions', 'A surprised face with wide eyes', 'preschoolers'),
-('emotions', 'Someone laughing and having fun', 'preschoolers'),
-('emotions', 'A kind person helping others', 'preschoolers'),
+('emotions', 'A happy face with a big smile', 'preschoolers', '😊'),
+('emotions', 'Someone giving a hug', 'preschoolers', '🤗'),
+('emotions', 'A surprised face with wide eyes', 'preschoolers', '😲'),
+('emotions', 'Someone laughing and having fun', 'preschoolers', '😄'),
+('emotions', 'A kind person helping others', 'preschoolers', '🤝'),
 
 -- Activities category for preschoolers
-('activities', 'Playing on a playground', 'preschoolers'),
-('activities', 'Having a picnic outside', 'preschoolers'),
-('activities', 'Reading a favorite book', 'preschoolers'),
-('activities', 'Playing with blocks', 'preschoolers'),
-('activities', 'Dancing to music', 'preschoolers')
+('activities', 'Playing on a playground', 'preschoolers', '🛝'),
+('activities', 'Having a picnic outside', 'preschoolers', '🧺'),
+('activities', 'Reading a favorite book', 'preschoolers', '📚'),
+('activities', 'Playing with blocks', 'preschoolers', '🧱'),
+('activities', 'Dancing to music', 'preschoolers', '💃')
+) AS new_data(category, suggestion, age_group, emoji)
+WHERE NOT EXISTS (
+  SELECT 1 FROM free_draw_inspirations 
+  WHERE age_group = 'preschoolers'
+);
 
-ON CONFLICT (category, suggestion, age_group) DO NOTHING;
-
--- Step 5: Create helpful view for age group statistics
+-- Step 6: Create helpful view for age group statistics
 CREATE OR REPLACE VIEW age_group_stats AS
 SELECT 
   age_group,
