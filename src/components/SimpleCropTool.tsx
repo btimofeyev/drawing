@@ -102,6 +102,21 @@ export default function SimpleCropTool({ isOpen, imageUrl, onClose, onCropComple
           newArea.width = Math.max(0.1, Math.min(1 - prev.x, prev.width + deltaX))
           newArea.height = Math.max(0.1, Math.min(1 - prev.y, prev.height + deltaY))
           break
+        // Edge handles for dragging lines
+        case 'top':
+          newArea.y = Math.max(0, Math.min(prev.y + prev.height - 0.1, prev.y + deltaY))
+          newArea.height = Math.max(0.1, prev.height - deltaY)
+          break
+        case 'bottom':
+          newArea.height = Math.max(0.1, Math.min(1 - prev.y, prev.height + deltaY))
+          break
+        case 'left':
+          newArea.x = Math.max(0, Math.min(prev.x + prev.width - 0.1, prev.x + deltaX))
+          newArea.width = Math.max(0.1, prev.width - deltaX)
+          break
+        case 'right':
+          newArea.width = Math.max(0.1, Math.min(1 - prev.x, prev.width + deltaX))
+          break
       }
 
       return newArea
@@ -269,6 +284,40 @@ export default function SimpleCropTool({ isOpen, imageUrl, onClose, onCropComple
                   onMouseDown={(e) => {
                     e.stopPropagation()
                     handleMouseDown(e, 'br')
+                  }}
+                />
+                
+                {/* Edge handles for dragging lines */}
+                {/* Top edge */}
+                <div
+                  className="absolute -top-2 left-1/2 transform -translate-x-1/2 w-8 h-4 bg-white border-2 border-blue-500 cursor-n-resize"
+                  onMouseDown={(e) => {
+                    e.stopPropagation()
+                    handleMouseDown(e, 'top')
+                  }}
+                />
+                {/* Bottom edge */}
+                <div
+                  className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-8 h-4 bg-white border-2 border-blue-500 cursor-s-resize"
+                  onMouseDown={(e) => {
+                    e.stopPropagation()
+                    handleMouseDown(e, 'bottom')
+                  }}
+                />
+                {/* Left edge */}
+                <div
+                  className="absolute -left-2 top-1/2 transform -translate-y-1/2 w-4 h-8 bg-white border-2 border-blue-500 cursor-w-resize"
+                  onMouseDown={(e) => {
+                    e.stopPropagation()
+                    handleMouseDown(e, 'left')
+                  }}
+                />
+                {/* Right edge */}
+                <div
+                  className="absolute -right-2 top-1/2 transform -translate-y-1/2 w-4 h-8 bg-white border-2 border-blue-500 cursor-e-resize"
+                  onMouseDown={(e) => {
+                    e.stopPropagation()
+                    handleMouseDown(e, 'right')
                   }}
                 />
                 
