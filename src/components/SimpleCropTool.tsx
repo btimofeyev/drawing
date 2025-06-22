@@ -70,6 +70,7 @@ export default function SimpleCropTool({ isOpen, imageUrl, onClose, onCropComple
 
   const handleTouchStart = (e: React.TouchEvent, handle: string) => {
     e.preventDefault()
+    e.stopPropagation()
     const touch = e.touches[0]
     setIsDragging(true)
     setDragHandle(handle)
@@ -161,6 +162,8 @@ export default function SimpleCropTool({ isOpen, imageUrl, onClose, onCropComple
   const handleTouchMove = useCallback((e: TouchEvent) => {
     if (!isDragging || !dragHandle || imageSize.width === 0) return
 
+    e.preventDefault()
+    e.stopPropagation()
     const touch = e.touches[0]
     // Calculate movement relative to image size
     const deltaX = (touch.clientX - dragStart.x) / imageSize.width
@@ -266,6 +269,20 @@ export default function SimpleCropTool({ isOpen, imageUrl, onClose, onCropComple
     }
   }, [isDragging, handleMouseMove, handleMouseUp, handleTouchMove, handleTouchEnd])
 
+  // Prevent body scrolling when crop tool is open
+  useEffect(() => {
+    if (isOpen) {
+      const originalStyle = window.getComputedStyle(document.body).overflow
+      const originalTouchAction = document.body.style.touchAction
+      document.body.style.overflow = 'hidden'
+      document.body.style.touchAction = 'none'
+      return () => {
+        document.body.style.overflow = originalStyle
+        document.body.style.touchAction = originalTouchAction
+      }
+    }
+  }, [isOpen])
+
   const handleCrop = useCallback(async () => {
     const canvas = canvasRef.current
     const image = imageRef.current
@@ -328,7 +345,10 @@ export default function SimpleCropTool({ isOpen, imageUrl, onClose, onCropComple
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-90 z-50 flex flex-col">
+    <div 
+      className="fixed inset-0 bg-black bg-opacity-90 z-50 flex flex-col"
+      style={{ touchAction: 'none' }}
+    >
       {/* Header */}
       <div className="flex items-center justify-between p-4 bg-black/50">
         <h3 className="text-white text-lg font-bold">Adjust Your Photo</h3>
@@ -341,8 +361,8 @@ export default function SimpleCropTool({ isOpen, imageUrl, onClose, onCropComple
       </div>
 
       {/* Image Container */}
-      <div className="flex-1 flex items-center justify-center p-4">
-        <div ref={containerRef} className="relative max-w-full max-h-full">
+      <div className="flex-1 flex items-center justify-center p-4" style={{ touchAction: 'none' }}>
+        <div ref={containerRef} className="relative max-w-full max-h-full" style={{ touchAction: 'none' }}>
           <img
             ref={imageRef}
             src={imageUrl}
@@ -350,7 +370,8 @@ export default function SimpleCropTool({ isOpen, imageUrl, onClose, onCropComple
             className="max-w-full max-h-96 rounded-lg select-none"
             style={{
               transform: `rotate(${rotation}deg)`,
-              transition: 'transform 0.3s ease'
+              transition: 'transform 0.3s ease',
+              touchAction: 'none'
             }}
             crossOrigin="anonymous"
             onLoad={handleImageLoad}
@@ -367,7 +388,8 @@ export default function SimpleCropTool({ isOpen, imageUrl, onClose, onCropComple
                 width: '100%',
                 height: '100%',
                 transform: `rotate(${rotation}deg)`,
-                transition: 'transform 0.3s ease'
+                transition: 'transform 0.3s ease',
+                touchAction: 'none'
               }}
             >              
               {/* Crop area */}
@@ -378,7 +400,8 @@ export default function SimpleCropTool({ isOpen, imageUrl, onClose, onCropComple
                   top: `${cropArea.y * 100}%`,
                   width: `${cropArea.width * 100}%`,
                   height: `${cropArea.height * 100}%`,
-                  boxShadow: '0 0 0 9999px rgba(0, 0, 0, 0.5)'
+                  boxShadow: '0 0 0 9999px rgba(0, 0, 0, 0.5)',
+                  touchAction: 'none'
                 }}
                 onMouseDown={(e) => handleMouseDown(e, 'move')}
                 onTouchStart={(e) => handleTouchStart(e, 'move')}
