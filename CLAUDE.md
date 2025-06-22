@@ -57,12 +57,13 @@
 #### Enhanced Photo Capture System
 - **Camera-first upload experience**: Primary "Take a Photo" button with `capture="environment"` for rear camera
 - **Real-world artwork focus**: Optimized for photographing drawings, paintings, and physical artwork
-- **Photo enhancement pipeline**: Built-in image optimization using browser-image-compression
-- **Simple crop/rotate tools**: Basic adjustment tools for better artwork framing
-- **Decorative frame system**: 16 beautiful frames across 4 categories (Classic, Fun, Themed, Seasonal)
-- **Frame application**: Canvas-based frame compositing with real-time preview
-- **Child-friendly interface**: Large buttons, photo tips, and encouraging messaging
-- **Progressive enhancement**: Before/after comparison for photo improvements
+- **Auto-compression pipeline**: Automatic background optimization using browser-image-compression (5MB max, 2048px)
+- **Simple crop tools**: Remove unwanted backgrounds and focus on artwork with easy cropping
+- **Advanced decorative frame system**: 22 beautiful frames across 4 categories with unique effects
+- **Frame application**: Canvas-based frame compositing with 12% padding for optimal proportions
+- **Frame stacking prevention**: One frame per upload with proper state tracking and visual feedback
+- **Clean interface**: Streamlined UI with helpful tips for better artwork photography
+- **Background removal focus**: Crop functionality specifically designed to eliminate distracting backgrounds
 
 #### Daily Creative Challenges
 - **Two daily challenges**: Daily Challenge 1 and Daily Challenge 2 with varying difficulty levels
@@ -80,10 +81,12 @@
 - **Children**: Username + 4-digit PIN system with session management
 
 #### Community Features
+- **Clean gallery display**: Artwork-focused cards with tags moved to content area for unobstructed viewing
 - **Moderated gallery**: AI + manual content moderation with real-time status updates
 - **Like system**: Children can appreciate each other's artwork (cannot like own posts)
 - **View tracking**: Engagement metrics for popular content and trending detection
 - **Search & filtering**: By time slot, difficulty, date, and search terms
+- **Simplified full-screen viewer**: Immersive artwork display with minimal UI and floating like button
 - **Trending System**: Community-driven prompt discovery and remix functionality
 - **Community Remix**: Users can create artwork based on popular community prompts
 - **Prompt-Specific Pages**: Dedicated pages showing all artwork for specific challenges
@@ -358,18 +361,20 @@ node scripts/moderate-pending-posts.js
 - **Inspiration Categories**: 60 prompts across Animals, Nature, Fantasy, Objects, Emotions, Activities
 
 ### Decorative Frame System
-**16 Frame Templates across 4 Categories**:
-- **Classic Frames**: Golden Gallery, Silver Modern, Rustic Wood, Museum White
-- **Fun Frames**: Rainbow Magic, Crayon Box, Paint Splash, Sparkle Frame
-- **Themed Frames**: Cosmic Adventure, Ocean Deep, Flower Garden, Geometric Art
-- **Seasonal Frames**: Autumn Leaves, Winter Wonder, Spring Bloom, Summer Sunshine
+**22 Frame Templates across 4 Categories**:
+- **Classic Frames** (6): Golden Gallery, Silver Modern, Rustic Wood, Museum White, Bronze Vintage, Midnight Black
+- **Fun Frames** (6): Rainbow Magic, Crayon Box, Paint Splash, Sparkle Frame, Neon Dreams, Candy Stripes
+- **Themed Frames** (6): Cosmic Adventure, Ocean Deep, Flower Garden, Geometric Art, Jungle Explorer, Royal Castle
+- **Seasonal Frames** (4): Autumn Leaves, Winter Wonder, Spring Bloom, Summer Sunshine
 
-**Frame Application Features**:
+**Advanced Frame Features**:
+- **Frame stacking prevention**: Only one frame per upload with state tracking and visual feedback
+- **Optimized proportions**: 12% padding for better artwork-to-frame ratio
+- **Unique overlay effects**: Custom visual effects for each frame (glitter, neon glow, patina, etc.)
 - **Real-time Preview**: Live preview of artwork with selected frame in FrameSelector
 - **Canvas Compositing**: HTML5 Canvas-based frame application with proper scaling
-- **Responsive Design**: Frame styles adapt to different screen sizes
-- **CSS3 Animations**: Animated frames (rainbow shifts, glitter effects, bubble floating)
-- **Performance Optimized**: Lightweight CSS-based frames with minimal JavaScript
+- **Dual application systems**: PhotoCapture (camera) and upload form both support frames
+- **Performance Optimized**: Lightweight effects with minimal JavaScript overhead
 - **Child-Friendly Interface**: Large preview thumbnails with emoji indicators
 
 ### Achievement Calculations
@@ -382,6 +387,7 @@ node scripts/moderate-pending-posts.js
 - **Daily limits**: Maximum 3 uploads per child per day (one per time slot)
 - **File constraints**: 5MB maximum, image formats only
 - **Alt text requirement**: Accessibility and content description
+- **Frame limits**: One frame per upload with button disable and state tracking prevention
 - **Duplicate prevention**: Upload endpoint checks posts table directly to prevent multiple uploads per slot
 - **Re-upload after deletion**: When artwork is deleted, users can immediately re-upload to the same slot since limits are checked against existing posts
 

@@ -14,9 +14,6 @@ interface PhotoCaptureProps {
 
 export default function PhotoCapture({ isOpen, onClose, onPhotoSelected }: PhotoCaptureProps) {
   const [capturedPhoto, setCapturedPhoto] = useState<string | null>(null)
-  const [isEnhancing, setIsEnhancing] = useState(false)
-  const [showEnhanced, setShowEnhanced] = useState(false)
-  const [enhancedPhoto, setEnhancedPhoto] = useState<string | null>(null)
   const [showCropTool, setShowCropTool] = useState(false)
   const [showFrameSelector, setShowFrameSelector] = useState(false)
   const [selectedFrameId, setSelectedFrameId] = useState('museum-white')
@@ -27,14 +24,28 @@ export default function PhotoCapture({ isOpen, onClose, onPhotoSelected }: Photo
   const unframedFileRef = useRef<File | null>(null)
 
   const handleFileSelect = useCallback(async (file: File) => {
-    originalFileRef.current = file
-    unframedFileRef.current = file
+    // Auto-compress in background for performance
+    try {
+      const imageCompression = (await import('browser-image-compression')).default
+      const options = {
+        maxSizeMB: 5,
+        maxWidthOrHeight: 2048,
+        useWebWorker: true,
+        initialQuality: 0.9,
+        preserveExif: false
+      }
+      const optimizedFile = await imageCompression(file, options)
+      originalFileRef.current = optimizedFile
+      unframedFileRef.current = optimizedFile
+    } catch (error) {
+      console.error('Auto-compression failed, using original:', error)
+      originalFileRef.current = file
+      unframedFileRef.current = file
+    }
     
     // Create preview URL
-    const url = URL.createObjectURL(file)
+    const url = URL.createObjectURL(originalFileRef.current || file)
     setCapturedPhoto(url)
-    setShowEnhanced(false)
-    setEnhancedPhoto(null)
     setHasFrame(false)
   }, [])
 
@@ -42,46 +53,12 @@ export default function PhotoCapture({ isOpen, onClose, onPhotoSelected }: Photo
     fileInputRef.current?.click()
   }
 
-  const handleEnhancePhoto = async () => {
-    if (!originalFileRef.current) return
-    
-    setIsEnhancing(true)
-    
-    try {
-      // Import browser-image-compression dynamically
-      const imageCompression = (await import('browser-image-compression')).default
-      
-      // Enhancement options optimized for artwork photography
-      const options = {
-        maxSizeMB: 5,
-        maxWidthOrHeight: 2048,
-        useWebWorker: true,
-        initialQuality: 0.9,
-        // These settings help with contrast and sharpness for artwork
-        preserveExif: false
-      }
-      
-      const enhancedFile = await imageCompression(originalFileRef.current, options)
-      const enhancedUrl = URL.createObjectURL(enhancedFile)
-      
-      setEnhancedPhoto(enhancedUrl)
-      setShowEnhanced(true)
-      
-      // Update the file reference to the enhanced version
-      originalFileRef.current = enhancedFile
-      unframedFileRef.current = enhancedFile
-    } catch (error) {
-      console.error('Enhancement failed:', error)
-    } finally {
-      setIsEnhancing(false)
-    }
-  }
 
   const handleRetake = () => {
     setCapturedPhoto(null)
-    setEnhancedPhoto(null)
-    setShowEnhanced(false)
     originalFileRef.current = null
+    unframedFileRef.current = null
+    setHasFrame(false)
     fileInputRef.current?.click()
   }
 
@@ -91,20 +68,34 @@ export default function PhotoCapture({ isOpen, onClose, onPhotoSelected }: Photo
       onClose()
       // Cleanup
       setCapturedPhoto(null)
-      setEnhancedPhoto(null)
-      setShowEnhanced(false)
       originalFileRef.current = null
+      unframedFileRef.current = null
     }
   }
 
-  const handleCropComplete = (croppedFile: File) => {
-    originalFileRef.current = croppedFile
-    unframedFileRef.current = croppedFile
-    const url = URL.createObjectURL(croppedFile)
+  const handleCropComplete = async (croppedFile: File) => {
+    // Auto-compress the cropped image
+    try {
+      const imageCompression = (await import('browser-image-compression')).default
+      const options = {
+        maxSizeMB: 5,
+        maxWidthOrHeight: 2048,
+        useWebWorker: true,
+        initialQuality: 0.9,
+        preserveExif: false
+      }
+      const optimizedFile = await imageCompression(croppedFile, options)
+      originalFileRef.current = optimizedFile
+      unframedFileRef.current = optimizedFile
+    } catch (error) {
+      console.error('Auto-compression failed, using cropped original:', error)
+      originalFileRef.current = croppedFile
+      unframedFileRef.current = croppedFile
+    }
+    
+    const url = URL.createObjectURL(originalFileRef.current || croppedFile)
     setCapturedPhoto(url)
     setShowCropTool(false)
-    setShowEnhanced(false)
-    setEnhancedPhoto(null)
     setHasFrame(false)
   }
 
@@ -133,11 +124,8 @@ export default function PhotoCapture({ isOpen, onClose, onPhotoSelected }: Photo
   const handleClose = () => {
     // Cleanup URLs
     if (capturedPhoto) URL.revokeObjectURL(capturedPhoto)
-    if (enhancedPhoto) URL.revokeObjectURL(enhancedPhoto)
     
     setCapturedPhoto(null)
-    setEnhancedPhoto(null)
-    setShowEnhanced(false)
     setShowCropTool(false)
     setShowFrameSelector(false)
     setSelectedFrameId('museum-white')
@@ -218,65 +206,28 @@ export default function PhotoCapture({ isOpen, onClose, onPhotoSelected }: Photo
             {/* Image Preview */}
             <div className="flex-1 flex items-center justify-center mb-6">
               <div className="relative max-w-full max-h-full">
-                {showEnhanced && enhancedPhoto ? (
-                  <div className="grid grid-cols-2 gap-4">
-                    {/* Original */}
-                    <div className="text-center">
-                      <p className="text-white text-sm mb-2">Original</p>
-                      <img 
-                        src={capturedPhoto} 
-                        alt="Original photo" 
-                        className="max-w-full max-h-64 rounded-lg"
-                      />
-                    </div>
-                    {/* Enhanced */}
-                    <div className="text-center">
-                      <p className="text-white text-sm mb-2">Enhanced ✨</p>
-                      <img 
-                        src={enhancedPhoto} 
-                        alt="Enhanced photo" 
-                        className="max-w-full max-h-64 rounded-lg ring-2 ring-green-400"
-                      />
-                    </div>
-                  </div>
-                ) : (
-                  <img 
-                    src={capturedPhoto} 
-                    alt="Captured artwork" 
-                    className="max-w-full max-h-96 rounded-lg"
-                  />
-                )}
+                <img 
+                  src={capturedPhoto} 
+                  alt="Captured artwork" 
+                  className="max-w-full max-h-96 rounded-lg"
+                />
               </div>
             </div>
 
-            {/* Enhancement Controls */}
-            {!showEnhanced && (
-              <div className="text-center mb-6">
-                <button
-                  onClick={handleEnhancePhoto}
-                  disabled={isEnhancing}
-                  className="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-8 py-3 rounded-full font-bold text-lg hover:scale-105 transition-transform duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 mx-auto"
-                >
-                  {isEnhancing ? (
-                    <>
-                      <RefreshCw className="h-5 w-5 animate-spin" />
-                      Enhancing...
-                    </>
-                  ) : (
-                    <>
-                      <Zap className="h-5 w-5" />
-                      Make it look amazing! ✨
-                    </>
-                  )}
-                </button>
+            {/* Photo Tips */}
+            <div className="text-center mb-6">
+              <div className="bg-white/10 rounded-xl p-4 max-w-md mx-auto">
+                <p className="text-white/90 text-sm">
+                  💡 <strong>Tip:</strong> Use crop to remove backgrounds and frames to make your artwork pop!
+                </p>
               </div>
-            )}
+            </div>
 
             {/* Action Buttons */}
-            <div className="flex justify-center gap-2">
+            <div className="flex justify-center gap-3">
               <button
                 onClick={handleRetake}
-                className="bg-white/20 text-white px-3 py-3 rounded-full font-bold hover:bg-white/30 transition-colors flex items-center gap-2"
+                className="bg-white/20 text-white px-4 py-3 rounded-full font-bold hover:bg-white/30 transition-colors flex items-center gap-2"
               >
                 <RotateCcw className="h-5 w-5" />
                 <span className="hidden sm:inline">Retake</span>
@@ -284,31 +235,31 @@ export default function PhotoCapture({ isOpen, onClose, onPhotoSelected }: Photo
 
               <button
                 onClick={() => setShowCropTool(true)}
-                className="bg-blue-500 text-white px-3 py-3 rounded-full font-bold hover:bg-blue-600 transition-colors flex items-center gap-2"
+                className="bg-blue-500 text-white px-4 py-3 rounded-full font-bold hover:bg-blue-600 transition-colors flex items-center gap-2"
               >
                 <Crop className="h-5 w-5" />
-                <span className="hidden sm:inline">Adjust</span>
+                <span className="hidden sm:inline">Crop</span>
               </button>
 
               <button
                 onClick={() => setShowFrameSelector(true)}
                 disabled={isApplyingFrame || hasFrame}
-                className={`${hasFrame ? 'bg-green-500 cursor-not-allowed' : 'bg-purple-500 hover:bg-purple-600'} text-white px-3 py-3 rounded-full font-bold transition-colors flex items-center gap-2 disabled:opacity-50`}
+                className={`${hasFrame ? 'bg-green-500 cursor-not-allowed' : 'bg-purple-500 hover:bg-purple-600'} text-white px-4 py-3 rounded-full font-bold transition-colors flex items-center gap-2 disabled:opacity-50`}
               >
                 {isApplyingFrame ? (
                   <RefreshCw className="h-5 w-5 animate-spin" />
                 ) : (
                   <Frame className="h-5 w-5" />
                 )}
-                <span className="hidden sm:inline">{hasFrame ? 'Frame Applied ✓' : 'Add Frame'}</span>
+                <span className="hidden sm:inline">{hasFrame ? 'Framed ✓' : 'Frame'}</span>
               </button>
               
               <button
                 onClick={handleUsePhoto}
-                className="bg-green-500 text-white px-4 py-3 rounded-full font-bold hover:bg-green-600 transition-colors flex items-center gap-2"
+                className="bg-green-500 text-white px-5 py-3 rounded-full font-bold hover:bg-green-600 transition-colors flex items-center gap-2"
               >
                 <Check className="h-5 w-5" />
-                <span className="hidden sm:inline">Use Photo</span>
+                <span className="text-sm font-bold">Use Photo</span>
               </button>
             </div>
           </div>
