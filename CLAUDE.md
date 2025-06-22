@@ -57,13 +57,13 @@
 #### Enhanced Photo Capture System
 - **Camera-first upload experience**: Primary "Take a Photo" button with `capture="environment"` for rear camera
 - **Real-world artwork focus**: Optimized for photographing drawings, paintings, and physical artwork
-- **Photo enhancement pipeline**: Built-in image optimization using browser-image-compression
-- **Simple crop/rotate tools**: Basic adjustment tools for better artwork framing
+- **Auto-compression pipeline**: Automatic background optimization using browser-image-compression (5MB max, 2048px)
+- **Simple crop tools**: Remove unwanted backgrounds and focus on artwork with easy cropping
 - **Advanced decorative frame system**: 22 beautiful frames across 4 categories with unique effects
 - **Frame application**: Canvas-based frame compositing with 12% padding for optimal proportions
 - **Frame stacking prevention**: One frame per upload with proper state tracking and visual feedback
-- **Child-friendly interface**: Large buttons, photo tips, and encouraging messaging
-- **Progressive enhancement**: Before/after comparison for photo improvements
+- **Clean interface**: Streamlined UI with helpful tips for better artwork photography
+- **Background removal focus**: Crop functionality specifically designed to eliminate distracting backgrounds
 
 #### Daily Creative Challenges
 - **Two daily challenges**: Daily Challenge 1 and Daily Challenge 2 with varying difficulty levels
