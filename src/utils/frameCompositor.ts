@@ -106,37 +106,57 @@ function createFrameBackground(ctx: CanvasRenderingContext2D, width: number, hei
   
   switch (frameId) {
     case 'gold-ornate':
-      // Gold gradient background
+      // Gold gradient background - matching CSS frame-gold-ornate
       const goldGradient = ctx.createLinearGradient(0, 0, width, height)
       goldGradient.addColorStop(0, '#d4af37')
       goldGradient.addColorStop(0.5, '#ffd700')
       goldGradient.addColorStop(1, '#b8860b')
       ctx.fillStyle = goldGradient
       ctx.fillRect(0, 0, width, height)
+      
+      // Add ornate pattern to match CSS
+      ctx.strokeStyle = '#daa520'
+      ctx.lineWidth = 2
+      for (let i = 0; i < width; i += 8) {
+        ctx.beginPath()
+        ctx.moveTo(i, 0)
+        ctx.lineTo(i + 4, height)
+        ctx.stroke()
+      }
       break
 
     case 'silver-modern':
-      // Silver gradient
+      // Silver gradient - matching CSS frame-silver-modern
       const silverGradient = ctx.createLinearGradient(0, 0, width, height)
-      silverGradient.addColorStop(0, '#e5e5e5')
-      silverGradient.addColorStop(0.5, '#c0c0c0')
+      silverGradient.addColorStop(0, '#c0c0c0')
+      silverGradient.addColorStop(0.5, '#e5e5e5')
       silverGradient.addColorStop(1, '#a8a8a8')
       ctx.fillStyle = silverGradient
       ctx.fillRect(0, 0, width, height)
       break
 
     case 'wood-rustic':
-      // Wood texture background
+      // Wood texture background - matching CSS frame-wood-rustic
       const woodGradient = ctx.createLinearGradient(0, 0, width, height)
       woodGradient.addColorStop(0, '#8b4513')
       woodGradient.addColorStop(0.5, '#a0522d')
       woodGradient.addColorStop(1, '#cd853f')
       ctx.fillStyle = woodGradient
       ctx.fillRect(0, 0, width, height)
+      
+      // Add wood grain effect
+      ctx.strokeStyle = 'rgba(139, 69, 19, 0.7)'
+      ctx.lineWidth = 1
+      for (let y = 0; y < height; y += 6) {
+        ctx.beginPath()
+        ctx.moveTo(0, y)
+        ctx.lineTo(width, y)
+        ctx.stroke()
+      }
       break
 
     case 'rainbow-gradient':
-      // Rainbow gradient
+      // Rainbow gradient - matching CSS frame-rainbow-gradient
       const rainbowGradient = ctx.createLinearGradient(0, 0, width, height)
       rainbowGradient.addColorStop(0, '#ff0000')
       rainbowGradient.addColorStop(0.16, '#ff8000')
@@ -150,19 +170,30 @@ function createFrameBackground(ctx: CanvasRenderingContext2D, width: number, hei
       break
 
     case 'space-stars':
-      // Space background with stars
-      const spaceGradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, Math.max(width, height) / 2)
-      spaceGradient.addColorStop(0, '#16213e')
-      spaceGradient.addColorStop(1, '#1a1a2e')
+      // Space background with stars - matching CSS frame-space-stars
+      const spaceGradient = ctx.createLinearGradient(0, 0, width, height)
+      spaceGradient.addColorStop(0, '#1a1a2e')
+      spaceGradient.addColorStop(0.5, '#16213e')
+      spaceGradient.addColorStop(1, '#0f3460')
       ctx.fillStyle = spaceGradient
       ctx.fillRect(0, 0, width, height)
       
-      // Add stars
+      // Add stars to match CSS pattern
       ctx.fillStyle = '#ffffff'
-      for (let i = 0; i < 50; i++) {
+      for (let i = 0; i < 30; i++) {
         const x = Math.random() * width
         const y = Math.random() * height
-        const radius = Math.random() * 2 + 0.5
+        const radius = Math.random() * 1.5 + 0.5
+        ctx.beginPath()
+        ctx.arc(x, y, radius, 0, Math.PI * 2)
+        ctx.fill()
+      }
+      // Add yellow stars
+      ctx.fillStyle = '#ffff00'
+      for (let i = 0; i < 5; i++) {
+        const x = Math.random() * width
+        const y = Math.random() * height
+        const radius = Math.random() * 1 + 0.5
         ctx.beginPath()
         ctx.arc(x, y, radius, 0, Math.PI * 2)
         ctx.fill()
@@ -170,7 +201,7 @@ function createFrameBackground(ctx: CanvasRenderingContext2D, width: number, hei
       break
 
     case 'underwater-bubbles':
-      // Underwater gradient
+      // Underwater gradient - matching CSS frame-underwater-bubbles
       const waterGradient = ctx.createLinearGradient(0, 0, 0, height)
       waterGradient.addColorStop(0, '#4facfe')
       waterGradient.addColorStop(0.5, '#00f2fe')
@@ -178,12 +209,13 @@ function createFrameBackground(ctx: CanvasRenderingContext2D, width: number, hei
       ctx.fillStyle = waterGradient
       ctx.fillRect(0, 0, width, height)
       
-      // Add bubbles
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.4)'
-      for (let i = 0; i < 30; i++) {
+      // Add bubbles with varied opacity to match CSS
+      for (let i = 0; i < 20; i++) {
         const x = Math.random() * width
         const y = Math.random() * height
-        const radius = Math.random() * 8 + 2
+        const radius = Math.random() * 6 + 1
+        const opacity = Math.random() * 0.3 + 0.2
+        ctx.fillStyle = `rgba(255, 255, 255, ${opacity})`
         ctx.beginPath()
         ctx.arc(x, y, radius, 0, Math.PI * 2)
         ctx.fill()
@@ -191,91 +223,173 @@ function createFrameBackground(ctx: CanvasRenderingContext2D, width: number, hei
       break
 
     case 'crayon-texture':
-      // Crayon-like texture with bright colors
-      const crayonColors = ['#ff6b6b', '#4ecdc4', '#f9ca24', '#fd79a8', '#6c5ce7']
-      ctx.fillStyle = '#fffacd' // Light yellow background
+      // Crayon-like texture - matching CSS frame-crayon-texture
+      const crayonGradient = ctx.createLinearGradient(0, 0, width, height)
+      crayonGradient.addColorStop(0, '#ff6b6b')
+      crayonGradient.addColorStop(0.2, '#4ecdc4')
+      crayonGradient.addColorStop(0.4, '#45b7d1')
+      crayonGradient.addColorStop(0.6, '#f9ca24')
+      crayonGradient.addColorStop(0.8, '#f0932b')
+      crayonGradient.addColorStop(1, '#eb4d4b')
+      ctx.fillStyle = crayonGradient
       ctx.fillRect(0, 0, width, height)
       
-      // Add crayon strokes
-      for (let i = 0; i < 20; i++) {
-        const color = crayonColors[Math.floor(Math.random() * crayonColors.length)]
-        ctx.strokeStyle = color
-        ctx.lineWidth = Math.random() * 10 + 5
-        ctx.globalAlpha = 0.3
+      // Add striped texture to match CSS
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)'
+      ctx.lineWidth = 4
+      for (let i = 0; i < width; i += 12) {
         ctx.beginPath()
-        ctx.moveTo(Math.random() * width, 0)
-        ctx.lineTo(Math.random() * width, height)
+        ctx.moveTo(i, 0)
+        ctx.lineTo(i, height)
         ctx.stroke()
       }
-      ctx.globalAlpha = 1
       break
 
     case 'flower-garden':
-      // Pastel garden background
+      // Pastel garden background - matching CSS frame-flower-garden
       const gardenGradient = ctx.createLinearGradient(0, 0, width, height)
-      gardenGradient.addColorStop(0, '#ffb3c6')
-      gardenGradient.addColorStop(0.5, '#fff0f3')
-      gardenGradient.addColorStop(1, '#c9ada7')
+      gardenGradient.addColorStop(0, '#ff9a9e')
+      gardenGradient.addColorStop(0.5, '#fecfef')
+      gardenGradient.addColorStop(1, '#ff9a9e')
       ctx.fillStyle = gardenGradient
       ctx.fillRect(0, 0, width, height)
+      
+      // Add flower dots to match CSS pattern
+      ctx.fillStyle = 'rgba(255, 105, 180, 0.3)'
+      for (let i = 0; i < 15; i++) {
+        const x = Math.random() * width
+        const y = Math.random() * height
+        ctx.beginPath()
+        ctx.arc(x, y, 4, 0, Math.PI * 2)
+        ctx.fill()
+      }
       break
 
     case 'geometric-modern':
-      // Geometric pattern background
-      ctx.fillStyle = '#2d3436'
+      // Geometric pattern background - matching CSS frame-geometric-modern
+      const geometricGradient = ctx.createLinearGradient(0, 0, width, height)
+      geometricGradient.addColorStop(0, '#667eea')
+      geometricGradient.addColorStop(1, '#764ba2')
+      ctx.fillStyle = geometricGradient
       ctx.fillRect(0, 0, width, height)
       
-      // Add geometric shapes
-      const geometricColors = ['#00b894', '#e17055', '#fdcb6e', '#6c5ce7']
-      for (let i = 0; i < 10; i++) {
-        ctx.fillStyle = geometricColors[i % geometricColors.length] + '40'
-        const size = Math.random() * 100 + 50
-        ctx.save()
-        ctx.translate(Math.random() * width, Math.random() * height)
-        ctx.rotate(Math.random() * Math.PI)
-        ctx.fillRect(-size/2, -size/2, size, size)
-        ctx.restore()
+      // Add geometric lines to match CSS
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)'
+      ctx.lineWidth = 2
+      for (let i = 0; i < width; i += 16) {
+        ctx.beginPath()
+        ctx.moveTo(i, 0)
+        ctx.lineTo(i + 8, height)
+        ctx.stroke()
       }
       break
 
     case 'autumn-leaves':
-      // Autumn gradient
+      // Autumn gradient - matching CSS frame-autumn-leaves
       const autumnGradient = ctx.createLinearGradient(0, 0, width, height)
-      autumnGradient.addColorStop(0, '#d35400')
-      autumnGradient.addColorStop(0.5, '#e67e22')
-      autumnGradient.addColorStop(1, '#f39c12')
+      autumnGradient.addColorStop(0, '#ff6b35')
+      autumnGradient.addColorStop(0.33, '#f7931e')
+      autumnGradient.addColorStop(0.66, '#ffcc02')
+      autumnGradient.addColorStop(1, '#c13584')
       ctx.fillStyle = autumnGradient
       ctx.fillRect(0, 0, width, height)
+      
+      // Add leaf shapes to match CSS
+      ctx.fillStyle = 'rgba(210, 105, 30, 0.4)'
+      for (let i = 0; i < 12; i++) {
+        const x = Math.random() * width
+        const y = Math.random() * height
+        const size = Math.random() * 8 + 4
+        ctx.save()
+        ctx.translate(x, y)
+        ctx.rotate(Math.random() * Math.PI * 2)
+        ctx.beginPath()
+        ctx.moveTo(0, -size)
+        ctx.lineTo(size, size)
+        ctx.lineTo(-size, size)
+        ctx.closePath()
+        ctx.fill()
+        ctx.restore()
+      }
       break
 
     case 'winter-snowflakes':
-      // Winter gradient
+      // Winter gradient - matching CSS frame-winter-snowflakes
       const winterGradient = ctx.createLinearGradient(0, 0, 0, height)
       winterGradient.addColorStop(0, '#e3f2fd')
       winterGradient.addColorStop(0.5, '#bbdefb')
       winterGradient.addColorStop(1, '#90caf9')
       ctx.fillStyle = winterGradient
       ctx.fillRect(0, 0, width, height)
+      
+      // Add snowflakes to match CSS
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.8)'
+      for (let i = 0; i < 25; i++) {
+        const x = Math.random() * width
+        const y = Math.random() * height
+        const size = Math.random() * 3 + 1
+        ctx.beginPath()
+        ctx.arc(x, y, size, 0, Math.PI * 2)
+        ctx.fill()
+      }
+      // Smaller snowflakes
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.6)'
+      for (let i = 0; i < 20; i++) {
+        const x = Math.random() * width
+        const y = Math.random() * height
+        const size = Math.random() * 1.5 + 0.5
+        ctx.beginPath()
+        ctx.arc(x, y, size, 0, Math.PI * 2)
+        ctx.fill()
+      }
       break
 
     case 'spring-flowers':
-      // Spring gradient
+      // Spring gradient - matching CSS frame-spring-flowers
       const springGradient = ctx.createLinearGradient(0, 0, width, height)
-      springGradient.addColorStop(0, '#f8bbd0')
-      springGradient.addColorStop(0.5, '#e1bee7')
-      springGradient.addColorStop(1, '#c5cae9')
+      springGradient.addColorStop(0, '#a8e6cf')
+      springGradient.addColorStop(0.33, '#dcedc1')
+      springGradient.addColorStop(0.66, '#ffd3a5')
+      springGradient.addColorStop(1, '#fd9853')
       ctx.fillStyle = springGradient
       ctx.fillRect(0, 0, width, height)
+      
+      // Add flower dots to match CSS
+      ctx.fillStyle = 'rgba(255, 105, 180, 0.4)'
+      for (let i = 0; i < 8; i++) {
+        const x = Math.random() * width
+        const y = Math.random() * height
+        ctx.beginPath()
+        ctx.arc(x, y, 3, 0, Math.PI * 2)
+        ctx.fill()
+      }
+      for (let i = 0; i < 6; i++) {
+        const x = Math.random() * width
+        const y = Math.random() * height
+        ctx.beginPath()
+        ctx.arc(x, y, 2, 0, Math.PI * 2)
+        ctx.fill()
+      }
       break
 
     case 'summer-sun':
-      // Summer gradient
-      const summerGradient = ctx.createRadialGradient(width * 0.7, height * 0.3, 0, width * 0.7, height * 0.3, Math.max(width, height))
-      summerGradient.addColorStop(0, '#fff59d')
-      summerGradient.addColorStop(0.5, '#ffeb3b')
-      summerGradient.addColorStop(1, '#ffc107')
+      // Summer gradient - matching CSS frame-summer-sun
+      const summerGradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, Math.max(width, height) / 2)
+      summerGradient.addColorStop(0, '#ffd54f')
+      summerGradient.addColorStop(0.5, '#ffca28')
+      summerGradient.addColorStop(1, '#ffb300')
       ctx.fillStyle = summerGradient
       ctx.fillRect(0, 0, width, height)
+      
+      // Add radial stripes to match CSS
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)'
+      ctx.lineWidth = 2
+      for (let i = 0; i < height; i += 10) {
+        ctx.beginPath()
+        ctx.moveTo(0, i)
+        ctx.lineTo(width, i)
+        ctx.stroke()
+      }
       break
 
     case 'bronze-vintage':
@@ -346,52 +460,160 @@ function createFrameBackground(ctx: CanvasRenderingContext2D, width: number, hei
       break
 
     case 'halloween-spooky':
-      // Halloween orange and black
+      // Halloween orange and black - matching CSS frame-halloween-spooky
       const halloweenGradient = ctx.createLinearGradient(0, 0, width, height)
-      halloweenGradient.addColorStop(0, '#ff8c00')
-      halloweenGradient.addColorStop(0.5, '#ff4500')
-      halloweenGradient.addColorStop(1, '#1a1a1a')
+      halloweenGradient.addColorStop(0, '#2d1b19')
+      halloweenGradient.addColorStop(0.33, '#4a2c2a')
+      halloweenGradient.addColorStop(0.66, '#8b4513')
+      halloweenGradient.addColorStop(1, '#cd853f')
       ctx.fillStyle = halloweenGradient
+      ctx.fillRect(0, 0, width, height)
+      
+      // Add spooky dots to match CSS
+      const spookyColors = ['rgba(255, 140, 0, 0.6)', 'rgba(255, 69, 0, 0.5)', 'rgba(139, 69, 19, 0.7)']
+      for (let i = 0; i < 15; i++) {
+        const x = Math.random() * width
+        const y = Math.random() * height
+        const radius = Math.random() * 6 + 2
+        const color = spookyColors[Math.floor(Math.random() * spookyColors.length)]
+        ctx.fillStyle = color
+        ctx.beginPath()
+        ctx.arc(x, y, radius, 0, Math.PI * 2)
+        ctx.fill()
+      }
+      break
+
+    case 'paint-splatter':
+      // Paint splatter - matching CSS frame-paint-splatter
+      ctx.fillStyle = '#ffffff'
       ctx.fillRect(0, 0, width, height)
       break
 
+    case 'glitter-sparkle':
+      // Glitter sparkle - matching CSS frame-glitter-sparkle
+      const glitterGradient = ctx.createLinearGradient(0, 0, width, height)
+      glitterGradient.addColorStop(0, '#ffd700')
+      glitterGradient.addColorStop(0.25, '#ffff00')
+      glitterGradient.addColorStop(0.5, '#ff69b4')
+      glitterGradient.addColorStop(0.75, '#00ffff')
+      glitterGradient.addColorStop(1, '#ffd700')
+      ctx.fillStyle = glitterGradient
+      ctx.fillRect(0, 0, width, height)
+      break
 
-    default:
-      // Museum white (default)
+    case 'neon-glow':
+      // Neon glow - matching CSS frame-neon-glow
+      const neonGradient = ctx.createLinearGradient(0, 0, width, height)
+      neonGradient.addColorStop(0, '#00ffff')
+      neonGradient.addColorStop(0.25, '#ff00ff')
+      neonGradient.addColorStop(0.5, '#ffff00')
+      neonGradient.addColorStop(0.75, '#00ff00')
+      neonGradient.addColorStop(1, '#00ffff')
+      ctx.fillStyle = neonGradient
+      ctx.fillRect(0, 0, width, height)
+      break
+
+    case 'candy-stripes':
+      // Candy stripes - matching CSS frame-candy-stripes
       ctx.fillStyle = '#ffffff'
+      ctx.fillRect(0, 0, width, height)
+      
+      // Add diagonal candy stripes
+      const stripeColors = ['#ff6b9d', '#ffffff', '#4ecdc4', '#ffffff']
+      const stripeWidth = 24
+      ctx.save()
+      for (let i = -height; i < width + height; i += stripeWidth) {
+        const colorIndex = Math.floor((i + height) / stripeWidth) % stripeColors.length
+        ctx.fillStyle = stripeColors[colorIndex]
+        ctx.save()
+        ctx.translate(i, 0)
+        ctx.rotate(Math.PI / 4)
+        ctx.fillRect(0, -height, stripeWidth, width + height * 2)
+        ctx.restore()
+      }
+      ctx.restore()
+      break
+
+    case 'jungle-adventure':
+      // Jungle adventure - matching CSS frame-jungle-adventure
+      const jungleGradient = ctx.createLinearGradient(0, 0, width, height)
+      jungleGradient.addColorStop(0, '#2d5016')
+      jungleGradient.addColorStop(0.33, '#3e6b1c')
+      jungleGradient.addColorStop(0.66, '#4f7c23')
+      jungleGradient.addColorStop(1, '#6b8e2a')
+      ctx.fillStyle = jungleGradient
+      ctx.fillRect(0, 0, width, height)
+      break
+
+    case 'medieval-castle':
+      // Medieval castle - matching CSS frame-medieval-castle
+      const castleGradient = ctx.createLinearGradient(0, 0, width, height)
+      castleGradient.addColorStop(0, '#8b4513')
+      castleGradient.addColorStop(0.33, '#a0522d')
+      castleGradient.addColorStop(0.66, '#cd853f')
+      castleGradient.addColorStop(1, '#daa520')
+      ctx.fillStyle = castleGradient
+      ctx.fillRect(0, 0, width, height)
+      
+      // Add stone texture blocks
+      ctx.strokeStyle = 'rgba(139, 69, 19, 0.3)'
+      ctx.lineWidth = 1
+      for (let y = 0; y < height; y += 20) {
+        ctx.beginPath()
+        ctx.moveTo(0, y)
+        ctx.lineTo(width, y)
+        ctx.stroke()
+      }
+      for (let x = 0; x < width; x += 16) {
+        ctx.beginPath()
+        ctx.moveTo(x, 0)
+        ctx.lineTo(x, height)
+        ctx.stroke()
+      }
+      break
+
+    case 'museum-white':
+    default:
+      // Museum white - matching CSS frame-museum-white
+      const whiteGradient = ctx.createLinearGradient(0, 0, width, height)
+      whiteGradient.addColorStop(0, '#ffffff')
+      whiteGradient.addColorStop(0.5, '#f8f8f8')
+      whiteGradient.addColorStop(1, '#eeeeee')
+      ctx.fillStyle = whiteGradient
       ctx.fillRect(0, 0, width, height)
       break
   }
 }
 
 function addFrameOverlay(ctx: CanvasRenderingContext2D, width: number, height: number, frameId: string) {
-  // Frame-specific overlays
+  // Frame-specific overlays to match CSS effects
   switch (frameId) {
     case 'glitter-sparkle':
-      // Add glitter effect
+      // Add glitter sparkles to match CSS animation
       ctx.fillStyle = 'rgba(255, 255, 255, 0.8)'
-      for (let i = 0; i < 20; i++) {
+      for (let i = 0; i < 25; i++) {
         const x = Math.random() * width
         const y = Math.random() * height
+        const size = Math.random() * 3 + 1
         ctx.save()
         ctx.translate(x, y)
         ctx.rotate(Math.random() * Math.PI * 2)
-        ctx.fillRect(-2, -0.5, 4, 1)
-        ctx.fillRect(-0.5, -2, 1, 4)
+        ctx.fillRect(-size, -size/4, size*2, size/2)
+        ctx.fillRect(-size/4, -size, size/2, size*2)
         ctx.restore()
       }
       break
 
     case 'paint-splatter':
-      // Add paint splatters
-      const colors = ['#ff6b6b', '#4ecdc4', '#f9ca24', '#6c5ce7', '#fd79a8']
-      for (let i = 0; i < 15; i++) {
+      // Add paint splatters to match CSS ::before pseudo-element
+      const splatColors = ['#ff6b6b', '#4ecdc4', '#f9ca24', '#6c5ce7', '#fd79a8']
+      for (let i = 0; i < 12; i++) {
         const x = Math.random() * width
         const y = Math.random() * height
-        const radius = Math.random() * 5 + 2
-        const color = colors[Math.floor(Math.random() * colors.length)]
+        const radius = Math.random() * 4 + 1
+        const color = splatColors[Math.floor(Math.random() * splatColors.length)]
         
-        ctx.fillStyle = color + '80' // Add transparency
+        ctx.fillStyle = color
         ctx.beginPath()
         ctx.arc(x, y, radius, 0, Math.PI * 2)
         ctx.fill()
