@@ -65,6 +65,18 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Check if parent already has children (limit to 1 child for new accounts)
+    const existingChildren = await ChildAuth.getChildrenByParent(parent.id)
+    if (existingChildren.length > 0) {
+      return NextResponse.json(
+        { 
+          error: 'MULTIPLE_CHILDREN_LIMIT',
+          message: "We're working on giving users the ability to add more kids! This feature will be available soon."
+        },
+        { status: 400 }
+      )
+    }
+
     const body = await request.json()
     const childData = createChildSchema.parse(body)
 

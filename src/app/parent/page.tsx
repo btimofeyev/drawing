@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Plus, Settings, Shield, Users, Palette, Sparkles, Eye, Trash2, AlertTriangle } from 'lucide-react'
+import { Plus, Settings, Shield, Users, Palette, Sparkles, Eye, Trash2, AlertTriangle, Clock, Mail } from 'lucide-react'
 import Link from 'next/link'
 
 interface Child {
@@ -32,6 +32,7 @@ export default function ParentDashboard() {
   const [selectedChild, setSelectedChild] = useState<Child | null>(null)
   const [childArtwork, setChildArtwork] = useState<Artwork[]>([])
   const [showDeleteChildModal, setShowDeleteChildModal] = useState<Child | null>(null)
+  const [showComingSoonModal, setShowComingSoonModal] = useState(false)
 
   useEffect(() => {
     fetchChildren()
@@ -101,6 +102,14 @@ export default function ParentDashboard() {
     }
   }
 
+  const handleAddChild = () => {
+    if (children.length > 0) {
+      setShowComingSoonModal(true)
+    } else {
+      setShowCreateForm(true)
+    }
+  }
+
   const handleSignOut = async () => {
     try {
       await fetch('/api/auth/parent/signout', { method: 'POST' })
@@ -143,7 +152,7 @@ export default function ParentDashboard() {
             
             <div className="flex items-center gap-4">
               <button
-                onClick={() => setShowCreateForm(true)}
+                onClick={handleAddChild}
                 className="btn btn-primary"
               >
                 <Plus className="h-4 w-4" />
@@ -183,7 +192,7 @@ export default function ParentDashboard() {
                 
                 <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
                   <button
-                    onClick={() => setShowCreateForm(true)}
+                    onClick={handleAddChild}
                     className="btn btn-primary btn-large"
                   >
                     <Sparkles />
@@ -265,6 +274,9 @@ export default function ParentDashboard() {
 
       {/* Create Child Modal */}
       {showCreateForm && <CreateChildModal onClose={() => setShowCreateForm(false)} onSuccess={fetchChildren} />}
+      
+      {/* Coming Soon Modal */}
+      {showComingSoonModal && <ComingSoonModal onClose={() => setShowComingSoonModal(false)} />}
       
       {/* Artwork Viewer Modal */}
       {selectedChild && (
@@ -399,6 +411,63 @@ export default function ParentDashboard() {
   )
 }
 
+function ComingSoonModal({ onClose }: { onClose: () => void }) {
+  return (
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+      <div className="bg-white rounded-3xl max-w-lg w-full p-10 animate-fade-in shadow-2xl">
+        <div className="text-center">
+          <div className="icon-container bg-gradient-to-br from-purple-100 to-pink-100 mx-auto mb-6" style={{width: '4rem', height: '4rem'}}>
+            <Clock style={{width: '2rem', height: '2rem'}} className="text-purple-600" />
+          </div>
+          
+          <h2 className="text-3xl font-bold mb-4 bg-gradient-to-r from-purple-500 to-pink-500 bg-clip-text text-transparent">
+            Multiple Kids Coming Soon!
+          </h2>
+          
+          <p className="text-lg text-slate-600 mb-6 leading-relaxed">
+            We're working hard on giving users the ability to add more kids to their account. This exciting feature will be available soon!
+          </p>
+          
+          <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-2xl p-6 mb-8">
+            <div className="flex items-center justify-center gap-3 mb-3">
+              <Sparkles className="h-5 w-5 text-purple-500" />
+              <span className="font-semibold text-slate-700">What's Coming:</span>
+            </div>
+            <ul className="text-sm text-slate-600 space-y-2">
+              <li className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-purple-400 rounded-full"></div>
+                Add multiple children to one parent account
+              </li>
+              <li className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-pink-400 rounded-full"></div>
+                Manage all your kids' creative journeys in one place
+              </li>
+              <li className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-purple-400 rounded-full"></div>
+                Enhanced family dashboard with individual progress tracking
+              </li>
+            </ul>
+          </div>
+          
+          <p className="text-sm text-slate-500 mb-8">
+            Stay tuned for updates! We'll notify you as soon as this feature is ready.
+          </p>
+          
+          <button
+            onClick={onClose}
+            className="btn btn-primary w-full"
+          >
+            <span className="flex items-center justify-center gap-2">
+              Got it!
+              <Sparkles className="h-4 w-4" />
+            </span>
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function CreateChildModal({ onClose, onSuccess }: { onClose: () => void; onSuccess: () => void }) {
   const [username, setUsername] = useState('')
   const [name, setName] = useState('')
@@ -425,7 +494,11 @@ function CreateChildModal({ onClose, onSuccess }: { onClose: () => void; onSucce
         onSuccess()
         onClose()
       } else {
-        setError(data.error || 'Failed to create child profile')
+        if (data.error === 'MULTIPLE_CHILDREN_LIMIT') {
+          setError(data.message || "We're working on giving users the ability to add more kids!")
+        } else {
+          setError(data.error || 'Failed to create child profile')
+        }
       }
     } catch (error) {
       setError('Something went wrong. Please try again.')
