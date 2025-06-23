@@ -22,7 +22,7 @@ interface Child {
   id: string
   username: string
   name: string
-  ageGroup: 'kids' | 'tweens'
+  ageGroup: 'preschoolers' | 'kids' | 'tweens'
 }
 
 interface UserStats {
@@ -134,13 +134,39 @@ export default function ChildLayout({ children }: ChildLayoutProps) {
     }
   }
 
-  const navigation = [
-    { name: 'Dashboard', href: '/child-home', icon: Home },
-    { name: 'Art Gallery', href: '/gallery', icon: Users },
-    { name: 'My Profile', href: '/profile', icon: Star },
-    { name: 'Achievements', href: '/achievements', icon: Trophy },
-    { name: 'Leaderboards', href: '/leaderboards', icon: TrendingUp },
-  ]
+  // Age-specific navigation and UI settings
+  const getNavigationForAge = (ageGroup: string) => {
+    const baseNavigation = [
+      { name: 'Home', href: '/child-home', icon: Home, emoji: '🏠' },
+      { name: 'Gallery', href: '/gallery', icon: Users, emoji: '🎨' },
+      { name: 'Profile', href: '/profile', icon: Star, emoji: '⭐' },
+      { name: 'Badges', href: '/achievements', icon: Trophy, emoji: '🏆' },
+    ]
+
+    if (ageGroup === 'preschoolers') {
+      // Simpler navigation for preschoolers (ages 4-6)
+      return [
+        { name: 'Home', href: '/child-home', icon: Home, emoji: '🏠' },
+        { name: 'Gallery', href: '/gallery', icon: Users, emoji: '🎨' },
+        { name: 'Badges', href: '/achievements', icon: Trophy, emoji: '🏆' },
+      ]
+    } else if (ageGroup === 'kids') {
+      // Standard navigation for kids (ages 7-10)
+      return [
+        ...baseNavigation,
+        { name: 'Leaderboards', href: '/leaderboards', icon: TrendingUp, emoji: '📊' },
+      ]
+    } else {
+      // Full navigation for tweens (ages 11-16)
+      return [
+        ...baseNavigation,
+        { name: 'Leaderboards', href: '/leaderboards', icon: TrendingUp, emoji: '📊' },
+      ]
+    }
+  }
+
+  const navigation = getNavigationForAge(child?.ageGroup || 'kids')
+  const isPreschooler = child?.ageGroup === 'preschoolers'
 
   const isActive = (href: string) => pathname === href
 
@@ -191,52 +217,90 @@ export default function ChildLayout({ children }: ChildLayoutProps) {
               <h3 className="font-semibold text-slate-800">{child?.name || 'Young Artist'}</h3>
               <p className="text-sm text-slate-500 mb-4">@{child?.username || 'artist'}</p>
               
-              {/* Level Progress - Subtle */}
-              <div className="space-y-2">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-slate-600">Level {userStats?.level || 1}</span>
-                  <span className="text-slate-500">{userStats?.points || 0} pts</span>
+              {/* Age-Appropriate Level Progress */}
+              {isPreschooler ? (
+                // Simplified progress for preschoolers
+                <div className="space-y-3">
+                  <div className="text-center">
+                    <span className="text-2xl">⭐</span>
+                    <p className="text-base font-bold text-slate-800">Level {userStats?.level || 1}</p>
+                    <p className="text-sm text-slate-600">{userStats?.points || 0} stars!</p>
+                  </div>
+                  <div className="w-full bg-slate-200 rounded-full h-3">
+                    <div 
+                      className="bg-gradient-to-r from-yellow-400 to-pink-500 h-3 rounded-full transition-all duration-500"
+                      style={{ width: `${userStats?.progressToNextLevel || 0}%` }}
+                    />
+                  </div>
                 </div>
-                <div className="w-full bg-slate-200 rounded-full h-1.5">
-                  <div 
-                    className="bg-pink-500 h-1.5 rounded-full transition-all duration-500"
-                    style={{ width: `${userStats?.progressToNextLevel || 0}%` }}
-                  />
+              ) : (
+                // Standard progress for kids and tweens
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-slate-600">Level {userStats?.level || 1}</span>
+                    <span className="text-slate-500">{userStats?.points || 0} pts</span>
+                  </div>
+                  <div className="w-full bg-slate-200 rounded-full h-1.5">
+                    <div 
+                      className="bg-pink-500 h-1.5 rounded-full transition-all duration-500"
+                      style={{ width: `${userStats?.progressToNextLevel || 0}%` }}
+                    />
+                  </div>
+                  <p className="text-xs text-slate-500">
+                    {userStats?.pointsToNextLevel || 100} points to level {(userStats?.level || 1) + 1}
+                  </p>
                 </div>
-                <p className="text-xs text-slate-500">
-                  {userStats?.pointsToNextLevel || 100} points to level {(userStats?.level || 1) + 1}
-                </p>
-              </div>
+              )}
             </div>
           </div>
 
-          {/* Minimal Stats */}
+          {/* Age-Appropriate Stats */}
           <div className="p-6 border-b border-slate-100">
-            <div className="grid grid-cols-2 gap-4 text-center">
+            <div className={`grid grid-cols-2 gap-4 text-center ${isPreschooler ? 'space-y-2' : ''}`}>
               <div>
-                <div className="text-lg font-semibold text-slate-800">{userStats?.earnedAchievements || 0}</div>
-                <div className="text-xs text-slate-500">Achievements</div>
+                <div className={`font-semibold text-slate-800 ${isPreschooler ? 'text-xl' : 'text-lg'}`}>
+                  {isPreschooler && '🏆'} {userStats?.earnedAchievements || 0}
+                </div>
+                <div className={`text-slate-500 ${isPreschooler ? 'text-sm' : 'text-xs'}`}>
+                  {isPreschooler ? 'Badges' : 'Achievements'}
+                </div>
               </div>
               <div>
-                <div className="text-lg font-semibold text-slate-800">{userStats?.totalPosts || 0}</div>
-                <div className="text-xs text-slate-500">Artworks</div>
+                <div className={`font-semibold text-slate-800 ${isPreschooler ? 'text-xl' : 'text-lg'}`}>
+                  {isPreschooler && '🎨'} {userStats?.totalPosts || 0}
+                </div>
+                <div className={`text-slate-500 ${isPreschooler ? 'text-sm' : 'text-xs'}`}>
+                  {isPreschooler ? 'Drawings' : 'Artworks'}
+                </div>
               </div>
             </div>
           </div>
 
-          {/* Clean Navigation */}
-          <nav className="flex-1 p-4 space-y-1">
+          {/* Age-Appropriate Navigation */}
+          <nav className={`flex-1 p-4 ${isPreschooler ? 'space-y-3' : 'space-y-1'}`}>
             {navigation.map((item) => {
               const Icon = item.icon
               return (
                 <Link key={item.name} href={item.href}>
-                  <div className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
+                  <div className={`flex items-center gap-3 rounded-lg transition-colors ${
+                    isPreschooler 
+                      ? 'px-4 py-4 text-base' // Larger touch targets for preschoolers
+                      : 'px-3 py-2 text-sm'   // Standard size for others
+                  } ${
                     isActive(item.href)
                       ? 'bg-pink-50 text-pink-700'
                       : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
                   }`}>
-                    <Icon className="h-4 w-4" />
-                    <span className="text-sm font-medium">{item.name}</span>
+                    {isPreschooler ? (
+                      // Show emoji icons for preschoolers
+                      <span className="text-xl">{item.emoji}</span>
+                    ) : (
+                      // Show lucide icons for older children
+                      <Icon className="h-4 w-4" />
+                    )}
+                    <span className={`font-medium ${isPreschooler ? 'text-base' : 'text-sm'}`}>
+                      {item.name}
+                    </span>
                   </div>
                 </Link>
               )

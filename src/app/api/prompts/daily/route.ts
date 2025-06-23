@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { ChildAuth } from '@/lib/auth'
 import { supabaseAdmin } from '@/lib/supabase'
-import { PromptGenerator, TimeSlot } from '@/lib/openai'
+import { ImprovedPromptGenerator as PromptGenerator, TimeSlot } from '@/lib/openai'
 import { cookies } from 'next/headers'
+import { getCurrentDateET } from '@/utils/timezone'
 
 export async function GET(request: NextRequest) {
   try {
@@ -42,8 +43,8 @@ export async function GET(request: NextRequest) {
     const timeSlot = searchParams.get('slot') as 'daily_1' | 'daily_2' | 'free_draw' | null
     const getAllSlots = searchParams.get('all') === 'true'
 
-    // Get today's date
-    const today = new Date().toISOString().split('T')[0]
+    // Get today's date in Eastern Time
+    const today = getCurrentDateET()
 
     if (getAllSlots) {
       // Return all three time slots for today
@@ -68,7 +69,7 @@ export async function GET(request: NextRequest) {
       // Generate missing prompts
       for (const slot of missingSlots) {
         try {
-          const generatedPrompt = await PromptGenerator.generateSlotPrompt({
+          const generatedPrompt = await PromptGenerator.generateDailyPrompt({
             ageGroup: child.age_group,
             timeSlot: slot,
             difficulty: 'easy'
@@ -97,7 +98,7 @@ export async function GET(request: NextRequest) {
             ageGroup: child.age_group,
             difficulty: getSlotDifficulty(slot),
             timeSlot: slot
-          })
+          }, 'real_life', 'everyday activities')
           allPrompts.push({
             id: `fallback-${slot}`,
             date: today,
@@ -177,7 +178,7 @@ export async function GET(request: NextRequest) {
       // If no prompt for today, try to generate one with OpenAI
       try {
         
-        const generatedPrompt = await PromptGenerator.generateSlotPrompt({
+        const generatedPrompt = await PromptGenerator.generateDailyPrompt({
           ageGroup: child.age_group,
           timeSlot: targetSlot,
           difficulty: 'easy'
@@ -231,7 +232,7 @@ export async function GET(request: NextRequest) {
             ageGroup: child.age_group,
             difficulty: getSlotDifficulty(targetSlot),
             timeSlot: targetSlot
-          })
+          }, 'real_life', 'everyday activities')
 
           return NextResponse.json({
             prompt: {

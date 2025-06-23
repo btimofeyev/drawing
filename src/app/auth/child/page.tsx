@@ -55,6 +55,8 @@ export default function ChildAuthPage() {
       const data = await response.json()
 
       if (data.success) {
+        // Use router.refresh() to ensure cookies are recognized by middleware
+        router.refresh()
         router.push('/child-home')
       } else {
         setError('Wrong username or PIN. Please try again.')

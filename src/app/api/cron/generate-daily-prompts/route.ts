@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
-import { PromptGenerator } from '@/lib/openai'
+import { ImprovedPromptGenerator as PromptGenerator } from '@/lib/openai'
 
 // This endpoint should be called daily at midnight EST (4 AM UTC)
 // to pre-generate all prompts for the next day
@@ -32,7 +32,25 @@ export async function GET(request: NextRequest) {
     for (const ageGroup of ageGroups) {
       try {
         // Generate the 2 themed community prompts
-        const communityPrompts = await PromptGenerator.generateMVPCommunityPrompts(ageGroup)
+        let communityPrompts: any[] = []
+        
+        if (ageGroup === 'preschoolers') {
+          // For preschoolers, generate individual prompts
+          const prompt1 = await PromptGenerator.generateDailyPrompt({
+            ageGroup: 'preschoolers',
+            difficulty: 'easy',
+            timeSlot: 'daily_1'
+          })
+          const prompt2 = await PromptGenerator.generateDailyPrompt({
+            ageGroup: 'preschoolers', 
+            difficulty: 'easy',
+            timeSlot: 'daily_2'
+          })
+          communityPrompts = [prompt1, prompt2]
+        } else {
+          // For kids and tweens, use the generateDailySlots method
+          communityPrompts = await PromptGenerator.generateDailySlots(ageGroup as 'kids' | 'tweens')
+        }
 
         for (const prompt of communityPrompts) {
           if (forceOverwrite) {
@@ -163,7 +181,25 @@ export async function POST(request: NextRequest) {
     for (const ageGroup of ageGroups) {
       try {
         // Generate the 2 themed community prompts
-        const communityPrompts = await PromptGenerator.generateMVPCommunityPrompts(ageGroup)
+        let communityPrompts: any[] = []
+        
+        if (ageGroup === 'preschoolers') {
+          // For preschoolers, generate individual prompts
+          const prompt1 = await PromptGenerator.generateDailyPrompt({
+            ageGroup: 'preschoolers',
+            difficulty: 'easy',
+            timeSlot: 'daily_1'
+          })
+          const prompt2 = await PromptGenerator.generateDailyPrompt({
+            ageGroup: 'preschoolers', 
+            difficulty: 'easy',
+            timeSlot: 'daily_2'
+          })
+          communityPrompts = [prompt1, prompt2]
+        } else {
+          // For kids and tweens, use the generateDailySlots method
+          communityPrompts = await PromptGenerator.generateDailySlots(ageGroup as 'kids' | 'tweens')
+        }
 
         for (const prompt of communityPrompts) {
           try {

@@ -189,18 +189,220 @@ export async function GET(request: NextRequest) {
         isCurrentChild: item.child.username === child.username
       }))
 
+    // Calculate start of current month
+    const currentDate = new Date()
+    const startOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1)
+    const monthStart = startOfMonth.toISOString()
+
+    // Get monthly uploads leaderboard
+    const { data: monthlyUploads, error: monthlyUploadsError } = await supabaseAdmin
+      .from('posts')
+      .select(`
+        child_id,
+        child_profiles!inner(username, name, age_group)
+      `)
+      .gte('created_at', monthStart)
+      .eq('moderation_status', 'approved')
+
+    // Get monthly likes leaderboard (total likes received across all posts this month)
+    const { data: monthlyLikesData, error: monthlyLikesError } = await supabaseAdmin
+      .from('child_likes')
+      .select(`
+        post_id,
+        posts!inner(
+          child_id,
+          created_at,
+          child_profiles!inner(username, name, age_group)
+        )
+      `)
+      .gte('created_at', monthStart)
+
+    // Get new artists (users created in last 30 days with posts)
+    const thirtyDaysAgo = new Date()
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
+    const { data: newArtistsData, error: newArtistsError } = await supabaseAdmin
+      .from('child_profiles')
+      .select(`
+        id,
+        username,
+        name,
+        age_group,
+        created_at
+      `)
+      .gte('created_at', thirtyDaysAgo.toISOString())
+
+    // Get posts count for new artists
+    const { data: newArtistsPosts, error: newArtistsPostsError } = await supabaseAdmin
+      .from('posts')
+      .select('child_id')
+      .eq('moderation_status', 'approved')
+      .in('child_id', newArtistsData?.map(artist => artist.id) || [])
+
+    // Get growth data (compare this week vs last week upload counts)
+    const lastWeekStart = new Date(startOfWeek)
+    lastWeekStart.setDate(lastWeekStart.getDate() - 7)
+    const lastWeekStartISO = lastWeekStart.toISOString()
+
+    const { data: lastWeekUploads, error: lastWeekError } = await supabaseAdmin
+      .from('posts')
+      .select(`
+        child_id,
+        child_profiles!inner(username, name, age_group)
+      `)
+      .gte('created_at', lastWeekStartISO)
+      .lt('created_at', weekStart)
+      .eq('moderation_status', 'approved')
+
+    // Process monthly uploads
+    const monthlyUploadsMap = new Map<string, { child: any; count: number }>()
+    monthlyUploads?.forEach(post => {
+      const childId = post.child_id
+      const childData = post.child_profiles
+      
+      if (monthlyUploadsMap.has(childId)) {
+        monthlyUploadsMap.get(childId)!.count++
+      } else {
+        monthlyUploadsMap.set(childId, { child: childData, count: 1 })
+      }
+    })
+
+    // Process monthly likes (total likes received on all posts, not just this month's posts)
+    const monthlyLikesMap = new Map<string, { child: any; count: number }>()
+    monthlyLikesData?.forEach(like => {
+      const childId = Array.isArray(like.posts) ? like.posts[0]?.child_id : (like.posts as any)?.child_id
+      const childData = Array.isArray(like.posts) ? like.posts[0]?.child_profiles : (like.posts as any)?.child_profiles
+      
+      if (monthlyLikesMap.has(childId)) {
+        monthlyLikesMap.get(childId)!.count++
+      } else {
+        monthlyLikesMap.set(childId, { child: childData, count: 1 })
+      }
+    })
+
+    // Process new artists
+    const newArtistsMap = new Map<string, { child: any; count: number }>()
+    newArtistsPosts?.forEach(post => {
+      const childId = post.child_id
+      const artistData = newArtistsData?.find(artist => artist.id === childId)
+      
+      if (artistData) {
+        if (newArtistsMap.has(childId)) {
+          newArtistsMap.get(childId)!.count++
+        } else {
+          newArtistsMap.set(childId, { 
+            child: {
+              username: artistData.username,
+              name: artistData.name,
+              age_group: artistData.age_group
+            }, 
+            count: 1 
+          })
+        }
+      }
+    })
+
+    // Process growth comparison (this week vs last week)
+    const thisWeekMap = new Map<string, { count: number; child: any }>()
+    const lastWeekMap = new Map<string, number>()
+    
+    // Build this week's data with child info
+    weeklyUploads?.forEach(post => {
+      const childId = post.child_id
+      const childData = post.child_profiles
+      
+      if (thisWeekMap.has(childId)) {
+        thisWeekMap.get(childId)!.count++
+      } else {
+        thisWeekMap.set(childId, { count: 1, child: childData })
+      }
+    })
+    
+    // Build last week's data
+    lastWeekUploads?.forEach(post => {
+      const childId = post.child_id
+      lastWeekMap.set(childId, (lastWeekMap.get(childId) || 0) + 1)
+    })
+
+    const growthMap = new Map<string, { child: any; growth: number; thisWeek: number; lastWeek: number }>()
+    
+    // Check growth for all users who posted this week
+    thisWeekMap.forEach((thisWeekData, childId) => {
+      const thisWeekCount = thisWeekData.count
+      const lastWeekCount = lastWeekMap.get(childId) || 0
+      const growth = thisWeekCount - lastWeekCount
+      
+      if (growth > 0) {  // Only show positive growth
+        growthMap.set(childId, {
+          child: thisWeekData.child,
+          growth: growth,
+          thisWeek: thisWeekCount,
+          lastWeek: lastWeekCount
+        })
+      }
+    })
+
+    // Convert to sorted arrays
+    const topMonthlyUploads = Array.from(monthlyUploadsMap.values())
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 10)
+      .map((item, index) => ({
+        rank: index + 1,
+        username: item.child.username,
+        name: item.child.name,
+        ageGroup: item.child.age_group,
+        count: item.count,
+        isCurrentChild: item.child.username === child.username
+      }))
+
+    const topMonthlyLikes = Array.from(monthlyLikesMap.values())
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 10)
+      .map((item, index) => ({
+        rank: index + 1,
+        username: item.child.username,
+        name: item.child.name,
+        ageGroup: item.child.age_group,
+        count: item.count,
+        isCurrentChild: item.child.username === child.username
+      }))
+
+    const topNewArtists = Array.from(newArtistsMap.values())
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 10)
+      .map((item, index) => ({
+        rank: index + 1,
+        username: item.child.username,
+        name: item.child.name,
+        ageGroup: item.child.age_group,
+        count: item.count,
+        isCurrentChild: item.child.username === child.username
+      }))
+
+    const topGrowth = Array.from(growthMap.values())
+      .sort((a, b) => b.growth - a.growth)
+      .slice(0, 10)
+      .map((item, index) => ({
+        rank: index + 1,
+        username: item.child.username,
+        name: item.child.name,
+        ageGroup: item.child.age_group,
+        count: item.growth,
+        isCurrentChild: item.child.username === child.username
+      }))
+
     return NextResponse.json({
       leaderboards: {
         weeklyUploads: topUploaders,
         weeklyLikes: topLiked,
         currentStreaks: topStreaks,
-        monthlyUploads: [], // Placeholder for now
-        monthlyLikes: [], // Placeholder for now
-        newArtists: [], // Placeholder for now
-        mostImproved: [], // Placeholder for now
+        monthlyUploads: topMonthlyUploads,
+        monthlyLikes: topMonthlyLikes,
+        newArtists: topNewArtists,
+        mostImproved: topGrowth,
         communityStars: topCommunity
       },
-      weekStart: weekStart
+      weekStart: weekStart,
+      monthStart: monthStart
     })
   } catch (error) {
     console.error('Leaderboards error:', error)

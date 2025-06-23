@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { ChildAuth } from '@/lib/auth'
 import { supabaseAdmin } from '@/lib/supabase'
 import { getAuthenticatedChild, createErrorResponse } from '@/utils/apiAuth'
+import { getCurrentDateET, getDayBoundsET } from '@/utils/timezone'
 
 export async function POST(request: NextRequest) {
   try {
@@ -24,7 +25,7 @@ export async function POST(request: NextRequest) {
       return createErrorResponse('Time slot is required. Must be daily_1, daily_2, or free_draw', 400)
     }
 
-    const today = new Date().toISOString().split('T')[0]
+    const today = getCurrentDateET()
     const targetTimeSlot = timeSlot
 
     // Check if child can upload to this time slot
@@ -164,13 +165,12 @@ export async function GET(request: NextRequest) {
     }
 
     if (date) {
-      const startOfDay = new Date(date)
-      const endOfDay = new Date(date)
-      endOfDay.setDate(endOfDay.getDate() + 1)
+      // Use Eastern Time bounds for consistent daily cycles
+      const { start: dayStart, end: dayEnd } = getDayBoundsET(date)
       
       query = query
-        .gte('created_at', startOfDay.toISOString())
-        .lt('created_at', endOfDay.toISOString())
+        .gte('created_at', dayStart)
+        .lte('created_at', dayEnd)
     }
 
     const { data: posts, error } = await query

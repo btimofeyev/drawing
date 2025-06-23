@@ -1,15 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { PromptGenerator, TimeSlot } from '@/lib/openai'
+import { ImprovedPromptGenerator as PromptGenerator, TimeSlot } from '@/lib/openai'
 import { supabaseAdmin } from '@/lib/supabase'
+import { getCurrentDateET } from '@/utils/timezone'
+import { requireAdminAuth } from '@/lib/adminAuth'
 
 export async function POST(request: NextRequest) {
+  // Check admin authentication
+  const { isAdmin, error } = await requireAdminAuth()
+  if (!isAdmin) {
+    return error || NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
   try {
     const body = await request.json()
-    const { date, ageGroups = ['kids', 'tweens'] } = body
+    const { date, ageGroups = ['preschoolers', 'kids', 'tweens'], regenerate = false } = body
 
-    // Validate date
-    const targetDate = date ? new Date(date) : new Date()
-    const dateStr = targetDate.toISOString().split('T')[0]
+    // Use Eastern Time for consistency
+    const dateStr = date || getCurrentDateET()
 
 
     const generatedPrompts = []
@@ -22,9 +29,22 @@ export async function POST(request: NextRequest) {
         .eq('date', dateStr)
         .eq('age_group', ageGroup)
 
-      if (existing && existing.length > 0) {
+      if (existing && existing.length > 0 && !regenerate) {
         generatedPrompts.push(...existing)
         continue
+      }
+
+      // If regenerating, delete ALL existing prompts for this date/age_group
+      if (regenerate) {
+        const { error: deleteError } = await supabaseAdmin
+          .from('prompts')
+          .delete()
+          .eq('date', dateStr)
+          .eq('age_group', ageGroup)
+        
+        if (deleteError) {
+          console.error(`Failed to delete existing prompts for ${ageGroup}:`, deleteError)
+        }
       }
 
       // Generate prompts for each time slot
@@ -32,11 +52,21 @@ export async function POST(request: NextRequest) {
       
       for (const timeSlot of timeSlots) {
         try {
+          // Use different difficulties to work around the unique constraint
+          let difficulty: 'easy' | 'medium' | 'hard'
+          if (timeSlot === 'daily_1') {
+            difficulty = 'easy'
+          } else if (timeSlot === 'daily_2') {
+            difficulty = 'medium'
+          } else {
+            // free_draw uses hard for uniqueness
+            difficulty = 'hard'
+          }
           
-          const prompt = await PromptGenerator.generateSlotPrompt({
+          const prompt = await PromptGenerator.generateDailyPrompt({
             ageGroup,
             timeSlot,
-            difficulty: 'easy'
+            difficulty
           })
 
           // Store in database
@@ -83,6 +113,12 @@ export async function POST(request: NextRequest) {
 
 // Generate prompts for the next week
 export async function GET(request: NextRequest) {
+  // Check admin authentication
+  const { isAdmin, error } = await requireAdminAuth()
+  if (!isAdmin) {
+    return error || NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
   try {
     const url = new URL(request.url)
     const days = parseInt(url.searchParams.get('days') || '7')

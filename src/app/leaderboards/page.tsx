@@ -140,33 +140,48 @@ export default function LeaderboardsPage() {
         title: 'Growth Champions',
         icon: <TrendingUp className="h-5 w-5" />,
         color: 'blue',
-        suffix: 'points',
-        description: 'Artists who have improved the most this month',
-        howToAchieve: 'Earn achievements and points by being active and improving your skills!'
+        suffix: 'more uploads',
+        description: 'Artists who increased their uploads the most this week vs last week',
+        howToAchieve: 'Upload more artwork this week than you did last week to show growth!'
       },
       communityStars: {
         title: 'Community Heroes',
         icon: <Users className="h-5 w-5" />,
         color: 'orange',
-        suffix: 'likes given',
-        description: 'Artists spreading the most positivity by liking others\' artwork',
-        howToAchieve: 'Show love to other artists by liking their amazing creations!'
+        suffix: 'likes given this week',
+        description: 'Artists spreading the most positivity this week by liking others\' artwork',
+        howToAchieve: 'Show love to other artists by liking their amazing creations this week!'
       }
     }
     return configs[type]
   }
 
   const getRankIcon = (rank: number) => {
-    if (rank === 1) return <Crown className="h-6 w-6 text-yellow-500" />
-    if (rank === 2) return <Medal className="h-6 w-6 text-slate-400" />
-    if (rank === 3) return <Medal className="h-6 w-6 text-orange-400" />
+    if (rank === 1) return (
+      <div className="flex flex-col items-center">
+        <Crown className="h-6 w-6 text-white" />
+        <span className="text-xs font-bold text-white mt-1">1st</span>
+      </div>
+    )
+    if (rank === 2) return (
+      <div className="flex flex-col items-center">
+        <Medal className="h-6 w-6 text-white" />
+        <span className="text-xs font-bold text-white mt-1">2nd</span>
+      </div>
+    )
+    if (rank === 3) return (
+      <div className="flex flex-col items-center">
+        <Medal className="h-6 w-6 text-white" />
+        <span className="text-xs font-bold text-white mt-1">3rd</span>
+      </div>
+    )
     return <span className="text-lg font-bold text-slate-500">#{rank}</span>
   }
 
   const getRankBadgeColor = (rank: number) => {
-    if (rank === 1) return 'bg-gradient-to-r from-yellow-400 to-yellow-600'
-    if (rank === 2) return 'bg-gradient-to-r from-slate-300 to-slate-500'
-    if (rank === 3) return 'bg-gradient-to-r from-orange-400 to-orange-600'
+    if (rank === 1) return 'bg-gradient-to-r from-yellow-400 to-yellow-600 text-white'
+    if (rank === 2) return 'bg-gradient-to-r from-slate-400 to-slate-600 text-white'
+    if (rank === 3) return 'bg-gradient-to-r from-amber-500 to-orange-500 text-white'
     return 'bg-slate-100'
   }
 
@@ -206,13 +221,13 @@ export default function LeaderboardsPage() {
             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3">
               {[
                 { key: 'weeklyUploads', label: 'Weekly Creative', icon: <Camera className="h-4 w-4" /> },
-                { key: 'weeklyLikes', label: 'Weekly Loved', icon: <Heart className="h-4 w-4" /> },
-                { key: 'currentStreaks', label: 'Dedication', icon: <Zap className="h-4 w-4" /> },
                 { key: 'monthlyUploads', label: 'Monthly Creative', icon: <Palette className="h-4 w-4" /> },
+                { key: 'weeklyLikes', label: 'Weekly Loved', icon: <Heart className="h-4 w-4" /> },
                 { key: 'monthlyLikes', label: 'Monthly Loved', icon: <Star className="h-4 w-4" /> },
-                { key: 'newArtists', label: 'Rising Stars', icon: <Star className="h-4 w-4" /> },
                 { key: 'mostImproved', label: 'Growth', icon: <TrendingUp className="h-4 w-4" /> },
-                { key: 'communityStars', label: 'Community', icon: <Users className="h-4 w-4" /> }
+                { key: 'currentStreaks', label: 'Dedication', icon: <Zap className="h-4 w-4" /> },
+                { key: 'newArtists', label: 'Rising Stars', icon: <Star className="h-4 w-4" /> },
+                { key: 'communityStars', label: 'Community Heroes', icon: <Users className="h-4 w-4" /> }
               ].map(({ key, label, icon }) => (
                 <button
                   key={key}
@@ -260,7 +275,7 @@ export default function LeaderboardsPage() {
                           entry.isCurrentChild ? 'border-pink-300 bg-pink-50' : 'border-slate-200 bg-white'
                         } ${index === 0 ? 'md:order-2 transform md:scale-110' : index === 1 ? 'md:order-1' : 'md:order-3'}`}
                       >
-                        <div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 text-white ${getRankBadgeColor(entry.rank)}`}>
+                        <div className={`w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4 text-white ${getRankBadgeColor(entry.rank)}`}>
                           {getRankIcon(entry.rank)}
                         </div>
                         
@@ -304,7 +319,7 @@ export default function LeaderboardsPage() {
                     >
                       <div className="flex items-center gap-4">
                         {/* Rank */}
-                        <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
+                        <div className={`${entry.rank <= 3 ? 'w-16 h-16' : 'w-12 h-12'} rounded-xl flex items-center justify-center ${
                           entry.rank <= 3 
                             ? getRankBadgeColor(entry.rank) + ' text-white'
                             : 'bg-slate-200 text-slate-700'

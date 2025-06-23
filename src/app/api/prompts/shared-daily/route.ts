@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { ChildAuth } from '@/lib/auth'
 import { supabaseAdmin } from '@/lib/supabase'
-import { PromptGenerator } from '@/lib/openai'
+import { ImprovedPromptGenerator as PromptGenerator } from '@/lib/openai'
 import { cookies } from 'next/headers'
 
 export async function GET(request: NextRequest) {
@@ -92,9 +92,10 @@ export async function GET(request: NextRequest) {
     if (!sharedPrompt) {
       try {
         
-        const generatedPrompt = await PromptGenerator.generateSharedDailyPrompt({
+        const generatedPrompt = await PromptGenerator.generateDailyPrompt({
           ageGroup: child.age_group,
-          difficulty: 'easy'
+          difficulty: 'easy',
+          timeSlot: 'daily_1'
         })
 
         // Store the generated prompt in database
@@ -110,7 +111,7 @@ export async function GET(request: NextRequest) {
               difficulty: generatedPrompt.difficulty,
               prompt_text: generatedPrompt.description,
               prompt_type: 'shared_daily',
-              community_title: generatedPrompt.communityTitle
+              community_title: generatedPrompt.title || generatedPrompt.description
             })
             .select(`
               *,
@@ -168,7 +169,7 @@ export async function GET(request: NextRequest) {
             id: newPrompt.id,
             title: generatedPrompt.title,
             description: newPrompt.prompt_text,
-            communityTitle: newPrompt.community_title || generatedPrompt.communityTitle,
+            communityTitle: newPrompt.community_title || generatedPrompt.title,
             emoji: generatedPrompt.emoji,
             difficulty: newPrompt.difficulty,
             ageGroup: newPrompt.age_group,
@@ -187,10 +188,11 @@ export async function GET(request: NextRequest) {
         console.error('Failed to generate shared daily prompt:', error)
         
         // Return fallback prompt
-        const fallbackPrompt = PromptGenerator.getFallbackSharedPrompt({
+        const fallbackPrompt = PromptGenerator.getFallbackPrompt({
           ageGroup: child.age_group,
-          difficulty: 'medium'
-        })
+          difficulty: 'medium',
+          timeSlot: 'daily_1'
+        }, 'real_life', 'everyday activities')
         
         return NextResponse.json({
           success: true,
@@ -198,7 +200,7 @@ export async function GET(request: NextRequest) {
             id: 'fallback',
             title: fallbackPrompt.title,
             description: fallbackPrompt.description,
-            communityTitle: fallbackPrompt.communityTitle,
+            communityTitle: fallbackPrompt.title,
             emoji: fallbackPrompt.emoji,
             difficulty: fallbackPrompt.difficulty,
             ageGroup: fallbackPrompt.ageGroup,

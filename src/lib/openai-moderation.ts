@@ -35,6 +35,11 @@ export interface ModerationResult {
 }
 
 export async function moderateImage(imageUrl: string): Promise<ModerationResult> {
+  // Ensure API key is present - fail safely if not
+  if (!process.env.OPENAI_API_KEY) {
+    throw new Error('OpenAI API key not configured - content moderation unavailable')
+  }
+
   try {
     const response = await openai.moderations.create({
       input: imageUrl,
@@ -43,30 +48,36 @@ export async function moderateImage(imageUrl: string): Promise<ModerationResult>
 
     return response.results[0]
   } catch (error) {
-    console.error('OpenAI moderation error:', error)
+    // Log error but don't expose details in production
+    if (process.env.NODE_ENV === 'development') {
+      console.error('OpenAI moderation error:', error)
+    }
+    // Return safe failsafe result that rejects content
     return createFailsafeModerationResult()
   }
 }
 
 function createFailsafeModerationResult(): ModerationResult {
+  // CRITICAL FIX: When moderation fails, reject content by setting ALL categories to true
+  // This ensures child safety by defaulting to the most restrictive state
   const categories = Object.keys({
-    sexual: false,
-    hate: false,
-    harassment: false,
-    'self-harm': false,
-    'sexual/minors': false,
-    'hate/threatening': false,
-    'violence/graphic': false,
-    'self-harm/intent': false,
-    'self-harm/instructions': false,
-    'harassment/threatening': false,
-    violence: false
+    sexual: true,
+    hate: true,
+    harassment: true,
+    'self-harm': true,
+    'sexual/minors': true,
+    'hate/threatening': true,
+    'violence/graphic': true,
+    'self-harm/intent': true,
+    'self-harm/instructions': true,
+    'harassment/threatening': true,
+    violence: true
   })
   
   return {
     flagged: true,
-    categories: categories.reduce((acc, key) => ({ ...acc, [key]: false }), {} as any),
-    category_scores: categories.reduce((acc, key) => ({ ...acc, [key]: 0 }), {} as any)
+    categories: categories.reduce((acc, key) => ({ ...acc, [key]: true }), {} as any),
+    category_scores: categories.reduce((acc, key) => ({ ...acc, [key]: 1.0 }), {} as any)
   }
 }
 

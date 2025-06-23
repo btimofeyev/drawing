@@ -3,6 +3,7 @@ import { ChildAuth } from '@/lib/auth'
 import { supabaseAdmin } from '@/lib/supabase'
 import { cookies } from 'next/headers'
 import { moderateImage, shouldApproveForChildren } from '@/lib/openai-moderation'
+import { getCurrentDateET, getDayBoundsET } from '@/utils/timezone'
 
 export async function POST(request: NextRequest) {
   try {
@@ -106,17 +107,18 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const today = new Date().toISOString().split('T')[0]
+    const today = getCurrentDateET()
     const targetTimeSlot = timeSlot as 'daily_1' | 'daily_2' | 'free_draw'
 
-    // Check if child already has a post in this time slot today
+    // Check if child already has a post in this time slot today (Eastern Time)
+    const { start: dayStart, end: dayEnd } = getDayBoundsET(today)
     const { data: existingPost, error: checkError } = await supabaseAdmin
       .from('posts')
       .select('id')
       .eq('child_id', childId)
       .eq('time_slot', targetTimeSlot)
-      .gte('created_at', `${today}T00:00:00Z`)
-      .lt('created_at', `${today}T23:59:59Z`)
+      .gte('created_at', dayStart)
+      .lte('created_at', dayEnd)
       .maybeSingle()
 
     if (checkError) {
@@ -253,23 +255,30 @@ export async function POST(request: NextRequest) {
     let moderationStatus: 'pending' | 'approved' | 'rejected' = 'pending'
     
     try {
-      // Only moderate if OpenAI API key is configured
-      if (process.env.OPENAI_API_KEY) {
-        const moderationResult = await moderateImage(imageUrl)
-        
-        if (shouldApproveForChildren(moderationResult)) {
-          moderationStatus = 'approved'
-        } else {
-          moderationStatus = 'rejected'
-        }
-      } else {
-        // If no API key, auto-approve (for development)
+      // CRITICAL: Always require moderation for child safety
+      const moderationResult = await moderateImage(imageUrl)
+      
+      if (shouldApproveForChildren(moderationResult)) {
         moderationStatus = 'approved'
+      } else {
+        moderationStatus = 'rejected'
       }
     } catch (moderationError) {
-      console.error('Moderation failed:', moderationError)
-      // On error, default to pending for manual review
-      moderationStatus = 'pending'
+      // CRITICAL: On any moderation failure, reject content for child safety
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Moderation failed:', moderationError)
+      }
+      
+      // Clean up uploaded files since we're rejecting
+      await supabaseAdmin.storage.from('artwork').remove([fileName])
+      if (thumbnailName) {
+        await supabaseAdmin.storage.from('artwork').remove([thumbnailName])
+      }
+      
+      return NextResponse.json(
+        { error: 'Content moderation unavailable. Please try again later or contact support.' },
+        { status: 503 }
+      )
     }
 
     // Create the post record

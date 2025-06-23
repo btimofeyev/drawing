@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Plus, Settings, Shield, Users, Palette, Sparkles, Eye, Trash2, AlertTriangle, Clock, Mail } from 'lucide-react'
+import { Plus, Settings, Shield, Users, Palette, Sparkles, Eye, Trash2, AlertTriangle, Clock, Mail, Crown } from 'lucide-react'
 import Link from 'next/link'
 
 interface Child {
@@ -33,10 +33,23 @@ export default function ParentDashboard() {
   const [childArtwork, setChildArtwork] = useState<Artwork[]>([])
   const [showDeleteChildModal, setShowDeleteChildModal] = useState<Child | null>(null)
   const [showComingSoonModal, setShowComingSoonModal] = useState(false)
+  const [isAdmin, setIsAdmin] = useState(false)
 
   useEffect(() => {
     fetchChildren()
+    checkAdminStatus()
   }, [])
+
+  const checkAdminStatus = async () => {
+    try {
+      const response = await fetch('/api/admin/generate-prompts', {
+        method: 'GET'
+      })
+      setIsAdmin(response.ok)
+    } catch (error) {
+      setIsAdmin(false)
+    }
+  }
 
   const fetchChildren = async () => {
     try {
@@ -151,6 +164,16 @@ export default function ParentDashboard() {
             </div>
             
             <div className="flex items-center gap-4">
+              {isAdmin && (
+                <Link
+                  href="/admin/prompts"
+                  className="btn btn-secondary border-purple-200 hover:bg-purple-50 hover:border-purple-300"
+                >
+                  <Crown className="h-4 w-4 text-purple-600" />
+                  <span className="text-purple-600">Admin</span>
+                </Link>
+              )}
+              
               <button
                 onClick={handleAddChild}
                 className="btn btn-primary"

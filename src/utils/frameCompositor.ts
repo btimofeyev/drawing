@@ -20,7 +20,22 @@ export async function applyFrameToImage(
     const img = new Image()
     img.crossOrigin = 'anonymous'
     
+    // Create object URL for cleanup
+    const imageUrl = URL.createObjectURL(imageFile)
+    
+    // Memory cleanup function
+    const cleanup = () => {
+      URL.revokeObjectURL(imageUrl)
+      img.src = ''
+      img.onload = null
+      img.onerror = null
+    }
+    
     img.onload = () => {
+      // Variables to track resources for cleanup
+      let canvas: HTMLCanvasElement | null = null
+      let ctx: CanvasRenderingContext2D | null = null
+      
       try {
         // Calculate dimensions maintaining aspect ratio
         let { width, height } = img
@@ -41,10 +56,11 @@ export async function applyFrameToImage(
         const canvasHeight = height + (framePadding * 2)
 
         // Create canvas for composition
-        const canvas = document.createElement('canvas')
-        const ctx = canvas.getContext('2d')
+        canvas = document.createElement('canvas')
+        ctx = canvas.getContext('2d')
         
         if (!ctx) {
+          cleanup()
           reject(new Error('Canvas context not available'))
           return
         }
@@ -79,6 +95,15 @@ export async function applyFrameToImage(
 
         // Convert to blob and create file
         canvas.toBlob((blob) => {
+          // Clean up canvas memory immediately after conversion
+          if (canvas) {
+            canvas.width = 0
+            canvas.height = 0
+            canvas = null
+          }
+          ctx = null
+          cleanup()
+          
           if (blob) {
             const framedFile = new File([blob], `framed-artwork-${Date.now()}.jpg`, {
               type: 'image/jpeg',
@@ -91,12 +116,22 @@ export async function applyFrameToImage(
         }, 'image/jpeg', quality)
 
       } catch (error) {
+        // Clean up on error
+        if (canvas) {
+          canvas.width = 0
+          canvas.height = 0
+        }
+        cleanup()
         reject(error)
       }
     }
 
-    img.onerror = () => reject(new Error('Failed to load image'))
-    img.src = URL.createObjectURL(imageFile)
+    img.onerror = () => {
+      cleanup()
+      reject(new Error('Failed to load image'))
+    }
+    
+    img.src = imageUrl
   })
 }
 
@@ -482,38 +517,7 @@ function createFrameBackground(ctx: CanvasRenderingContext2D, width: number, hei
       ctx.fillRect(0, 0, width, height)
       break
 
-    case 'neon-glow':
-      // Neon glow - matching CSS frame-neon-glow
-      const neonGradient = ctx.createLinearGradient(0, 0, width, height)
-      neonGradient.addColorStop(0, '#00ffff')
-      neonGradient.addColorStop(0.25, '#ff00ff')
-      neonGradient.addColorStop(0.5, '#ffff00')
-      neonGradient.addColorStop(0.75, '#00ff00')
-      neonGradient.addColorStop(1, '#00ffff')
-      ctx.fillStyle = neonGradient
-      ctx.fillRect(0, 0, width, height)
-      break
-
-    case 'candy-stripes':
-      // Candy stripes - matching CSS frame-candy-stripes
-      ctx.fillStyle = '#ffffff'
-      ctx.fillRect(0, 0, width, height)
-      
-      // Add diagonal candy stripes
-      const stripeColors = ['#ff6b9d', '#ffffff', '#4ecdc4', '#ffffff']
-      const candyStripeWidth = 24
-      ctx.save()
-      for (let i = -height; i < width + height; i += candyStripeWidth) {
-        const colorIndex = Math.floor((i + height) / candyStripeWidth) % stripeColors.length
-        ctx.fillStyle = stripeColors[colorIndex]
-        ctx.save()
-        ctx.translate(i, 0)
-        ctx.rotate(Math.PI / 4)
-        ctx.fillRect(0, -height, candyStripeWidth, width + height * 2)
-        ctx.restore()
-      }
-      ctx.restore()
-      break
+    // Removed duplicate cases - keeping original implementations above
 
     case 'jungle-adventure':
       // Jungle adventure - matching CSS frame-jungle-adventure

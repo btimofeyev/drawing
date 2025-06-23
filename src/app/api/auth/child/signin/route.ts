@@ -34,10 +34,11 @@ export async function POST(request: NextRequest) {
     })
 
     // Set the child auth cookie that middleware expects
+    const expiresAt = new Date(Date.now() + (60 * 60 * 24 * 7 * 1000)) // 7 days from now
     response.cookies.set('child_auth', JSON.stringify({
       childId: child.id,
       username: child.username,
-      timestamp: Date.now()
+      expires: expiresAt.toISOString()
     }), {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
