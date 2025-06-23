@@ -2,6 +2,65 @@ import { NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { verifyParentAuth } from '@/lib/auth'
 
+export async function PATCH(
+  request: Request,
+  { params }: { params: Promise<{ childId: string }> }
+) {
+  try {
+    const { childId } = await params
+    
+    // Verify parent authentication
+    const { parent, error: authError } = await verifyParentAuth(request)
+    if (authError || !parent) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    // Verify this child belongs to the parent
+    const { data: child, error: childError } = await supabaseAdmin
+      .from('child_profiles')
+      .select('id, username, parental_consent')
+      .eq('id', childId)
+      .eq('parent_id', parent.id)
+      .single()
+
+    if (childError || !child) {
+      return NextResponse.json({ error: 'Child not found' }, { status: 404 })
+    }
+
+    const body = await request.json()
+    const { parental_consent } = body
+
+    if (typeof parental_consent !== 'boolean') {
+      return NextResponse.json({ error: 'parental_consent must be a boolean value' }, { status: 400 })
+    }
+
+    // Update parental consent
+    const { data: updatedChild, error: updateError } = await supabaseAdmin
+      .from('child_profiles')
+      .update({ parental_consent })
+      .eq('id', childId)
+      .eq('parent_id', parent.id)
+      .select()
+      .single()
+
+    if (updateError) {
+      console.error('Error updating parental consent:', updateError)
+      return NextResponse.json({ error: 'Failed to update parental consent' }, { status: 500 })
+    }
+
+    return NextResponse.json({ 
+      success: true, 
+      child: updatedChild,
+      message: parental_consent 
+        ? 'Parental consent granted. Your child can now share artwork!' 
+        : 'Parental consent revoked. Your child cannot share artwork until consent is granted again.'
+    })
+  } catch (error) {
+    console.error('Error in PATCH /api/parent/children/[childId]:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
+}
+
 export async function DELETE(
   request: Request,
   { params }: { params: Promise<{ childId: string }> }

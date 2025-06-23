@@ -7,7 +7,10 @@ const createChildSchema = z.object({
   name: z.string().min(1).max(50),
   ageGroup: z.enum(['preschoolers', 'kids', 'tweens']),
   pin: z.string().length(4).regex(/^\d+$/),
-  avatarUrl: z.string().url().optional()
+  avatarUrl: z.string().url().optional(),
+  parentalConsent: z.boolean().optional().default(false),
+  agreedToTerms: z.boolean().refine(val => val === true, 'Must agree to Terms of Service'),
+  agreedToPrivacy: z.boolean().refine(val => val === true, 'Must agree to Privacy Policy')
 })
 
 export async function GET(request: NextRequest) {
@@ -86,7 +89,8 @@ export async function POST(request: NextRequest) {
       name: childData.name,
       ageGroup: childData.ageGroup,
       pin: childData.pin,
-      avatarUrl: childData.avatarUrl
+      avatarUrl: childData.avatarUrl,
+      parentalConsent: childData.parentalConsent
     })
 
     return NextResponse.json({

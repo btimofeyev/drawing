@@ -38,6 +38,18 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // COPPA Compliance Check: Verify parental consent before allowing uploads
+    if (!child.parental_consent) {
+      return NextResponse.json(
+        { 
+          error: 'Parental consent required',
+          message: 'Your parent or guardian must approve your account before you can share artwork. Please ask them to log into their parent dashboard.',
+          requiresParentalConsent: true
+        },
+        { status: 403 }
+      )
+    }
+
     // Parse form data
     const formData = await request.formData()
     const file = formData.get('file') as File

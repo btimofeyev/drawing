@@ -82,6 +82,7 @@ export class ChildAuth {
     ageGroup: 'preschoolers' | 'kids' | 'tweens'
     pin: string
     avatarUrl?: string
+    parentalConsent?: boolean
   }) {
     const pinHash = await this.hashPin(data.pin)
     
@@ -94,7 +95,7 @@ export class ChildAuth {
         age_group: data.ageGroup,
         pin_hash: pinHash,
         avatar_url: data.avatarUrl || null,
-        parental_consent: true
+        parental_consent: data.parentalConsent || false
       })
       .select()
       .single()

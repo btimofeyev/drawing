@@ -123,6 +123,40 @@ export default function ParentDashboard() {
     }
   }
 
+  const handleToggleConsent = async (child: Child) => {
+    const newConsentStatus = !child.parentalConsent
+    const action = newConsentStatus ? 'grant' : 'revoke'
+    
+    if (!confirm(`Are you sure you want to ${action} parental consent for ${child.name}? ${
+      newConsentStatus 
+        ? 'This will allow them to share artwork with the community.' 
+        : 'This will prevent them from sharing artwork until consent is granted again.'
+    }`)) {
+      return
+    }
+
+    try {
+      const response = await fetch(`/api/parent/children/${child.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ parental_consent: newConsentStatus })
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        // Refresh the children list to show updated consent status
+        await fetchChildren()
+        alert(data.message)
+      } else {
+        const errorData = await response.json()
+        alert(`Failed to update consent: ${errorData.error}`)
+      }
+    } catch (error) {
+      console.error('Error updating consent:', error)
+      alert('Failed to update parental consent. Please try again.')
+    }
+  }
+
   const handleSignOut = async () => {
     try {
       await fetch('/api/auth/parent/signout', { method: 'POST' })
@@ -258,6 +292,23 @@ export default function ParentDashboard() {
                               {child.parentalConsent ? '✅ Approved' : '⏳ Pending'}
                             </span>
                           </div>
+                          <div className="mt-3">
+                            <button
+                              onClick={() => handleToggleConsent(child)}
+                              className={`w-full text-sm font-medium py-2 px-4 rounded-lg transition-colors ${
+                                child.parentalConsent
+                                  ? 'bg-red-100 text-red-700 hover:bg-red-200'
+                                  : 'bg-green-100 text-green-700 hover:bg-green-200'
+                              }`}
+                            >
+                              {child.parentalConsent ? 'Revoke Consent' : 'Grant Consent'}
+                            </button>
+                          </div>
+                          {!child.parentalConsent && (
+                            <p className="text-xs text-amber-700 mt-2 bg-amber-50 p-2 rounded">
+                              <strong>COPPA Compliance:</strong> Your child cannot share artwork until you grant consent.
+                            </p>
+                          )}
                         </div>
 
                         <div className="bg-slate-50 rounded-2xl p-4">
@@ -498,6 +549,9 @@ function CreateChildModal({ onClose, onSuccess }: { onClose: () => void; onSucce
   const [pin, setPin] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
+  const [agreedToTerms, setAgreedToTerms] = useState(false)
+  const [agreedToPrivacy, setAgreedToPrivacy] = useState(false)
+  const [grantParentalConsent, setGrantParentalConsent] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -508,7 +562,15 @@ function CreateChildModal({ onClose, onSuccess }: { onClose: () => void; onSucce
       const response = await fetch('/api/parent/children', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, name, ageGroup, pin })
+        body: JSON.stringify({ 
+          username, 
+          name, 
+          ageGroup, 
+          pin, 
+          parentalConsent: grantParentalConsent,
+          agreedToTerms,
+          agreedToPrivacy 
+        })
       })
 
       const data = await response.json()
@@ -531,25 +593,25 @@ function CreateChildModal({ onClose, onSuccess }: { onClose: () => void; onSucce
   }
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-8 z-50">
-      <div className="bg-white rounded-3xl max-w-lg w-full p-10 animate-fade-in shadow-2xl">
-        <div className="text-center mb-10">
-          <div className="icon-container orange mx-auto mb-6" style={{width: '4rem', height: '4rem'}}>
-            <Plus style={{width: '2rem', height: '2rem'}} />
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50 overflow-y-auto">
+      <div className="bg-white rounded-3xl max-w-2xl w-full my-8 p-8 animate-fade-in shadow-2xl max-h-[95vh] overflow-y-auto">
+        <div className="text-center mb-8">
+          <div className="icon-container orange mx-auto mb-4" style={{width: '3rem', height: '3rem'}}>
+            <Plus style={{width: '1.5rem', height: '1.5rem'}} />
           </div>
-          <h2 className="text-3xl font-bold mb-3 bg-gradient-to-r from-pink-500 via-purple-500 to-blue-500 bg-clip-text text-transparent">Create Child Profile</h2>
-          <p className="text-slate-600 text-lg">Set up a safe, creative account for your child</p>
+          <h2 className="text-2xl font-bold mb-2 bg-gradient-to-r from-pink-500 via-purple-500 to-blue-500 bg-clip-text text-transparent">Create Child Profile</h2>
+          <p className="text-slate-600">Set up a safe, creative account for your child</p>
         </div>
         
         {error && (
-          <div className="p-4 bg-red-50 border border-red-200 rounded-2xl text-red-700 mb-8 font-medium">
+          <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-red-700 mb-6 text-sm font-medium">
             {error}
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-8">
+        <form onSubmit={handleSubmit} className="space-y-6">
           <div>
-            <label className="block text-lg font-semibold text-slate-700 mb-3">
+            <label className="block text-base font-semibold text-slate-700 mb-2">
               🎨 Username
             </label>
             <input
@@ -559,15 +621,15 @@ function CreateChildModal({ onClose, onSuccess }: { onClose: () => void; onSucce
               placeholder="coolartist123"
               maxLength={20}
               required
-              className="w-full px-6 py-4 border-2 border-slate-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-pink-200 focus:border-pink-500 text-lg font-medium transition-all duration-200 hover:border-pink-300"
+              className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-pink-200 focus:border-pink-500 font-medium transition-all duration-200 hover:border-pink-300"
             />
-            <p className="text-sm text-slate-500 mt-2">
+            <p className="text-xs text-slate-500 mt-1">
               ✨ 3-20 characters, letters, numbers, and underscores only
             </p>
           </div>
 
           <div>
-            <label className="block text-lg font-semibold text-slate-700 mb-3">
+            <label className="block text-base font-semibold text-slate-700 mb-2">
               👶 Child's Name
             </label>
             <input
@@ -576,18 +638,18 @@ function CreateChildModal({ onClose, onSuccess }: { onClose: () => void; onSucce
               onChange={(e) => setName(e.target.value)}
               placeholder="Enter full name"
               required
-              className="w-full px-6 py-4 border-2 border-slate-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-pink-200 focus:border-pink-500 text-lg font-medium transition-all duration-200 hover:border-pink-300"
+              className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-pink-200 focus:border-pink-500 font-medium transition-all duration-200 hover:border-pink-300"
             />
           </div>
 
           <div>
-            <label className="block text-lg font-semibold text-slate-700 mb-3">
+            <label className="block text-base font-semibold text-slate-700 mb-2">
               🎂 Age Group
             </label>
             <select
               value={ageGroup}
               onChange={(e) => setAgeGroup(e.target.value)}
-              className="w-full px-6 py-4 border-2 border-slate-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-pink-200 focus:border-pink-500 text-lg font-medium transition-all duration-200 hover:border-pink-300"
+              className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-pink-200 focus:border-pink-500 font-medium transition-all duration-200 hover:border-pink-300"
             >
               <option value="preschoolers">Preschoolers (4-6 years)</option>
               <option value="kids">Kids (7-10 years)</option>
@@ -596,7 +658,7 @@ function CreateChildModal({ onClose, onSuccess }: { onClose: () => void; onSucce
           </div>
 
           <div>
-            <label className="block text-lg font-semibold text-slate-700 mb-3">
+            <label className="block text-base font-semibold text-slate-700 mb-2">
               🔐 4-Digit PIN
             </label>
             <input
@@ -606,14 +668,102 @@ function CreateChildModal({ onClose, onSuccess }: { onClose: () => void; onSucce
               placeholder="1234"
               maxLength={4}
               required
-              className="w-full px-6 py-4 border-2 border-slate-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-pink-200 focus:border-pink-500 text-center text-3xl font-mono tracking-widest transition-all duration-200 hover:border-pink-300"
+              className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-pink-200 focus:border-pink-500 text-center text-2xl font-mono tracking-widest transition-all duration-200 hover:border-pink-300"
             />
-            <p className="text-sm text-slate-500 mt-2 text-center">
+            <p className="text-xs text-slate-500 mt-1 text-center">
               🔑 Your child will use this PIN with their username to sign in
             </p>
           </div>
 
-          <div className="flex gap-4 pt-6">
+          {/* Legal Agreements Section */}
+          <div className="border-t border-slate-200 pt-6">
+            <h3 className="text-lg font-bold text-slate-800 mb-3 flex items-center gap-2">
+              📋 Legal Agreements & Parental Consent
+            </h3>
+            <p className="text-sm text-slate-600 mb-4">
+              As required by COPPA, please review and agree to the following before creating your child's account:
+            </p>
+
+            <div className="space-y-3 mb-4">
+              {/* Terms of Service */}
+              <div className="bg-slate-50 rounded-lg p-3">
+                <label className="flex items-start gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={agreedToTerms}
+                    onChange={(e) => setAgreedToTerms(e.target.checked)}
+                    className="mt-0.5 w-4 h-4 text-pink-600 rounded border-2 border-slate-300 focus:ring-pink-500"
+                    required
+                  />
+                  <div className="text-sm">
+                    <span className="font-semibold text-slate-700">I agree to the </span>
+                    <a href="/legal/terms" target="_blank" className="text-pink-600 hover:text-pink-700 underline font-medium">
+                      Terms of Service
+                    </a>
+                    <span className="text-slate-700"> on behalf of my child</span>
+                  </div>
+                </label>
+              </div>
+
+              {/* Privacy Policy */}
+              <div className="bg-slate-50 rounded-lg p-3">
+                <label className="flex items-start gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={agreedToPrivacy}
+                    onChange={(e) => setAgreedToPrivacy(e.target.checked)}
+                    className="mt-0.5 w-4 h-4 text-pink-600 rounded border-2 border-slate-300 focus:ring-pink-500"
+                    required
+                  />
+                  <div className="text-sm">
+                    <span className="font-semibold text-slate-700">I have read and agree to the </span>
+                    <a href="/legal/privacy" target="_blank" className="text-pink-600 hover:text-pink-700 underline font-medium">
+                      Privacy Policy
+                    </a>
+                    <span className="text-slate-700"> including how my child's data will be collected and used</span>
+                  </div>
+                </label>
+              </div>
+
+              {/* COPPA Parental Consent */}
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                <label className="flex items-start gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={grantParentalConsent}
+                    onChange={(e) => setGrantParentalConsent(e.target.checked)}
+                    className="mt-0.5 w-4 h-4 text-blue-600 rounded border-2 border-blue-300 focus:ring-blue-500"
+                  />
+                  <div className="text-sm">
+                    <span className="font-semibold text-blue-800">✅ Grant Parental Consent (COPPA Compliance)</span>
+                    <p className="text-blue-700 mt-1">
+                      I give my verifiable consent for my child (under 13) to create an account and share artwork on Daily Scribble. 
+                      I understand that I can revoke this consent at any time from my parent dashboard.
+                    </p>
+                    <p className="text-xs text-blue-600 mt-1 font-medium">
+                      Note: You can leave this unchecked and grant consent later from your dashboard if you prefer.
+                    </p>
+                  </div>
+                </label>
+              </div>
+            </div>
+
+            {/* Legal Notice */}
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-4">
+              <div className="flex items-start gap-2">
+                <div className="text-lg">⚖️</div>
+                <div className="text-xs">
+                  <p className="font-semibold text-amber-800 mb-1">COPPA Compliance Notice</p>
+                  <p className="text-amber-700">
+                    This service is designed for children under 13. By creating this account, you confirm that you are the parent or legal guardian 
+                    of the child and have the authority to provide consent on their behalf as required by the Children's Online Privacy Protection Act (COPPA).
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex gap-3 pt-4">
             <button
               type="button"
               onClick={onClose}
@@ -623,7 +773,7 @@ function CreateChildModal({ onClose, onSuccess }: { onClose: () => void; onSucce
             </button>
             <button
               type="submit"
-              disabled={isLoading || !username || !name || pin.length !== 4 || username.length < 3}
+              disabled={isLoading || !username || !name || pin.length !== 4 || username.length < 3 || !agreedToTerms || !agreedToPrivacy}
               className="flex-1 btn btn-primary disabled:bg-slate-400 disabled:cursor-not-allowed"
             >
               <span className="flex items-center justify-center gap-2">

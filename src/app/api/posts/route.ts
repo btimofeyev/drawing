@@ -14,6 +14,18 @@ export async function POST(request: NextRequest) {
       return createErrorResponse('Unauthorized', 401)
     }
 
+    // COPPA Compliance Check: Verify parental consent before allowing uploads
+    if (!child.parental_consent) {
+      return NextResponse.json(
+        { 
+          error: 'Parental consent required',
+          message: 'Your parent or guardian must approve your account before you can share artwork. Please ask them to log into their parent dashboard.',
+          requiresParentalConsent: true
+        },
+        { status: 403 }
+      )
+    }
+
     const body = await request.json()
     const { imageUrl, thumbnailUrl, altText, promptId, timeSlot } = body
 
